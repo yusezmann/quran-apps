@@ -113,7 +113,7 @@ const ImsakiyahComponent = () => {
 
   return (
     <section>
-      <Card className="px-10" size="small" style={{ width: "100%" }}>
+      <Card size="small" style={{ width: "100%" }}>
         <div className="flex flex-col xl:flex-row justify-center items-center p-6 mb-14">
           <h1 className="text-2xl font-bold">
             Jadwal Imsakiyah
@@ -128,7 +128,7 @@ const ImsakiyahComponent = () => {
           <div className="flex flex-col">
             <label>Provinsi:</label>
             <Select
-              className="w-48 xl:w-64"
+              className="w-38 xl:w-64"
               placeholder="Pilih Provinsi"
               value={selectedProvince || undefined}
               onChange={handleProvinceChange}
@@ -145,7 +145,7 @@ const ImsakiyahComponent = () => {
           <div className="flex flex-col">
             <label>Kab/Kota:</label>
             <Select
-              className="w-48 xl:w-64"
+              className="w-38 xl:w-64"
               placeholder="Pilih Kabupaten/Kota"
               value={selectedKabkota || undefined}
               onChange={handleKabkotaChange}
