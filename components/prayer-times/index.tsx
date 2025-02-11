@@ -224,8 +224,8 @@ const PrayerTimeComponent = () => {
 
   return (
     <section className="mb-8">
-      <Card className="px-10" size="small" style={{ width: "100%" }}>
-        <div className="bg-white rounded-lg p-6 space-y-6">
+      <Card size="small" style={{ width: "100%" }}>
+        <div className="bg-white rounded-lg space-y-6">
           <div className="flex flex-col xl:flex-row justify-between items-start">
             <div className="flex flex-col">
               <h2 className="text-2xl font-bold">
