@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query"
 import { useQuranStore } from "@/store/quranStore"
-import { Book } from "lucide-react"
+import { Book, Hexagon, Star } from "lucide-react"
 
 interface Surah {
   nomor: number
@@ -63,10 +63,13 @@ export default function SurahList() {
             onClick={() => setCurrentSurah(surah.nomor)}
           >
             <div className="flex items-center">
-              <span className="w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center mr-3">
-                {surah.nomor}
-              </span>
-              <div>
+              <div className="relative w-10 h-10 flex items-center justify-center bg-green-600 rounded-full">
+                <Hexagon className="w-10 h-10 text-white" />
+                <span className="absolute text-gray-50 text-sm font-bold">
+                  {surah.nomor}
+                </span>
+              </div>
+              <div className="ml-4">
                 <h3 className="text-gray-800 font-semibold">
                   {surah.nama_latin}
                 </h3>

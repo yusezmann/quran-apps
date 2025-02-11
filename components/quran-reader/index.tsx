@@ -10,9 +10,12 @@ import {
   AlertCircle,
   ChevronLeft,
   ChevronRight,
+  Star,
+  LucideStar,
+  Hexagon,
 } from "lucide-react"
 import { useState, useRef, useEffect } from "react"
-import BismillahText from "./BismillahText"
+import BismillahText from "../BismillahText"
 import { fetchSurah, type Surah } from "@/services/quranService"
 import { Button } from "antd"
 import {
@@ -185,7 +188,13 @@ export default function QuranReader() {
           <Button
             type="default"
             shape="circle"
-            icon={isPlaying ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
+            icon={
+              isPlaying ? (
+                <Pause className="h-4 w-4" />
+              ) : (
+                <Play className="h-4 w-4" />
+              )
+            }
             onClick={togglePlayPause}
             disabled={!surah?.audioFull["01"]}
           />
@@ -216,10 +225,14 @@ export default function QuranReader() {
         <BismillahText />
         {surah?.ayat.map((ayat: any) => (
           <div key={ayat.nomorAyat} className="border-b pb-4">
-            <div className="flex justify-between items-center mb-2">
-              <span className="w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center">
-                {ayat.nomorAyat}
-              </span>
+            <div className="flex justify-between items-center mb-2 ">
+              <div className="relative w-10 h-10 flex items-center justify-center bg-green-600 rounded-full">
+                <Hexagon className="w-10 h-10 text-white" />
+                <span className="absolute text-gray-50 text-sm font-bold">
+                  {ayat.nomorAyat}
+                </span>
+              </div>
+
               <div className="flex space-x-2">
                 <Button
                   type="default"
