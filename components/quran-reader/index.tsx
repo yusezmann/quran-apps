@@ -184,7 +184,7 @@ export default function QuranReader() {
           disabled={!surah?.suratSebelumnya}
         />
 
-        <div className="flex items-center space-x-2">
+        <div className="flex space-x-2">
           <Button
             type="default"
             shape="circle"
