@@ -20,12 +20,25 @@ const hijriMonths = [
 ]
 
 export function getHijriDate(date: Date): HijriDate {
-  // This is a simplified version. For production, use a proper Hijri calendar library
-  const timestamp = date.getTime() - date.getTimezoneOffset() * 60 * 1000
-  const hijriYear = Math.floor(timestamp / (354.367 * 24 * 60 * 60 * 1000)) + 1389
-  const daysPastHijriYear = Math.floor((timestamp % (354.367 * 24 * 60 * 60 * 1000)) / (24 * 60 * 60 * 1000))
-  const hijriMonth = Math.floor(daysPastHijriYear / 29.5)
-  const hijriDay = Math.floor(daysPastHijriYear % 29.5) + 1
+  const civilEpoch = Date.UTC(1970, 0, 1)
+  const hijriEpoch = Date.UTC(622, 6, 16) // Approximate epoch for Hijri calendar
+
+  const msPerDay = 86400000
+  const daysSinceHijriEpoch = Math.floor(
+    (date.getTime() - hijriEpoch) / msPerDay,
+  )
+  const hijriYear = Math.floor(daysSinceHijriEpoch / 354.367) + 1
+  let remainingDays = daysSinceHijriEpoch % 354.367
+
+  let hijriMonth = 0
+  const hijriMonthLengths = [30, 29, 30, 29, 30, 29, 30, 29, 30, 29, 30, 29]
+
+  while (remainingDays >= hijriMonthLengths[hijriMonth]) {
+    remainingDays -= hijriMonthLengths[hijriMonth]
+    hijriMonth++
+  }
+
+  const hijriDay = Math.floor(remainingDays) + 1
 
   return {
     day: hijriDay,
@@ -33,4 +46,3 @@ export function getHijriDate(date: Date): HijriDate {
     year: hijriYear,
   }
 }
-
