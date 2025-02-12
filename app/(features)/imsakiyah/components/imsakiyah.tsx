@@ -11,7 +11,6 @@ import {
   ImsakiyahData,
   ImsakiyahHeaderData,
 } from "../interfaces/imsakiyah.interface"
-import { get } from "http"
 
 const DEFAULT_PROVINCE = "D.K.I Jakarta"
 const DEFAULT_KABKOTA = "Kota Jakarta"
@@ -114,7 +113,7 @@ const ImsakiyahComponent = () => {
   return (
     <section>
       <Card size="small" style={{ width: "100%" }}>
-        <div className="flex flex-col xl:flex-row justify-center items-center p-6 mb-14">
+        <div className="flex flex-col xl:flex-row justify-center items-center p-6 mb-12">
           <h1 className="text-2xl font-bold">
             Jadwal Imsakiyah
             <span className="ml-2">{headerData?.[0]?.masehi}</span>
@@ -123,12 +122,15 @@ const ImsakiyahComponent = () => {
             <span className="ml-2">({headerData?.[0]?.hijriah} Hijriah) -</span>
             <span className="ml-2">{headerData?.[0]?.kabkota}</span>
           </h2>
+          <h2 className="text-2xl font-bold justify-center items-center ml-2">
+            {headerData?.[0]?.provinsi}
+          </h2>
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4">
           <div className="flex flex-col">
-            <label>Provinsi:</label>
+            <label className="text-sm font-medium">Provinsi:</label>
             <Select
-              className="w-38 xl:w-64"
+              className="w-full min-w-[150px] mb-4"
               placeholder="Pilih Provinsi"
               value={selectedProvince || undefined}
               onChange={handleProvinceChange}
@@ -143,9 +145,9 @@ const ImsakiyahComponent = () => {
             </Select>
           </div>
           <div className="flex flex-col">
-            <label>Kab/Kota:</label>
+            <label className="text-sm font-medium">Kab/Kota:</label>
             <Select
-              className="w-38 xl:w-64"
+              className="w-full min-w-[150px] mb-4"
               placeholder="Pilih Kabupaten/Kota"
               value={selectedKabkota || undefined}
               onChange={handleKabkotaChange}
@@ -161,6 +163,7 @@ const ImsakiyahComponent = () => {
             </Select>
           </div>
         </div>
+
         <div className="mt-8 overflow-x-auto">
           {loadingData ? (
             <Spin size="large" className="flex justify-center" />

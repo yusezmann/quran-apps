@@ -9,8 +9,8 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-100">
       <Header />
-      <main className="container mx-auto px-4 py-8">
-        <PrayerTimeComponent />
+      <PrayerTimeComponent />
+      <main className="container mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           <div className="lg:col-span-1 hidden xl:block">
             <SurahList />

@@ -223,8 +223,189 @@ const PrayerTimeComponent = () => {
   }
 
   return (
-    <section className="mb-8">
-      <Card size="small" style={{ width: "100%" }}>
+    <section className="mb-0">
+      {prayerTimes &&
+        Object.entries(prayerTimes.jadwal).map(([key, value]) => {
+          if (["tanggal", "date", "terbit", "dhuha"].includes(key)) return null
+
+          if (nextPrayer?.name.toLowerCase() === key)
+            return (
+              <>
+                <Card
+                  size="small"
+                  style={{ width: "100%" }}
+                  className="relative h-[50vh] md:h-60 xl:h-[100vh] border-none rounded-b-2xl"
+                >
+                  <Image
+                    src="/assets/images/kaabah.jpg"
+                    alt="Kaabah"
+                    fill
+                    sizes="(max-width: 768px) 100vw"
+                    className="object-cover brightness-50 rounded-b-2xl"
+                  />
+                  <div className="flex flex-col xl:flex-row justify-between items-start relative z-10 text-white xl:px-6 xl:py-8">
+                    <div className="flex flex-col">
+                      <h2 className="text-2xl font-bold">
+                        Jadwal Sholat di {prayerTimes?.lokasi}
+                      </h2>
+                      <Button
+                        variant="link"
+                        color="danger"
+                        className="relative text-primary -left-32 xl:left-[-120px]"
+                        onClick={() => setLocationDialogOpen(true)}
+                      >
+                        <MapPin className="h-4 w-4 mr-1" />
+                        Salah Lokasi?
+                      </Button>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-bold">{formatDate(currentTime)}</div>
+                      <div className="text-muted-foreground italic">
+                        {hijriDate.day} {hijriDate.month}, {hijriDate.year}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-4 xl:p-0 text-center relative z-10 text-white block xl:hidden">
+                    <h6 className="text-sm font-bold">Sholat Selanjutnya</h6>
+                    <div className="font-bold text-lg">{nextPrayer?.name}</div>
+                    <div className="text-3xl font-bold my-2">{countdown}</div>
+                    <div className="text-sm">
+                      {currentTime.toLocaleTimeString("id-ID", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="relative text-white top-[60px] xl:top-[500px]">
+                    <div className="flex justify-between items-center text-sm xl:px-6">
+                      <div className="flex items-center gap-2">
+                        <span>{selectedMethod.name}</span>
+                        <Button
+                          variant="link"
+                          color="danger"
+                          className="text-primary p-0 h-auto"
+                          onClick={() => setMethodDialogOpen(true)}
+                        >
+                          Ganti
+                        </Button>
+                        <Button
+                          type="default"
+                          shape="circle"
+                          className="border-none"
+                          onClick={() =>
+                            toast.info(
+                              `Menggunakan parameter: Subuh ${selectedMethod.params.subuh}°, Isya ${selectedMethod.params.isya}°`,
+                            )
+                          }
+                        >
+                          <Info className="h-6 w-6" />
+                        </Button>
+                        <span className="text-muted-foreground">
+                          Subuh {selectedMethod.params.subuh} derajat, Isya{" "}
+                          {selectedMethod.params.isya} derajat
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+                <Card
+                  size="small"
+                  style={{ width: "91%" }}
+                  className="relative left-[18px] md:left-[35px] -top-6 md:-top-8 lg:left-[45px] shadow-lg xl:shadow-none block xl:hidden"
+                >
+                  <div className="flex flex-row flex-wrap gap-4 items-center justify-center">
+                    {Object.entries(prayerTimes.jadwal).map(([key, value]) => {
+                      if (
+                        [
+                          "tanggal",
+                          "date",
+                          "terbit",
+                          "dhuha",
+                          "imsak",
+                        ].includes(key)
+                      )
+                        return null
+                      return (
+                        <div key={key} className="flex flex-col items-center ">
+                          <div className="font-bold capitalize">{key}</div>
+                          <div className="text-gray-700">{value}</div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </Card>
+                <div className="relative hidden xl:block xl:-top-[500px]">
+                  <div className="grid grid-cols-1 xl:grid-cols-5 gap-4 px-6  ">
+                    {Object.entries(prayerTimes.jadwal).map(([key, value]) => {
+                      if (
+                        [
+                          "tanggal",
+                          "date",
+                          "terbit",
+                          "dhuha",
+                          "imsak",
+                        ].includes(key)
+                      )
+                        return null
+                      if (nextPrayer?.name.toLowerCase() === key) {
+                        return (
+                          <Card
+                            key={key}
+                            className="col-span-1 relative overflow-hidden"
+                          >
+                            <Image
+                              src="/assets/images/kaabah.jpg"
+                              alt="Background"
+                              fill
+                              sizes="(max-width: 768px) 100vw"
+                              className="object-cover brightness-50"
+                            />
+                            <h6 className="p-4 text-center relative z-10 text-white">
+                              <div className="text-sm font-bold">
+                                Sholat Selanjutnya
+                              </div>
+                              <div className="font-bold">
+                                {nextPrayer?.name}
+                              </div>
+                              <div className="text-3xl font-bold my-2">
+                                {countdown}
+                              </div>
+                              <div className="text-sm">
+                                {currentTime.toLocaleTimeString("id-ID", {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                              </div>
+                            </h6>
+                          </Card>
+                        )
+                      } else {
+                        return (
+                          <div
+                            key={key}
+                            className="items-center justify-center"
+                          >
+                            <Card className="bg-gray-100 text-center h-30 w-50 relative top-8 hidden xl:block">
+                              <h6 className="p-4 text-center relative z-10">
+                                <div className="font-bold capitalize">
+                                  {key}
+                                </div>
+                                <div className="text-xl">{value}</div>
+                              </h6>
+                            </Card>
+                          </div>
+                        )
+                      }
+                    })}
+                  </div>
+                </div>
+              </>
+            )
+        })}
+
+      {/* <Card size="small" style={{ width: "100%" }}>
         <div className="bg-white rounded-lg space-y-6">
           <div className="flex flex-col xl:flex-row justify-between items-start">
             <div className="flex flex-col">
@@ -353,13 +534,13 @@ const PrayerTimeComponent = () => {
             </div>
           </div>
         </div>
-      </Card>
+      </Card> */}
 
       <Modal
         open={locationDialogOpen}
         onCancel={() => setLocationDialogOpen(false)}
         footer={null}
-        className="relative left-[-35px] xl:left-0"
+        className="relative left-[-1px] xl:left-0"
       >
         <div>
           <div>
@@ -425,7 +606,7 @@ const PrayerTimeComponent = () => {
         open={methodDialogOpen}
         onCancel={() => setMethodDialogOpen(false)}
         footer={null}
-        className="relative left-[-35px] xl:left-0"
+        className="relative left-[-1px] xl:left-0"
       >
         <div className="flex flex-col gap-2">
           <div className="flex justify-between">
