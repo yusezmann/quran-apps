@@ -240,11 +240,16 @@ const PrayerTimeComponent = () => {
                     className="object-cover brightness-50 rounded-b-2xl"
                   />
 
-                  <div className="absolute inset-0 flex flex-col justify-between p-4 xl:p-6 text-white z-10">
-                    <div className="flex flex-wrap justify-between items-start">
+                  <div className="absolute inset-0 flex flex-col justify-between p-4 xl:p-6 text-white z-10 mt-[85px]">
+                    <div className="flex flex-wrap justify-between items-start xl:px-12">
                       <div className="flex flex-col min-w-0">
-                        <h2 className="text-2xl font-bold">
-                          Jadwal Sholat di {prayerTimes?.lokasi}
+                        <h2 className="text-2xl font-bold flex">
+                          <span className="hidden xl:block">
+                            Jadwal Sholat di
+                          </span>
+                          <span className="ml-2 text-sm xl:text-2xl">
+                            {prayerTimes?.lokasi}
+                          </span>
                         </h2>
                         <Button
                           variant="link"
@@ -255,12 +260,12 @@ const PrayerTimeComponent = () => {
                           <MapPin className="h-4 w-4 mr-1" /> Salah Lokasi?
                         </Button>
                       </div>
-                      <div className="text-right relative left-[240px] xl:left-0 -top-10 xl:-top-0">
-                        <div className="font-bold">
+                      <div className="text-right">
+                        <div className="font-semibold">
                           {formatDate(currentTime)}
                         </div>
                         <div className="text-muted-foreground italic">
-                          {hijriDate.day} {hijriDate.month}, {hijriDate.year}
+                          {hijriDate.day} {hijriDate.month} {hijriDate.year} H
                         </div>
                       </div>
                     </div>
@@ -339,7 +344,7 @@ const PrayerTimeComponent = () => {
                 </Card>
 
                 <div className="relative hidden xl:block xl:-top-[500px]">
-                  <div className="grid grid-cols-1 xl:grid-cols-5 gap-4 px-6">
+                  <div className="grid grid-cols-1 xl:grid-cols-5 gap-4 px-16">
                     {Object.entries(prayerTimes.jadwal).map(([key, value]) => {
                       if (
                         [
@@ -408,137 +413,6 @@ const PrayerTimeComponent = () => {
               </>
             )
         })}
-
-      {/* <Card size="small" style={{ width: "100%" }}>
-        <div className="bg-white rounded-lg space-y-6">
-          <div className="flex flex-col xl:flex-row justify-between items-start">
-            <div className="flex flex-col">
-              <h2 className="text-2xl font-bold">
-                Jadwal Sholat di {prayerTimes?.lokasi}
-              </h2>
-              <Button
-                variant="link"
-                color="danger"
-                className="relative text-primary left-16 xl:left-[-120px]"
-                onClick={() => setLocationDialogOpen(true)}
-              >
-                <MapPin className="h-4 w-4 mr-1" />
-                Salah Lokasi?
-              </Button>
-            </div>
-            <div className="text-right">
-              <div className="font-bold">{formatDate(currentTime)}</div>
-              <div className="text-muted-foreground italic">
-                {hijriDate.day} {hijriDate.month}, {hijriDate.year}
-              </div>
-            </div>
-          </div>
-
-          <AdzanPlayer />
-
-          <div className="grid grid-cols-2 xl:grid-cols-8 gap-2 mt-4 xl:hidden">
-            {prayerTimes &&
-              Object.entries(prayerTimes.jadwal).map(([key, value]) => {
-                if (["tanggal", "date", "terbit"].includes(key)) return null
-                if (nextPrayer?.name.toLowerCase() !== key) {
-                  return (
-                    <div
-                      key={key}
-                      className="bg-gray-100 text-center xl:h-20 xl:w-40"
-                    >
-                      <h6 className="p-4 text-center relative z-10">
-                        <div className="font-bold capitalize">{key}</div>
-                        <div className="text-xl">{value}</div>
-                      </h6>
-                    </div>
-                  )
-                }
-                return null
-              })}
-          </div>
-
-          <div className="grid grid-cols-1 xl:grid-cols-6 gap-4">
-            {prayerTimes &&
-              Object.entries(prayerTimes.jadwal).map(([key, value]) => {
-                if (["tanggal", "date", "terbit", "dhuha"].includes(key))
-                  return null
-
-                if (nextPrayer?.name.toLowerCase() === key) {
-                  return (
-                    <Card
-                      key={key}
-                      className="col-span-1 relative overflow-hidden"
-                    >
-                      <Image
-                        src="/assets/images/kaabah.jpg"
-                        alt="Background"
-                        fill
-                        sizes="(max-width: 768px) 100vw"
-                        className="object-cover brightness-50"
-                      />
-                      <h6 className="p-4 text-center relative z-10 text-white">
-                        <div className="text-sm font-bold">
-                          Sholat Selanjutnya
-                        </div>
-                        <div className="font-bold">{nextPrayer?.name}</div>
-                        <div className="text-3xl font-bold my-2">
-                          {countdown}
-                        </div>
-                        <div className="text-sm">
-                          {currentTime.toLocaleTimeString("id-ID", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </div>
-                      </h6>
-                    </Card>
-                  )
-                } else {
-                  return (
-                    <div key={key} className="items-center justify-center">
-                      <Card className="bg-gray-100 text-center h-30 w-50 relative top-8 hidden xl:block">
-                        <h6 className="p-4 text-center relative z-10">
-                          <div className="font-bold capitalize">{key}</div>
-                          <div className="text-xl">{value}</div>
-                        </h6>
-                      </Card>
-                    </div>
-                  )
-                }
-              })}
-          </div>
-
-          <div className="flex justify-between items-center text-sm">
-            <div className="flex items-center gap-2">
-              <span>{selectedMethod.name}</span>
-              <Button
-                variant="link"
-                color="primary"
-                className="text-primary p-0 h-auto"
-                onClick={() => setMethodDialogOpen(true)}
-              >
-                Ganti
-              </Button>
-              <Button
-                type="default"
-                shape="circle"
-                className="border-none"
-                onClick={() =>
-                  toast.info(
-                    `Menggunakan parameter: Subuh ${selectedMethod.params.subuh}°, Isya ${selectedMethod.params.isya}°`,
-                  )
-                }
-              >
-                <Info className="h-6 w-6" />
-              </Button>
-              <span className="text-muted-foreground">
-                Subuh {selectedMethod.params.subuh} derajat, Isya{" "}
-                {selectedMethod.params.isya} derajat
-              </span>
-            </div>
-          </div>
-        </div>
-      </Card> */}
 
       <Modal
         open={locationDialogOpen}

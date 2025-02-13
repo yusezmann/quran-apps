@@ -39,10 +39,10 @@ export default function SurahList() {
   const setCurrentSurah = useQuranStore((state) => state.setCurrentSurah)
 
   if (isLoading)
-    return <div className="bg-white p-4 rounded-lg shadow">Memuat...</div>
+    return <div className="bg-green-600 p-4 rounded-lg shadow">Memuat...</div>
   if (error)
     return (
-      <div className="bg-white p-4 rounded-lg shadow">
+      <div className="bg-green-600 p-4 rounded-lg shadow">
         Error mengambil surah: {(error as Error).message}
       </div>
     )

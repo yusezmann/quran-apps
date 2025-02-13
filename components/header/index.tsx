@@ -1,73 +1,77 @@
+"use client"
+
 import Link from "next/link"
-import { Search } from "lucide-react"
-import { LoginOutlined } from "@ant-design/icons"
+import { Menu } from "lucide-react"
+import { LoginOutlined, MenuOutlined } from "@ant-design/icons"
 import { Button } from "antd"
 import Image from "next/image"
+import { useEffect, useState } from "react"
+import { usePathname } from "next/navigation"
+import MobileMenu from "../mobile-menu"
 
 export default function Header() {
+  const [isScrolled, setIsScrolled] = useState(false)
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const pathname = usePathname()
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 0)
+    }
+    window.addEventListener("scroll", handleScroll)
+    return () => window.removeEventListener("scroll", handleScroll)
+  }, [])
+
   return (
-    <header className="bg-green-600 text-white">
-      <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-        <Link href="/" className="flex text-2xl font-bold items-center gap-2">
+    <nav
+      className={`fixed w-full z-50 transition-colors duration-300 ${
+        isScrolled ? "bg-green-600" : "bg-transparent"
+      }`}
+    >
+      <div className="px-4 md:px-16 py-6 flex items-center justify-between">
+        <Link
+          href="/"
+          className="flex text-2xl font-bold items-center gap-2 hover:text-accent-hover"
+        >
           <Image
             src="/assets/logo/logo.png"
             alt="logo"
             width={50}
             height={50}
           />
-          <h2 className="hidden xl:block">Al Quran</h2>
+          <h2 className="">Al Quran</h2>
         </Link>
-        <nav className="hidden xl:flex gap-6">
-          <Link href="/imsakiyah">
-            <Button
-              variant="text"
-              color="default"
-              className="text-white font-bold hover:text-white/60"
+        <div className="hidden xl:flex gap-6">
+          {["/", "/imsakiyah", "/doa", "/bookmarks"].map((path, idx) => (
+            <Link
+              key={path}
+              href={path}
+              className={
+                pathname === path
+                  ? "text-green-300 font-bold border-b-2 border-green-300"
+                  : "hover:text-accent-hover"
+              }
             >
-              Imsakiyah
-            </Button>
-          </Link>
-          <Link href="/doa">
-            <Button
-              variant="text"
-              color="default"
-              className="text-white font-bold hover:text-white/60"
-            >
-              Doa
-            </Button>
-          </Link>
-          <Link href="/bookmarks">
-            <Button
-              variant="text"
-              color="default"
-              className="text-white font-bold hover:text-white/60"
-            >
-              Bookmarks
-            </Button>
-          </Link>
-        </nav>
-        <div className="flex items-center space-x-4">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Cari surah atau ayat"
-              className="py-1 px-3 pr-1 rounded-full text-black focus:outline-none focus:ring-2 focus:ring-green-400"
-            />
-            <Search
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-              size={20}
-            />
-          </div>
-          {/* <Button
+              {["Home", "Imsakiyah", "Doa", "Bookmarks"][idx]}
+            </Link>
+          ))}
+        </div>
+        <div className="xl:hidden">
+          <Button
             type="default"
-            icon={<LoginOutlined />}
-            size="middle"
-            shape="round"
-          >
-            Login
-          </Button> */}
+            shape="circle"
+            icon={
+              <MenuOutlined className="text-white/60 hover:text-accent-hover" />
+            }
+            className="bg-transparent border-white/60 hover:border-accent-hover"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+          />
         </div>
       </div>
-    </header>
+      <MobileMenu
+        isOpen={isMenuOpen}
+        toggleMenu={() => setIsMenuOpen(!isMenuOpen)}
+      />
+    </nav>
   )
 }

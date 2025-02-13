@@ -111,7 +111,7 @@ const ImsakiyahComponent = () => {
   ]
 
   return (
-    <section>
+    <section className="mt-24 mb-0">
       <Card size="small" style={{ width: "100%" }}>
         <div className="flex flex-col xl:flex-row justify-center items-center p-6 mb-12">
           <h1 className="text-2xl font-bold">
@@ -123,7 +123,7 @@ const ImsakiyahComponent = () => {
             <span className="ml-2">{headerData?.[0]?.kabkota}</span>
           </h2>
           <h2 className="text-2xl font-bold justify-center items-center ml-2">
-            {headerData?.[0]?.provinsi}
+            Provinsi {headerData?.[0]?.provinsi}
           </h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4">
