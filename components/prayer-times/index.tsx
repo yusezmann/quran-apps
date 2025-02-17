@@ -75,6 +75,24 @@ const PrayerTimeComponent = () => {
     }
   }
 
+  // const handleLocationSearch = async () => {
+  //   if (searchQuery.length < 3) {
+  //     toast.error("Masukkan minimal 3 karakter")
+  //     return
+  //   }
+
+  //   setSearching(true)
+  //   try {
+  //     const results = await getCities(searchQuery)
+  //     setSearchResults(results)
+  //   } catch (error) {
+  //     console.error("Failed to search cities:", error)
+  //     toast.error("Gagal mencari kota")
+  //   } finally {
+  //     setSearching(false)
+  //   }
+  // }
+
   const handleLocationSearch = async () => {
     if (searchQuery.length < 3) {
       toast.error("Masukkan minimal 3 karakter")
@@ -84,10 +102,27 @@ const PrayerTimeComponent = () => {
     setSearching(true)
     try {
       const results = await getCities(searchQuery)
-      setSearchResults(results)
-    } catch (error) {
-      console.error("Failed to search cities:", error)
-      toast.error("Gagal mencari kota")
+      setSearchResults(results || [])
+    } catch (error: any) {
+      if (error.response) {
+        // Server merespons dengan kode status di luar 2xx
+        console.error("Server Error:", error.response.data)
+        toast.error(
+          `Gagal mencari kota: ${
+            error.response.data.message || "Terjadi kesalahan pada server"
+          }`,
+        )
+      } else if (error.request) {
+        // Permintaan dikirim tetapi tidak ada respons
+        console.error("Network Error:", error.request)
+        toast.error(
+          "Tidak dapat terhubung ke server. Periksa koneksi internet Anda.",
+        )
+      } else {
+        // Kesalahan lainnya
+        console.error("Unexpected Error:", error.message)
+        toast.error("Terjadi kesalahan yang tidak terduga")
+      }
     } finally {
       setSearching(false)
     }
@@ -110,24 +145,44 @@ const PrayerTimeComponent = () => {
 
     navigator.geolocation.getCurrentPosition(
       async (position) => {
-        try {
-          const cityId = await getPrayerTimesByCoords(
-            position.coords.latitude,
-            position.coords.longitude,
+        const { latitude, longitude } = position.coords
+        if (latitude && longitude) {
+          toast.success(
+            `Lokasi berhasil dideteksi: (${latitude}, ${longitude})`,
           )
-          setCityId(cityId)
-          setLocationDialogOpen(false)
-          toast.success("Lokasi berhasil dideteksi")
-          fetchPrayerTimes() // Fetch new prayer times after location change
-        } catch (error) {
-          console.error("Failed to detect location:", error)
-          toast.error(
-            "Gagal mendeteksi lokasi: " +
-              (error instanceof Error ? error.message : "Unknown error"),
-          )
-        } finally {
-          setIsDetectingLocation(false)
+
+          try {
+            const response = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
+            )
+            const data = await response.json()
+            const locationName =
+              data.address.city ||
+              data.address.town ||
+              data.address.village ||
+              data.address.county
+
+            if (locationName) {
+              const results = await getCities(
+                locationName.replace(/city/gi, ""),
+              )
+
+              if (results && results.length > 0) {
+                setSearchResults(results || [])
+              } else {
+                toast.error("Kota tidak ditemukan pada API")
+              }
+            } else {
+              toast.error("Nama kota tidak ditemukan dari koordinat")
+            }
+          } catch (error) {
+            console.error("Gagal mendapatkan daftar kota:", error)
+            toast.error("Gagal mendapatkan daftar kota dari koordinat")
+          }
+        } else {
+          toast.error("Gagal mendeteksi lokasi: koordinat tidak valid")
         }
+        setIsDetectingLocation(false)
       },
       (error) => {
         console.error("Geolocation error:", error)
@@ -150,8 +205,8 @@ const PrayerTimeComponent = () => {
       },
       {
         enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0,
+        timeout: 20000,
+        maximumAge: 300000,
       },
     )
   }
@@ -270,7 +325,7 @@ const PrayerTimeComponent = () => {
                       </div>
                     </div>
 
-                    <div className="block xl:hidden text-center relative top-[2px] xl:-top-10">
+                    <div className="block xl:hidden text-center relative -top-3 xl:-top-10">
                       <h6 className="text-sm font-bold">Sholat Selanjutnya</h6>
                       <div className="font-bold text-lg">
                         {nextPrayer?.name}
@@ -422,7 +477,7 @@ const PrayerTimeComponent = () => {
       >
         <div>
           <div>
-            <h2>Pilih Lokasi</h2>
+            <h2 className="text-lg font-semibold">Pilih Lokasi</h2>
           </div>
           <div className="space-y-4">
             <div className="flex gap-2">
@@ -458,7 +513,7 @@ const PrayerTimeComponent = () => {
                 </span>
               )}
             </Button>
-            {searchResults.length > 0 && (
+            {searchResults && searchResults.length > 0 && (
               <div style={{ maxHeight: 200, overflowY: "auto" }}>
                 <List
                   dataSource={searchResults}

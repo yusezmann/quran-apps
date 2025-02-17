@@ -299,7 +299,7 @@ export default function QuranReader() {
               <p className="text-right text-gray-800 text-2xl mb-4 leading-loose">
                 {ayat.teksArab}
               </p>
-              <p className="text-sm text-gray-600 mb-2 italic font-bold">
+              <p className="text-sm text-yellow-600 mb-2 italic font-bold">
                 {ayat.teksLatin}
               </p>
               <p className="text-gray-600 text-sm">{ayat.teksIndonesia}</p>
