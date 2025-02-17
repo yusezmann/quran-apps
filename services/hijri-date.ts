@@ -19,13 +19,14 @@ const hijriMonths = [
   "Dzulhijjah",
 ]
 
-export function getHijriDate(date: Date): HijriDate {
+export function getHijriDate(date: Date, offsetDays: number = -2): HijriDate {
+  const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
   const civilEpoch = Date.UTC(1970, 0, 1)
   const hijriEpoch = Date.UTC(622, 6, 16) // Approximate epoch for Hijri calendar
 
   const msPerDay = 86400000
   const daysSinceHijriEpoch = Math.floor(
-    (date.getTime() - hijriEpoch) / msPerDay,
+    (localDate.getTime() - hijriEpoch) / msPerDay,
   )
   const hijriYear = Math.floor(daysSinceHijriEpoch / 354.367) + 1
   let remainingDays = daysSinceHijriEpoch % 354.367
@@ -38,7 +39,7 @@ export function getHijriDate(date: Date): HijriDate {
     hijriMonth++
   }
 
-  const hijriDay = Math.floor(remainingDays) + 1
+  const hijriDay = Math.floor(remainingDays) + 1 + offsetDays
 
   return {
     day: hijriDay,

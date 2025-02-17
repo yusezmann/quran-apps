@@ -260,7 +260,7 @@ const PrayerTimeComponent = () => {
                           <MapPin className="h-4 w-4 mr-1" /> Salah Lokasi?
                         </Button>
                       </div>
-                      <div className="text-right">
+                      <div className="text-right text-[10px] xl:text-sm">
                         <div className="font-semibold">
                           {formatDate(currentTime)}
                         </div>
@@ -270,7 +270,7 @@ const PrayerTimeComponent = () => {
                       </div>
                     </div>
 
-                    <div className="block xl:hidden text-center relative -top-10">
+                    <div className="block xl:hidden text-center relative top-3 xl:-top-10">
                       <h6 className="text-sm font-bold">Sholat Selanjutnya</h6>
                       <div className="font-bold text-lg">
                         {nextPrayer?.name}
