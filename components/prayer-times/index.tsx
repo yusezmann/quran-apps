@@ -75,24 +75,6 @@ const PrayerTimeComponent = () => {
     }
   }
 
-  // const handleLocationSearch = async () => {
-  //   if (searchQuery.length < 3) {
-  //     toast.error("Masukkan minimal 3 karakter")
-  //     return
-  //   }
-
-  //   setSearching(true)
-  //   try {
-  //     const results = await getCities(searchQuery)
-  //     setSearchResults(results)
-  //   } catch (error) {
-  //     console.error("Failed to search cities:", error)
-  //     toast.error("Gagal mencari kota")
-  //   } finally {
-  //     setSearching(false)
-  //   }
-  // }
-
   const handleLocationSearch = async () => {
     if (searchQuery.length < 3) {
       toast.error("Masukkan minimal 3 karakter")

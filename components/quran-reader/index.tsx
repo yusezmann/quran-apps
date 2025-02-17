@@ -350,25 +350,21 @@ export default function QuranReader() {
         footer={null}
       >
         <h2 className="text-lg font-semibold mb-4">
-          Tafsir Ayat {selectedAyah}
+          Tafsir {surah?.namaLatin} Ayat {selectedAyah}
         </h2>
         <div className="overflow-y-auto max-h-96 space-y-3">
           {tafsir?.length ? (
             tafsir.map((item: any, index: number) => (
-              <p key={index} className="text-sm leading-relaxed">
-                {item.teks}
-              </p>
+              <div key={index} className="text-sm leading-relaxed space-y-2">
+                {item.teks.split("\n").map((paragraph: string, idx: number) => (
+                  <p key={idx}>{paragraph}</p>
+                ))}
+              </div>
             ))
           ) : (
             <p className="text-red-500">Tafsir tidak ditemukan</p>
           )}
         </div>
-        <Button
-          className="mt-4 w-full bg-green-600 text-white"
-          onClick={() => setIsModalOpen(false)}
-        >
-          Tutup
-        </Button>
       </Modal>
     </>
   )

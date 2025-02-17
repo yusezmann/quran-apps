@@ -92,7 +92,6 @@ export async function fetchTafsir(
     const response = await fetch(`${BASE_URL}tafsir/${surahNumber}`)
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
     const data = await response.json()
-    console.log(data)
 
     const filtered = data?.data?.tafsir?.filter(
       (t: any) => t.ayat === ayahNumber,

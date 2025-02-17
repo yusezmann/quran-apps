@@ -59,7 +59,6 @@ const ImsakiyahComponent = () => {
       const result = await fetchImsakiyah(selectedProvince, selectedKabkota)
       setData(result?.[0]?.imsakiyah || [])
       setHeaderData(result || [])
-      console.log(result)
     } catch (error) {
       console.error("Failed to fetch imsakiyah:", error)
     } finally {
