@@ -270,7 +270,7 @@ const PrayerTimeComponent = () => {
                       </div>
                     </div>
 
-                    <div className="block xl:hidden text-center relative top-2 xl:-top-10">
+                    <div className="block xl:hidden text-center relative top-[2px] xl:-top-10">
                       <h6 className="text-sm font-bold">Sholat Selanjutnya</h6>
                       <div className="font-bold text-lg">
                         {nextPrayer?.name}
