@@ -1,4 +1,4 @@
-import PrayerTimeComponent from "@/components/prayer-times"
+import PrayerTimeComponent from "@/app/(features)/prayer-times/components/prayer-times"
 import ImsakiyahComponent from "./components/imsakiyah"
 import Header from "@/components/header"
 import Image from "next/image"
@@ -15,7 +15,6 @@ const Imsakiyah = () => {
         className="object-cover brightness-50 rounded-b-2xl"
       />
       <div className="container mx-auto px-4 py-8">
-        {/* <PrayerTimeComponent /> */}
         <ImsakiyahComponent />
       </div>
     </div>

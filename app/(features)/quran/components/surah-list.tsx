@@ -1,8 +1,9 @@
 "use client"
 
 import { useQuery } from "@tanstack/react-query"
-import { useQuranStore } from "@/store/quranStore"
+import { useQuranStore } from "@/app/(features)/quran/store/quranStore"
 import { Book, Hexagon, Star } from "lucide-react"
+import { fetchSurahList } from "@/app/(features)/quran/services/quranService"
 
 interface Surah {
   nomor: number
@@ -13,19 +14,6 @@ interface Surah {
   arti: string
 }
 
-async function fetchSurahs() {
-  try {
-    const response = await fetch("https://quran-api.santrikoding.com/api/surah")
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
-    }
-    return await response.json()
-  } catch (error) {
-    console.error("Error fetching surahs:", error)
-    throw error
-  }
-}
-
 export default function SurahList() {
   const {
     data: surahs,
@@ -33,7 +21,7 @@ export default function SurahList() {
     error,
   } = useQuery({
     queryKey: ["surahs"],
-    queryFn: fetchSurahs,
+    queryFn: fetchSurahList,
     retry: 2,
   })
   const setCurrentSurah = useQuranStore((state) => state.setCurrentSurah)
@@ -56,7 +44,7 @@ export default function SurahList() {
         </h2>
       </div>
       <ul className="divide-y divide-gray-200 max-h-[calc(100vh-200px)] overflow-y-auto">
-        {surahs?.map((surah: Surah) => (
+        {surahs?.map((surah: any) => (
           <li
             key={surah.nomor}
             className="cursor-pointer hover:bg-gray-100 p-4"
@@ -71,10 +59,10 @@ export default function SurahList() {
               </div>
               <div className="ml-4">
                 <h3 className="text-gray-800 font-semibold">
-                  {surah.nama_latin}
+                  {surah.namaLatin}
                 </h3>
                 <p className="text-sm text-gray-600">
-                  {surah.arti} • {surah.jumlah_ayat} Ayat
+                  {surah.arti} • {surah.jumlahAyat} Ayat
                 </p>
               </div>
             </div>

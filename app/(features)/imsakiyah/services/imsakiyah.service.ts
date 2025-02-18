@@ -10,7 +10,7 @@ export async function fetchImsakiyah(
   }
 
   try {
-    const res = await fetch(`${BASE_URL}imsakiyah`, {
+    const res = await fetch(`${BASE_URL}/imsakiyah`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -34,14 +34,14 @@ export async function fetchImsakiyah(
 }
 
 export const getListProvinces = async () => {
-  const res = await fetch(`${BASE_URL}imsakiyah/provinsi`)
+  const res = await fetch(`${BASE_URL}/imsakiyah/provinsi`)
   const data = await res.json()
   return data.data
 }
 
 export const getListKabkota = async (provinsi: string) => {
   try {
-    const response = await fetch(`${BASE_URL}imsakiyah/kabkota`, {
+    const response = await fetch(`${BASE_URL}/imsakiyah/kabkota`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

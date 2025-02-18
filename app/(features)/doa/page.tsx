@@ -1,5 +1,6 @@
 import Header from "@/components/header"
 import Image from "next/image"
+import DoaComponent from "./components/doa-view"
 
 const Doa = () => {
   return (
@@ -13,7 +14,7 @@ const Doa = () => {
         className="object-cover brightness-50 rounded-b-2xl"
       />
       <div className="container mx-auto px-4 py-8">
-        <h1>Doa Page</h1>
+        <DoaComponent />
       </div>
     </div>
   )

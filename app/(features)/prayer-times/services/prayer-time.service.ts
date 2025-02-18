@@ -1,13 +1,9 @@
-import { PrayerTime, City } from "@/interfaces/prayer-time.interface"
+import {
+  PrayerTime,
+  City,
+} from "@/app/(features)/prayer-times/interfaces/prayer-time.interface"
 
 const PRAYER_API_BASE = process.env.NEXT_PUBLIC_PRAYER_API_URL
-
-// export async function getPrayerTimes(cityId: string): Promise<PrayerTime> {
-//   const today = new Date().toISOString().split("T")[0] // Format: YYYY-MM-DD
-//   const res = await fetch(`${PRAYER_API_BASE}/sholat/jadwal/${cityId}/${today}`)
-//   const data = await res.json()
-//   return data.data
-// }
 
 export async function getPrayerTimes(
   cityId: string,

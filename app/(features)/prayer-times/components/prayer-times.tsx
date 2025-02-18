@@ -1,18 +1,24 @@
 "use client"
 
-import { getHijriDate } from "@/services/hijri-date"
+// import { getHijriDate } from "@/services/hijri-date"
+
 import {
   getCities,
   getPrayerTimes,
-  getPrayerTimesByCoords,
-} from "@/services/prayer-time.service"
-import { City, PrayerTime } from "@/interfaces/prayer-time.interface"
+} from "@/app/(features)/prayer-times/services/prayer-time.service"
+import {
+  City,
+  PrayerTime,
+} from "@/app/(features)/prayer-times/interfaces/prayer-time.interface"
 import { Button, Card, Input, List, Modal, Tooltip } from "antd"
 import { Info, Loader2, MapPin } from "lucide-react"
 import Image from "next/image"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
-import AdzanPlayer from "../adzan"
+import AdzanPlayer from "../../adzan/components/adzan"
+import { getHijriDate } from "../../hijri-date/services/hijri-date.service"
+import { formatDate } from "@/lib/utils"
+import HijriDateDisplay from "../../hijri-date/components/hijr-date"
 
 const PRAYER_METHODS = [
   { id: "kemenag", name: "Kemenag", params: { subuh: 20, isya: 18 } },
@@ -241,16 +247,6 @@ const PrayerTimeComponent = () => {
     }
   }
 
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat("id-ID", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    }).format(date)
-  }
-
-  const hijriDate = getHijriDate(currentTime)
-
   if (loading) {
     return (
       <div className="flex items-center justify-center p-6">
@@ -298,16 +294,11 @@ const PrayerTimeComponent = () => {
                         </Button>
                       </div>
                       <div className="text-right text-[10px] xl:text-sm">
-                        <div className="font-semibold">
-                          {formatDate(currentTime)}
-                        </div>
-                        <div className="text-muted-foreground italic">
-                          {hijriDate.day} {hijriDate.month} {hijriDate.year} H
-                        </div>
+                        <HijriDateDisplay currentTime={currentTime} />
                       </div>
                     </div>
 
-                    <div className="block xl:hidden text-center relative -top-3 xl:-top-8">
+                    <div className="block xl:hidden text-center relative -top-3 xl:top-10">
                       <h6 className="text-sm font-bold">Sholat Selanjutnya</h6>
                       <div className="font-bold text-lg">
                         {nextPrayer?.name}

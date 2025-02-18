@@ -1,16 +1,16 @@
 "use client"
 
 import { useQuery } from "@tanstack/react-query"
-import { useQuranStore } from "@/store/quranStore"
+import { useQuranStore } from "@/app/(features)/quran/store/quranStore"
 import { Play, Pause, Bookmark, AlertCircle, Hexagon, Book } from "lucide-react"
 import { useState, useRef, useEffect } from "react"
-import BismillahText from "../BismillahText"
+import BismillahText from "@/components/BismillahText"
 import {
   fetchSurah,
   fetchSurahList,
   fetchTafsir,
   type Surah,
-} from "@/services/quranService"
+} from "@/app/(features)/quran/services/quranService"
 import { Button, Modal, Select } from "antd"
 import { LeftOutlined, RightOutlined } from "@ant-design/icons"
 
@@ -18,6 +18,7 @@ export default function QuranReader() {
   const currentSurah = useQuranStore((state) => state.currentSurah)
   const setCurrentSurah = useQuranStore((state) => state.setCurrentSurah)
   const [selectedAyah, setSelectedAyah] = useState<number | null>(null)
+  const [selectedQari, setSelectedQari] = useState("01")
   const {
     data: surah,
     isLoading,
@@ -47,7 +48,6 @@ export default function QuranReader() {
   const [currentAyah, setCurrentAyah] = useState<number | null>(null)
   const [audioError, setAudioError] = useState<string | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
-  // const [bookmarks, setBookmarks] = useState<Bookmark[]>([])
   const ayahRefs = useRef<{ [key: number]: HTMLDivElement | null }>({})
 
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -82,30 +82,22 @@ export default function QuranReader() {
     if (selected) setCurrentSurah(selected.nomor)
   }
 
-  const togglePlayPause = () => {
-    if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.pause()
-      } else {
-        if (surah?.audioFull["01"]) {
-          audioRef.current.src = surah.audioFull["01"]
-          audioRef.current.play().catch((e) => {
-            console.error("Error playing audio:", e)
-            setAudioError(
-              "Tidak dapat memutar audio surah. Silakan coba lagi nanti.",
-            )
-          })
-        } else {
-          setAudioError("Audio surah tidak tersedia.")
-        }
-      }
-      setIsPlaying(!isPlaying)
-    }
-  }
-
   const playAyah = (ayahNumber: number) => {
     if (audioRef.current) {
-      const ayahAudio = surah?.ayat[ayahNumber - 1]?.audio["01"]
+      const ayah = surah?.ayat[ayahNumber - 1]
+      if (!ayah) {
+        setAudioError(`Ayat ${ayahNumber} tidak ditemukan.`)
+        return
+      }
+
+      // Mengakses audio dengan aman
+      const ayahAudio =
+        (ayah.audio as Record<string, string>)[selectedQari] || ""
+
+      console.log("Ayah Data:", ayah)
+      console.log("Selected Qari:", selectedQari)
+      console.log("Ayah Audio URL:", ayahAudio)
+
       if (ayahAudio) {
         audioRef.current.src = ayahAudio
         audioRef.current.play().catch((e) => {
@@ -174,15 +166,6 @@ export default function QuranReader() {
     }
   }
 
-  // const handleBookmark = () => {
-  //   if (currentAyah) {
-  //     setBookmarks((prevBookmarks) => [
-  //       ...prevBookmarks,
-  //       { surahNumber: currentSurah, ayahNumber: currentAyah },
-  //     ])
-  //   }
-  // }
-
   if (!currentSurah)
     return (
       <div className="bg-green-600 p-4 rounded-lg shadow">
@@ -212,7 +195,7 @@ export default function QuranReader() {
           <div className="flex flex-col items-center">
             <h2 className="text-2xl font-semibold">{surah?.namaLatin}</h2>
             <p>
-              {surah?.arti} • {surah?.jumlahAyat} Ayat
+              {surah?.arti} • {surah?.jumlahAyat} Ayat • {surah?.tempatTurun}
             </p>
           </div>
           <Button
@@ -221,6 +204,22 @@ export default function QuranReader() {
             icon={<RightOutlined />}
             onClick={goToNextSurah}
             disabled={!surah?.suratSelanjutnya}
+          />
+        </div>
+        <div className="p-4 space-y-2">
+          <label className="text-sm font-medium text-gray-600">Qari:</label>
+          <Select
+            defaultValue={selectedQari}
+            onChange={(value) => setSelectedQari(value)}
+            options={[
+              { label: "Abdullah-Al-Juhany", value: "01" },
+              { label: "Abdul-Muhsin-Al-Qasim", value: "02" },
+              { label: "Abdurrahman-as-Sudais", value: "03" },
+              { label: "Ibrahim-Al-Dossari", value: "04" },
+              { label: "Misyari-Rasyid-Al-Afasi", value: "05" },
+            ]}
+            className="mb-2 xl:mb-4 w-full"
+            placeholder="Pilih Qari"
           />
         </div>
         <div className="p-4 block xl:hidden">

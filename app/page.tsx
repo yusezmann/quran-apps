@@ -1,9 +1,9 @@
 "use client"
 
 import Header from "@/components/header"
-import SurahList from "@/components/surah-list"
-import QuranReader from "@/components/quran-reader"
-import PrayerTimeComponent from "@/components/prayer-times"
+import PrayerTimeComponent from "@/app/(features)/prayer-times/components/prayer-times"
+import SurahList from "./(features)/quran/components/surah-list"
+import QuranReader from "./(features)/quran/components/quran-reader"
 
 export default function Home() {
   return (

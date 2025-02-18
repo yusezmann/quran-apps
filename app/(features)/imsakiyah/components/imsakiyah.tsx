@@ -113,7 +113,7 @@ const ImsakiyahComponent = () => {
     <section className="mt-24 mb-0">
       <Card size="small" style={{ width: "100%" }}>
         <div className="flex flex-col xl:flex-row justify-center items-center p-6 mb-12">
-          <h1 className="text-2xl font-bold">
+          <h1 className="text-2xl font-bold text-center">
             Jadwal Imsakiyah
             <span className="ml-2">{headerData?.[0]?.masehi}</span>
           </h1>
