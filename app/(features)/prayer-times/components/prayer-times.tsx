@@ -1,7 +1,5 @@
 "use client"
 
-// import { getHijriDate } from "@/services/hijri-date"
-
 import {
   getCities,
   getPrayerTimes,
@@ -15,9 +13,6 @@ import { Info, Loader2, MapPin } from "lucide-react"
 import Image from "next/image"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
-import AdzanPlayer from "../../adzan/components/adzan"
-import { getHijriDate } from "../../hijri-date/services/hijri-date.service"
-import { formatDate } from "@/lib/utils"
 import HijriDateDisplay from "../../hijri-date/components/hijr-date"
 
 const PRAYER_METHODS = [
