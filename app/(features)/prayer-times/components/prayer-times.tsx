@@ -293,7 +293,7 @@ const PrayerTimeComponent = () => {
                       </div>
                     </div>
 
-                    <div className="block xl:hidden text-center relative -top-3 xl:top-10">
+                    <div className="block xl:hidden text-center relative -top-[14px] md:-top-[120px]">
                       <h6 className="text-sm font-bold">Sholat Selanjutnya</h6>
                       <div className="font-bold text-lg">
                         {nextPrayer?.name}
@@ -366,7 +366,7 @@ const PrayerTimeComponent = () => {
                   </div>
                 </Card>
 
-                <div className="relative hidden xl:block xl:-top-[500px]">
+                <div className="relative hidden xl:block xl:-top-[480px]">
                   <div className="grid grid-cols-1 xl:grid-cols-5 gap-4 px-16">
                     {Object.entries(prayerTimes.jadwal).map(([key, value]) => {
                       if (

@@ -1,15 +1,22 @@
 import { create } from "zustand"
-import { Doa } from "../interfaces/doa.interface"
+import type { Dua } from "../interfaces/doa.interface"
 
-// Definisikan tipe untuk state Zustand
-interface DoaState {
-  doaList: Doa[]
-  setDoaList: (newDoaList: Doa[]) => void
+interface DuaStore {
+  duas: Dua[]
+  selectedDuaId: string | null
+  isLoading: boolean
+  setDuas: (duas: Dua[]) => void
+  setSelectedDuaId: (id: string | null) => void
+  setIsLoading: (isLoading: boolean) => void
 }
 
-const useStore = create<DoaState>((set) => ({
-  doaList: [],
-  setDoaList: (newDoaList) => set({ doaList: newDoaList }),
+export const useStore = create<DuaStore>((set) => ({
+  duas: [],
+  selectedDuaId: null,
+  isLoading: false,
+  setDuas: (duas) => set({ duas }),
+  setSelectedDuaId: (id) => {
+    set({ selectedDuaId: id })
+  },
+  setIsLoading: (isLoading) => set({ isLoading }),
 }))
-
-export default useStore

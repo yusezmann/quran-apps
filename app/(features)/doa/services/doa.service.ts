@@ -1,18 +1,18 @@
-import axios from "axios"
+import type { ApiResponse } from "../interfaces/doa.interface"
 
-export const fetchDoa = async () => {
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_PRAYER_API_URL}/doa/sumber`,
-  )
-  if (!response.ok) throw new Error("Failed to fetch Doa")
-  console.log(response.json())
-
-  return response.json()
-}
-
-const fetchDoaList = async () => {
-  const response = await axios.get(
-    `${process.env.NEXT_PUBLIC_PRAYER_API_URL}/doa/semua`,
-  )
-  return response.data // Pastikan ini adalah data yang diinginkan
+export const fetchDuas = async (): Promise<ApiResponse> => {
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_PRAYER_API_URL}/doa/semua`,
+    )
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+    const data = await response.json()
+    console.log("D0a-data:", data.data[0])
+    return data
+  } catch (error) {
+    console.error("Error fetching duas:", error)
+    throw error
+  }
 }

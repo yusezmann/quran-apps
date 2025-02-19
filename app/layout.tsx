@@ -1,7 +1,7 @@
 import { Toaster } from "sonner"
 import type { Metadata } from "next"
 import localFont from "next/font/local"
-import { Poppins } from "next/font/google"
+import { Poppins, Noto_Naskh_Arabic } from "next/font/google"
 import "./globals.css"
 import { QueryProvider } from "@/components/providers/query-provider"
 
@@ -11,15 +11,11 @@ const poppins = Poppins({
   variable: "--font-poppins",
 })
 
-// const geistSans = localFont({
-//   src: "../../public/fonts/GeistSans.ttf",
-//   variable: "--geist-font",
-// })
-
-// const geistMono = localFont({
-//   src: "../../public/fonts/GeistMono.ttf",
-//   variable: "--geist-font-mono",
-// })
+const notoNaskhArabic = Noto_Naskh_Arabic({
+  subsets: ["arabic"],
+  weight: ["400", "700"], // Pilih variasi font
+  variable: "--font-arabic", // Variabel untuk digunakan di CSS
+})
 
 export const metadata: Metadata = {
   title: "Quran Apps",
@@ -33,7 +29,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${poppins.variable} bg-gray-100  dark:bg-[#1c1c22]`}>
+      <body
+        className={`${poppins.variable} ${notoNaskhArabic.variable} bg-gray-100  dark:bg-[#1c1c22]`}
+      >
         <QueryProvider>{children}</QueryProvider>
         <Toaster />
       </body>

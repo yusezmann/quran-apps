@@ -5,15 +5,6 @@ import { useQuranStore } from "@/app/(features)/quran/store/quranStore"
 import { Book, Hexagon, Star } from "lucide-react"
 import { fetchSurahList } from "@/app/(features)/quran/services/quranService"
 
-interface Surah {
-  nomor: number
-  nama: string
-  nama_latin: string
-  jumlah_ayat: number
-  tempat_turun: string
-  arti: string
-}
-
 export default function SurahList() {
   const {
     data: surahs,
