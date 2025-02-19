@@ -412,24 +412,64 @@ const PrayerTimeComponent = () => {
                           </Card>
                         )
                       }
-                      return (
-                        <Card
-                          key={key}
-                          className="bg-gray-100 text-center h-32 w-50 relative top-8 hidden xl:block rounded-xl"
-                        >
-                          <Image
-                            src="/assets/images/padang-moon.jpg"
-                            alt="Background"
-                            fill
-                            sizes="(max-width: 768px) 100vw"
-                            className="object-cover brightness-50 rounded-xl"
-                          />
-                          <h6 className="p-4 text-center text-white relative z-10">
-                            <div className="font-bold capitalize">{key}</div>
-                            <div className="text-xl">{value}</div>
-                          </h6>
-                        </Card>
-                      )
+                      if (["subuh", "isya"].includes(key)) {
+                        return (
+                          <Card
+                            key={key}
+                            className="bg-gray-100 text-center h-32 w-50 relative top-8 hidden xl:block rounded-xl"
+                          >
+                            <Image
+                              src="/assets/images/padang-moon.jpg"
+                              alt="Background"
+                              fill
+                              sizes="(max-width: 768px) 100vw"
+                              className="object-cover brightness-50 rounded-xl"
+                            />
+                            <h6 className="p-4 text-center text-white relative z-10">
+                              <div className="font-bold capitalize">{key}</div>
+                              <div className="text-xl">{value}</div>
+                            </h6>
+                          </Card>
+                        )
+                      } else if (["dzuhur"].includes(key)) {
+                        return (
+                          <Card
+                            key={key}
+                            className="bg-gray-100 text-center h-32 w-50 relative top-8 hidden xl:block rounded-xl"
+                          >
+                            <Image
+                              src="/assets/images/dzuhur.jpg"
+                              alt="Background"
+                              fill
+                              sizes="(max-width: 768px) 100vw"
+                              className="object-cover brightness-70 rounded-xl"
+                            />
+                            <h6 className="p-4 text-center text-white relative z-10">
+                              <div className="font-bold capitalize">{key}</div>
+                              <div className="text-xl">{value}</div>
+                            </h6>
+                          </Card>
+                        )
+                      } else {
+                        return (
+                          <Card
+                            key={key}
+                            className="bg-gray-100 text-center h-32 w-50 relative top-8 hidden xl:block rounded-xl"
+                          >
+                            <Image
+                              src="/assets/images/sunset.jpg"
+                              alt="Background"
+                              fill
+                              sizes="(max-width: 768px) 100vw"
+                              className="object-cover brightness-70 rounded-xl"
+                            />
+                            <h6 className="p-4 text-center text-white relative z-10">
+                              <div className="font-bold capitalize">{key}</div>
+                              <div className="text-xl">{value}</div>
+                            </h6>
+                          </Card>
+                        )
+                      }
                     })}
                   </div>
                 </div>
