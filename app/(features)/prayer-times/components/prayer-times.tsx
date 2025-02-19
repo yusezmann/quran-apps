@@ -136,7 +136,7 @@ const PrayerTimeComponent = () => {
 
           try {
             const response = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
+              `${process.env.NEXT_PUBLIC_LOCATION_API_URL}/reverse?lat=${latitude}&lon=${longitude}&format=json`,
             )
             const data = await response.json()
             const locationName =
