@@ -1,14 +1,26 @@
-interface Surah {
-  number: number
+export interface Method {
+  id: string
   name: string
-  englishName: string
-  englishNameTranslation: string
-  numberOfAyahs: number
-  revelationType: string
+  params: { subuh: number; isya: number }
 }
 
-interface SurahDetail extends Surah {
-  ayahs: any[]
+export interface MethodSelectorProps {
+  isOpen: boolean
+  onClose: () => void
+  methods: Method[]
+  onSelectMethod: (method: Method) => void
+}
+
+export interface LocationSelectorProps {
+  isOpen: boolean
+  onClose: () => void
+  onSelectCity: (city: City) => void
+}
+
+export interface NextPrayerCardProps {
+  nextPrayer: { name: string; time: string } | null
+  countdown: string
+  currentTime: Date
 }
 
 export interface PrayerTime {
@@ -46,4 +58,11 @@ export interface City {
   id: string
   lokasi: string
   daerah: string
+}
+
+export interface PrayerTimesListProps {
+  prayerTimes: PrayerTime
+  nextPrayer: { name: string; time: string } | null
+  countdown: string
+  currentTime: Date
 }

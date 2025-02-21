@@ -7,15 +7,26 @@ const HijriDateDisplay = ({ currentTime }: { currentTime: Date }) => {
   const [hijriDate, setHijriDate] = useState<string>("Memuat...")
 
   useEffect(() => {
-    getHijriDate(currentTime)
-      .then((result: any) => {
+    const fetchHijriDate = async () => {
+      try {
+        const result: any = await getHijriDate(currentTime)
+        if (!result || !result.date) throw new Error("Data tidak valid")
+
         const { date } = result
         setHijriDate(`${date[0]}, ${date[1]}`)
-      })
-      .catch((error) => {
-        console.error("Gagal memuat tanggal Hijriah:", error)
-        setHijriDate("Gagal memuat tanggal")
-      })
+      } catch (error) {
+        if (error instanceof TypeError) {
+          console.error(
+            "Gagal memuat tanggal Hijriah: Periksa koneksi internet atau izin CORS.",
+            error,
+          )
+        } else {
+          console.error("Gagal memuat tanggal Hijriah:", error)
+        }
+      }
+    }
+
+    fetchHijriDate()
   }, [currentTime])
 
   return (

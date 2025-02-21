@@ -442,7 +442,7 @@ const PrayerTimeComponent = () => {
                               alt="Background"
                               fill
                               sizes="(max-width: 768px) 100vw"
-                              className="object-cover brightness-70 rounded-xl"
+                              className="object-cover brightness-50 rounded-xl"
                             />
                             <h6 className="p-4 text-center text-white relative z-10">
                               <div className="font-bold capitalize">{key}</div>

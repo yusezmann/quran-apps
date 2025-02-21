@@ -9,7 +9,6 @@ export const fetchDuas = async (): Promise<ApiResponse> => {
       throw new Error(`HTTP error! status: ${response.status}`)
     }
     const data = await response.json()
-    console.log("D0a-data:", data.data[0])
     return data
   } catch (error) {
     console.error("Error fetching duas:", error)
