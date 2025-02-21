@@ -31,7 +31,7 @@ const PrayerTimesList: React.FC<PrayerTimesListProps> = ({
         </div>
       </Card>
 
-      <div className="relative hidden xl:block xl:-top-[380px]">
+      <div className="relative hidden xl:block xl:-top-[410px]">
         <div className="grid grid-cols-1 xl:grid-cols-5 gap-4 px-16">
           {Object.entries(prayerTimes.jadwal).map(([key, value]) => {
             if (["tanggal", "date", "terbit", "dhuha", "imsak"].includes(key))

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import Image from "next/image"
 import { Button } from "antd"
 import { Info, Loader2, MapPin } from "lucide-react"
@@ -18,6 +18,7 @@ import HijriDateDisplay from "@/app/(features)/hijri-date/components/hijr-date"
 import LocationSelector from "./components/LocationSelector"
 import MethodSelector from "./components/MethodSelector"
 import PrayerTimesList from "./components/PrayerTimeList"
+import AdzanSettings, { playAzan } from "../adzan/components/AdzanSetting"
 
 const PRAYER_METHODS = [
   { id: "kemenag", name: "Kemenag", params: { subuh: 20, isya: 18 } },
@@ -66,6 +67,22 @@ const PrayerTimeComponent = () => {
   useEffect(() => {
     fetchPrayerTimes()
   }, [cityId, selectedMethod])
+
+  useEffect(() => {
+    if ("Notification" in window) {
+      Notification.requestPermission().then((permission) => {
+        if (permission !== "granted") {
+          toast.error("Notifikasi tidak diizinkan oleh pengguna")
+        }
+      })
+    }
+  }, [])
+
+  const sendNotification = (title: string, body: string) => {
+    if ("Notification" in window && Notification.permission === "granted") {
+      new Notification(title, { body, icon: "/assets/icons/prayer.png" })
+    }
+  }
 
   const fetchPrayerTimes = async () => {
     setLoading(true)
@@ -170,19 +187,70 @@ const PrayerTimeComponent = () => {
     )
   }
 
-  const updateNextPrayer = () => {
+  // const updateNextPrayer = useCallback(() => {
+  //   if (!prayerTimes) return
+
+  //   const prayers = [
+  //     { name: "Subuh", time: prayerTimes.jadwal.subuh },
+  //     { name: "Dzuhur", time: prayerTimes.jadwal.dzuhur },
+  //     { name: "Ashar", time: prayerTimes.jadwal.ashar },
+  //     { name: "Maghrib", time: prayerTimes.jadwal.maghrib },
+  //     { name: "Isya", time: prayerTimes.jadwal.isya },
+  //   ]
+
+  //   const now = new Date()
+  //   const times = prayers.map((prayer) => {
+  //     const [hours, minutes] = prayer.time.split(":")
+  //     const prayerTime = new Date(now)
+  //     prayerTime.setHours(Number.parseInt(hours), Number.parseInt(minutes), 0)
+  //     return { ...prayer, datetime: prayerTime }
+  //   })
+
+  //   const next = times.find((prayer) => prayer.datetime > now) || times[0]
+  //   setNextPrayer({ name: next.name, time: next.time })
+
+  //   // Calculate countdown
+  //   const diff = next.datetime.getTime() - now.getTime()
+  //   if (diff < 0) {
+  //     // Add 24 hours if we're comparing with tomorrow's prayer
+  //     const newDiff = diff + 24 * 60 * 60 * 1000
+  //     const hours = Math.floor(newDiff / (1000 * 60 * 60))
+  //     const minutes = Math.floor((newDiff % (1000 * 60 * 60)) / (1000 * 60))
+  //     const seconds = Math.floor((newDiff % (1000 * 60)) / 1000)
+  //     setCountdown(
+  //       `${hours.toString().padStart(2, "0")}:${minutes
+  //         .toString()
+  //         .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`,
+  //     )
+  //   } else {
+  //     const hours = Math.floor(diff / (1000 * 60 * 60))
+  //     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+  //     const seconds = Math.floor((diff % (1000 * 60)) / 1000)
+  //     setCountdown(
+  //       `${hours.toString().padStart(2, "0")}:${minutes
+  //         .toString()
+  //         .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`,
+  //     )
+
+  //     // Check if it's time for prayer and send notification
+  //     // if (hours === 0 && minutes === 0 && seconds === 0 && notificationsEnabled) {
+  //     //   sendNotification(`Waktu ${next.name}`, `Sekarang waktunya shalat ${next.name}`)
+  //     // }
+  //   }
+  // }, [prayerTimes])
+
+  const updateNextPrayer = useCallback(() => {
     if (!prayerTimes) return
 
     const prayers = [
       { name: "Subuh", time: prayerTimes.jadwal.subuh },
-      { name: "Terbit", time: prayerTimes.jadwal.terbit },
       { name: "Dzuhur", time: prayerTimes.jadwal.dzuhur },
       { name: "Ashar", time: prayerTimes.jadwal.ashar },
       { name: "Maghrib", time: prayerTimes.jadwal.maghrib },
       { name: "Isya", time: prayerTimes.jadwal.isya },
     ]
 
-    const now = currentTime
+    const now = new Date()
     const times = prayers.map((prayer) => {
       const [hours, minutes] = prayer.time.split(":")
       const prayerTime = new Date(now)
@@ -193,30 +261,33 @@ const PrayerTimeComponent = () => {
     const next = times.find((prayer) => prayer.datetime > now) || times[0]
     setNextPrayer({ name: next.name, time: next.time })
 
-    // Calculate countdown
-    const diff = next.datetime.getTime() - now.getTime()
+    // Hitung selisih waktu untuk countdown
+    let diff = next.datetime.getTime() - now.getTime()
+
     if (diff < 0) {
-      // Add 24 hours if we're comparing with tomorrow's prayer
-      const newDiff = diff + 24 * 60 * 60 * 1000
-      const hours = Math.floor(newDiff / (1000 * 60 * 60))
-      const minutes = Math.floor((newDiff % (1000 * 60 * 60)) / (1000 * 60))
-      const seconds = Math.floor((newDiff % (1000 * 60)) / 1000)
-      setCountdown(
-        `${hours.toString().padStart(2, "0")}:${minutes
-          .toString()
-          .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`,
-      )
-    } else {
-      const hours = Math.floor(diff / (1000 * 60 * 60))
-      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
-      const seconds = Math.floor((diff % (1000 * 60)) / 1000)
-      setCountdown(
-        `${hours.toString().padStart(2, "0")}:${minutes
-          .toString()
-          .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`,
-      )
+      // Tambahkan 24 jam jika waktu sholat berikutnya adalah besok
+      diff += 24 * 60 * 60 * 1000
     }
-  }
+
+    const hours = Math.floor(diff / (1000 * 60 * 60))
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000)
+
+    setCountdown(
+      `${hours.toString().padStart(2, "0")}:${minutes
+        .toString()
+        .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`,
+    )
+
+    // Kirim notifikasi saat waktu sholat tiba
+    if (hours === 0 && minutes === 0 && seconds === 0) {
+      sendNotification(
+        `Waktu ${next.name}`,
+        `Sekarang waktunya shalat ${next.name}`,
+      )
+      playAzan()
+    }
+  }, [prayerTimes])
 
   if (loading) {
     return (
@@ -230,13 +301,13 @@ const PrayerTimeComponent = () => {
     <section className="mb-0">
       {prayerTimes && (
         <>
-          <div className="relative h-[50vh] md:h-60 xl:h-[100vh] border-none rounded-b-2xl overflow-hidden">
+          <div className="relative h-[50vh] md:h-60 xl:h-[100vh] border-none rounded-b-2xl xl:rounded-b-none overflow-hidden">
             <Image
               src="/assets/images/kaabah.jpg"
               alt="Kaabah"
               fill
               sizes="(max-width: 768px) 100vw"
-              className="object-cover brightness-50 rounded-b-2xl"
+              className="object-cover brightness-50 rounded-b-2xl xl:rounded-b-none"
             />
             <div className="absolute inset-0 flex flex-col justify-between p-4 xl:p-6 text-white z-10 mt-[85px]">
               <div className="flex flex-wrap justify-between items-start xl:px-12 ">
@@ -273,6 +344,9 @@ const PrayerTimeComponent = () => {
                 </div>
               </div>
 
+              <div className="flex justify-between items-center text-sm px-2 xl:px-6 relative -top-8 xl:top-[85px] mt-4">
+                <AdzanSettings />
+              </div>
               <div className="flex justify-between items-center text-sm px-2 xl:px-6 relative -top-8 xl:-top-16">
                 <div className="flex items-center gap-2">
                   <span>{selectedMethod.name}</span>

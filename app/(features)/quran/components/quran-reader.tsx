@@ -194,7 +194,7 @@ export default function QuranReader() {
           />
           <div className="flex flex-col items-center">
             <h2 className="text-2xl font-semibold">{surah?.namaLatin}</h2>
-            <p>
+            <p className="text-xs xl:text-sm text-center">
               {surah?.arti} • {surah?.jumlahAyat} Ayat • {surah?.tempatTurun}
             </p>
           </div>
