@@ -1,4 +1,3 @@
-import PrayerTimeComponent from "@/app/(features)/prayer-times/components/prayer-times"
 import ImsakiyahComponent from "./components/imsakiyah"
 import Header from "@/components/header"
 import Image from "next/image"
