@@ -8,13 +8,12 @@ Quran App adalah aplikasi web yang menyediakan akses mudah untuk membaca Al-Qur'
 
 - Baca Al-Qur'an dengan teks Arab yang jelas
 - Navigasi mudah antar surah dan ayat
-- Dukungan mode gelap untuk kenyamanan membaca
 - Tampilan responsif untuk berbagai perangkat
 - Pemuatan halaman cepat dengan teknologi Next.js
 
 ## Teknologi yang Digunakan
 
-- **Next.js 15** - Framework React untuk rendering sisi server dan sisi klien
+- **Next.js 14** - Framework React untuk rendering sisi server dan sisi klien
 - **Tailwind CSS** - Untuk styling yang cepat dan fleksibel
 - **API Quran** - Untuk mendapatkan data Al-Qur'an secara dinamis
 - **Vercel** - Untuk deployment yang cepat dan efisien
