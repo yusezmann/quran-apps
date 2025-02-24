@@ -1,3 +1,5 @@
+import { City, ScheduleResponse } from "../interfaces/imsakiyah.interface"
+
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL
 
 export async function fetchImsakiyah(
@@ -26,6 +28,8 @@ export async function fetchImsakiyah(
     }
 
     const data = await res.json()
+    console.log(data)
+
     return data.data
   } catch (error) {
     console.error("Failed to fetch imsakiyah:", error)
@@ -62,4 +66,23 @@ export const getListKabkota = async (provinsi: string) => {
     console.error("Failed to fetch kabkota:", error)
     return null
   }
+}
+
+export const fetchCities = async (): Promise<City[]> => {
+  const response = await fetch("https://api.myquran.com/v2/sholat/kota/semua")
+  const data = await response.json()
+  return data.data
+}
+
+export const fetchSchedule = async (
+  cityId: string,
+  year: number,
+  month: number,
+): Promise<ScheduleResponse> => {
+  const response = await fetch(
+    `https://api.myquran.com/v2/sholat/jadwal/${cityId}/${year}/${month}`,
+  )
+  const data = await response.json()
+
+  return data.data
 }

@@ -4,6 +4,7 @@ import Header from "@/components/header"
 import PrayerTimeComponent from "@/app/(features)/prayer-times"
 import SurahList from "./(features)/quran/components/surah-list"
 import QuranReader from "./(features)/quran/components/quran-reader"
+import { Footer } from "@/components/footer"
 
 export default function Home() {
   return (
@@ -15,11 +16,12 @@ export default function Home() {
           <div className="lg:col-span-1 hidden xl:block">
             <SurahList />
           </div>
-          <div className="lg:col-span-3">
+          <div className="lg:col-span-3 mb-8">
             <QuranReader />
           </div>
         </div>
       </main>
+      <Footer />
     </div>
   )
 }

@@ -18,7 +18,8 @@ import HijriDateDisplay from "@/app/(features)/hijri-date/components/hijr-date"
 import LocationSelector from "./components/LocationSelector"
 import MethodSelector from "./components/MethodSelector"
 import PrayerTimesList from "./components/PrayerTimeList"
-import AdzanSettings, { playAzan } from "../adzan/components/AdzanSetting"
+import AdzanSettings from "../adzan/components/AdzanSetting"
+import CountdownTest from "./components/Countdown"
 
 const PRAYER_METHODS = [
   { id: "kemenag", name: "Kemenag", params: { subuh: 20, isya: 18 } },
@@ -28,6 +29,12 @@ const PRAYER_METHODS = [
     name: "Egyptian General Authority",
     params: { subuh: 19.5, isya: 17.5 },
   },
+]
+
+export const adzanList = [
+  { id: 1, name: "Adzan Makkah", src: "/assets/audio/adzan-makkah.mp3" },
+  { id: 2, name: "Adzan Mesir", src: "/assets/audio/adzan-mesir.mp3" },
+  { id: 3, name: "Adzan Shubuh", src: "/assets/audio/adzan-shubuh.mp3" },
 ]
 
 const PrayerTimeComponent = () => {
@@ -187,6 +194,12 @@ const PrayerTimeComponent = () => {
     )
   }
 
+  // Fungsi untuk memainkan suara adzan
+  const playAdzan = (audioUrl: string) => {
+    const audio = new Audio(audioUrl)
+    audio.play()
+  }
+
   // const updateNextPrayer = useCallback(() => {
   //   if (!prayerTimes) return
 
@@ -281,11 +294,12 @@ const PrayerTimeComponent = () => {
 
     // Kirim notifikasi saat waktu sholat tiba
     if (hours === 0 && minutes === 0 && seconds === 0) {
-      sendNotification(
-        `Waktu ${next.name}`,
-        `Sekarang waktunya shalat ${next.name}`,
-      )
-      playAzan()
+      // alert("Waktu sholat tiba")
+      // sendNotification(
+      //   `Waktu ${next.name}`,
+      //   `Sekarang waktunya shalat ${next.name}`,
+      // )
+      playAdzan(adzanList[0].src)
     }
   }, [prayerTimes])
 
@@ -344,9 +358,9 @@ const PrayerTimeComponent = () => {
                 </div>
               </div>
 
-              <div className="flex justify-between items-center text-sm px-2 xl:px-6 relative -top-8 xl:top-[85px] mt-4">
+              {/* <div className="flex justify-between items-center text-sm px-2 xl:px-6 relative -top-8 xl:top-[85px] mt-4">
                 <AdzanSettings />
-              </div>
+              </div> */}
               <div className="flex justify-between items-center text-sm px-2 xl:px-6 relative -top-8 xl:-top-16">
                 <div className="flex items-center gap-2">
                   <span>{selectedMethod.name}</span>

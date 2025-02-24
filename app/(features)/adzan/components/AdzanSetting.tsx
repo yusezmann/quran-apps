@@ -10,16 +10,37 @@ const adzanList = [
   { id: 3, name: "Adzan Shubuh", src: "/assets/audio/adzan-shubuh.mp3" },
 ]
 
-export const playAzan = () => {
-  const adzanEnabled = JSON.parse(
-    localStorage.getItem("adzanEnabled") || "false",
-  )
-  const selectedAdzan =
-    localStorage.getItem("selectedAdzan") || adzanList[0].src
+let audioCtx: AudioContext | null = null // Gunakan satu instance AudioContext
 
-  if (adzanEnabled) {
-    const audio = new Audio(selectedAdzan)
-    audio.play()
+export const playAdzan = (src: string) => {
+  if (!src) {
+    console.error("Sumber audio tidak ditemukan!")
+    return
+  }
+
+  const audio = new Audio(src)
+
+  const playAudio = () => {
+    audio.play().catch((error) => console.error("Gagal memutar adzan:", error))
+  }
+
+  // Cek apakah browser mendukung AudioContext
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)()
+  }
+
+  // Jika AudioContext dalam keadaan "suspended", resume setelah interaksi
+  if (audioCtx.state === "suspended") {
+    const resumeAudioContext = () => {
+      audioCtx?.resume().then(() => {
+        playAudio()
+      })
+      document.body.removeEventListener("click", resumeAudioContext) // Hapus listener setelah digunakan
+    }
+
+    document.body.addEventListener("click", resumeAudioContext, { once: true })
+  } else {
+    playAudio()
   }
 }
 
@@ -42,12 +63,6 @@ const AdzanSettings = () => {
     localStorage.setItem("adzanEnabled", JSON.stringify(adzanEnabled))
     localStorage.setItem("selectedAdzan", selectedAdzan)
   }, [adzanEnabled, selectedAdzan])
-
-  // Fungsi untuk memainkan suara adzan
-  const playAdzan = (audioUrl: string) => {
-    const audio = new Audio(audioUrl)
-    audio.play()
-  }
 
   return (
     <div>
@@ -99,9 +114,9 @@ const AdzanSettings = () => {
         </div>
 
         {/* Tombol Coba Suara Adzan */}
-        <Button type="primary" onClick={() => playAdzan(selectedAdzan)}>
+        {/* <Button type="primary" onClick={() => playAdzan(selectedAdzan)}>
           Coba Adzan
-        </Button>
+        </Button> */}
       </Modal>
     </div>
   )
