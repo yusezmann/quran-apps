@@ -1,6 +1,5 @@
 "use client"
 
-import ImsakiyahComponent from "./components/imsakiyah"
 import Header from "@/components/header"
 import Image from "next/image"
 import CitySelector from "./components/CitySelector"
