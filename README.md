@@ -1,36 +1,68 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Quran App
 
-## Getting Started
+[![Vercel](https://vercel.com/button)](https://quran-apps-brown.vercel.app/)
 
-First, run the development server:
+Quran App adalah aplikasi web yang menyediakan akses mudah untuk membaca Al-Qur'an secara online dengan tampilan yang bersih dan responsif.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Fitur
+
+- Baca Al-Qur'an dengan teks Arab yang jelas
+- Navigasi mudah antar surah dan ayat
+- Dukungan mode gelap untuk kenyamanan membaca
+- Tampilan responsif untuk berbagai perangkat
+- Pemuatan halaman cepat dengan teknologi Next.js
+
+## Teknologi yang Digunakan
+
+- **Next.js 15** - Framework React untuk rendering sisi server dan sisi klien
+- **Tailwind CSS** - Untuk styling yang cepat dan fleksibel
+- **API Quran** - Untuk mendapatkan data Al-Qur'an secara dinamis
+- **Vercel** - Untuk deployment yang cepat dan efisien
+- **Ant Design** - Untuk component UI yang bersih dan responsive
+- **Zustand** - Untuk state management yang cepat dan efisien
+- **TanStack Query** - Untuk mengolah data dari API secara dinamis
+
+## Sumber API
+
+Aplikasi ini menggunakan beberapa sumber API untuk mendapatkan data:
+
+- [eQuran API](https://equran.id/api/v2)
+- [MyQuran API](https://api.myquran.com/v2)
+- [Nominatim OpenStreetMap](https://nominatim.openstreetmap.org)
+
+## Instalasi dan Penggunaan
+
+1. Clone repository ini:
+   ```sh
+   git clone https://github.com/username/quran-app.git
+   cd quran-app
+   ```
+2. Install dependencies:
+   ```sh
+   npm install
+   ```
+3. Jalankan aplikasi secara lokal:
+   ```sh
+   npm run dev
+   ```
+4. Akses aplikasi di browser melalui `http://localhost:3001`
+
+## Deployment
+
+Aplikasi ini dapat langsung di-deploy ke Vercel dengan perintah:
+
+```sh
+vercel
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Kontribusi
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Jika ingin berkontribusi, silakan fork repository ini dan ajukan pull request dengan fitur atau perbaikan yang diusulkan.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Lisensi
 
-## Learn More
+Aplikasi ini dirilis di bawah lisensi MIT.
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Kunjungi aplikasi: [Quran App](https://quran-apps-brown.vercel.app/)
