@@ -30,7 +30,6 @@ type ScheduleProps = {
 const Schedule: React.FC<ScheduleProps> = ({ cityId }) => {
   const { currentDate } = useScheduleStore()
   const { data: schedule, isLoading, error } = useSchedule(cityId, currentDate)
-  console.log(schedule)
 
   if (isLoading) return <div>Loading schedule...</div>
   if (error) return <div>Error loading schedule</div>

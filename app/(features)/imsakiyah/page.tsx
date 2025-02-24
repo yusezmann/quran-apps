@@ -1,6 +1,6 @@
 "use client"
 
-import Header from "@/components/header"
+import Header from "@/components/Header"
 import Image from "next/image"
 import CitySelector from "./components/CitySelector"
 import Schedule from "./components/Schedule"

@@ -1,13 +1,12 @@
 "use client"
 
 import Link from "next/link"
-import { Menu } from "lucide-react"
 import { LoginOutlined, MenuOutlined } from "@ant-design/icons"
 import { Button } from "antd"
 import Image from "next/image"
 import { useEffect, useState } from "react"
 import { usePathname } from "next/navigation"
-import MobileMenu from "../mobile-menu"
+import MobileMenu from "./mobile-menu"
 
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false)

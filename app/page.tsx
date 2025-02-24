@@ -1,6 +1,6 @@
 "use client"
 
-import Header from "@/components/header"
+import Header from "@/components/Header"
 import PrayerTimeComponent from "@/app/(features)/prayer-times"
 import SurahList from "./(features)/quran/components/surah-list"
 import QuranReader from "./(features)/quran/components/quran-reader"
