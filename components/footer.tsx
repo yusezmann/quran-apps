@@ -5,7 +5,7 @@ import Image from "next/image"
 
 export function Footer() {
   return (
-    <footer className="bg-[#010511] text-gray-400 py-6 border-t border-gray-700 px-4 mt-auto">
+    <footer className="bg-[#010511] text-gray-400 py-6 border-t border-gray-700 px-4">
       <div className="container mx-auto flex flex-col md:flex-row items-center justify-between text-center md:text-left gap-4">
         {/* Logo & Nama */}
         <Link

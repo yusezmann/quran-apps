@@ -98,10 +98,40 @@ export default function QuranReader() {
   const goToLastRead = () => {
     if (lastRead) {
       setCurrentSurah(lastRead.surah)
-      setCurrentAyah(lastRead.ayah)
-      playAyah(lastRead.ayah)
+
+      // Tunggu hingga surat selesai dimuat, baru set ayat terakhir
+      setTimeout(() => {
+        setCurrentAyah(lastRead.ayah)
+
+        // Setelah ayat di-set, tunggu sedikit dan scroll ke ayatnya
+        setTimeout(() => {
+          scrollToAyah(lastRead.ayah)
+        }, 300)
+      }, 500)
     }
   }
+
+  // Fungsi untuk scroll ke ayat yang dituju
+  const scrollToAyah = (ayahNumber: number) => {
+    const ayahElement = document.getElementById(`ayah-${ayahNumber}`)
+    console.log("Mencari elemen:", `ayah-${ayahNumber}`, ayahElement) // Debugging
+
+    if (ayahElement) {
+      ayahElement.scrollIntoView({ behavior: "smooth", block: "center" })
+      console.log("Berhasil scroll ke ayat:", ayahNumber)
+    } else {
+      console.log("Ayat tidak ditemukan!")
+    }
+  }
+
+  // Gunakan useEffect untuk menangani perubahan currentAyah
+  useEffect(() => {
+    if (currentAyah) {
+      setTimeout(() => {
+        scrollToAyah(currentAyah)
+      }, 500) // Tambahkan delay agar elemen siap
+    }
+  }, [currentAyah])
 
   const { data: surahList } = useQuery({
     queryKey: ["surahList"],
@@ -237,22 +267,42 @@ export default function QuranReader() {
             disabled={!surah?.suratSelanjutnya}
           />
         </div>
-        <div className="p-4 space-y-2">
-          <label className="text-sm font-medium text-gray-600">Qari:</label>
-          <Select
-            defaultValue={selectedQari}
-            onChange={(value) => setSelectedQari(value)}
-            options={[
-              { label: "Abdullah-Al-Juhany", value: "01" },
-              { label: "Abdul-Muhsin-Al-Qasim", value: "02" },
-              { label: "Abdurrahman-as-Sudais", value: "03" },
-              { label: "Ibrahim-Al-Dossari", value: "04" },
-              { label: "Misyari-Rasyid-Al-Afasi", value: "05" },
-            ]}
-            className="mb-2 xl:mb-4 w-full"
-            placeholder="Pilih Qari"
-          />
+        <div className="p-4 space-y-4 md:space-y-0 md:flex md:justify-between md:items-center">
+          <div className="w-full md:w-auto flex flex-col">
+            <label className="text-sm font-medium text-gray-600">Qari:</label>
+            <Select
+              defaultValue={selectedQari}
+              onChange={(value) => setSelectedQari(value)}
+              options={[
+                { label: "Abdullah-Al-Juhany", value: "01" },
+                { label: "Abdul-Muhsin-Al-Qasim", value: "02" },
+                { label: "Abdurrahman-as-Sudais", value: "03" },
+                { label: "Ibrahim-Al-Dossari", value: "04" },
+                { label: "Misyari-Rasyid-Al-Afasi", value: "05" },
+              ]}
+              className="mt-1 w-full md:w-64"
+              placeholder="Pilih Qari"
+            />
+          </div>
+          <div className="w-full md:w-auto flex justify-end">
+            <span></span>
+            <Button
+              onClick={() => {
+                if (lastRead) {
+                  setCurrentSurah(lastRead.surah)
+                  setTimeout(() => {
+                    setCurrentAyah(lastRead.ayah)
+                  }, 500)
+                }
+              }}
+              className="text-green-500 hover:text-green-700 w-full md:w-auto"
+              disabled={!lastRead}
+            >
+              Kembali ke Bacaan Terakhir
+            </Button>
+          </div>
         </div>
+
         <div className="p-4 block xl:hidden">
           <Select
             showSearch
@@ -282,6 +332,7 @@ export default function QuranReader() {
           {surah?.ayat.map((ayat: any) => (
             <div
               key={ayat.nomorAyat}
+              id={`ayah-${ayat.nomorAyat}`} // Tambahkan id untuk scroll
               className={`border-b p-4 ${
                 lastRead?.surah === currentSurah &&
                 lastRead?.ayah === ayat.nomorAyat
@@ -320,7 +371,7 @@ export default function QuranReader() {
                       onClick={removeLastReadAyah}
                       className="text-red-500 hover:text-red-700"
                     >
-                      Hapus Tanda Bacaan Terakhir
+                      <Bookmark className="h-4 w-4" />
                     </Button>
                   ) : (
                     <Button
