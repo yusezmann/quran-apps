@@ -14,6 +14,7 @@ export default function MobileMenu({
     { path: "/imsakiyah", label: "Imsakiyah" },
     { path: "/doa", label: "Doa" },
     { path: "/asmaulhusna", label: "Asmaul Husna" },
+    { path: "/hadits", label: "Hadits" },
   ]
   return (
     <div

@@ -41,19 +41,21 @@ export default function Header() {
           <h2 className="text-white">Al Quran</h2>
         </Link>
         <div className="hidden xl:flex gap-6">
-          {["/", "/imsakiyah", "/doa", "/asmaulhusna"].map((path, idx) => (
-            <Link
-              key={path}
-              href={path}
-              className={
-                pathname === path
-                  ? "text-green-300 font-bold border-b-2 border-green-300"
-                  : "hover:text-accent-hover"
-              }
-            >
-              {["Home", "Imsakiyah", "Doa", "Asmaul Husna"][idx]}
-            </Link>
-          ))}
+          {["/", "/imsakiyah", "/doa", "/asmaulhusna", "/hadits"].map(
+            (path, idx) => (
+              <Link
+                key={path}
+                href={path}
+                className={
+                  pathname === path
+                    ? "text-green-300 font-bold border-b-2 border-green-300"
+                    : "hover:text-accent-hover"
+                }
+              >
+                {["Home", "Imsakiyah", "Doa", "Asmaul Husna", "Hadits"][idx]}
+              </Link>
+            ),
+          )}
         </div>
         <div className="xl:hidden">
           <Button
