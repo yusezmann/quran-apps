@@ -41,7 +41,7 @@ export default function Header() {
           <h2 className="text-white">Al Quran</h2>
         </Link>
         <div className="hidden xl:flex gap-6">
-          {["/", "/imsakiyah", "/doa", "/bookmarks"].map((path, idx) => (
+          {["/", "/imsakiyah", "/doa", "/asmaulhusna"].map((path, idx) => (
             <Link
               key={path}
               href={path}
@@ -51,7 +51,7 @@ export default function Header() {
                   : "hover:text-accent-hover"
               }
             >
-              {["Home", "Imsakiyah", "Doa", "Bookmarks"][idx]}
+              {["Home", "Imsakiyah", "Doa", "Asmaul Husna"][idx]}
             </Link>
           ))}
         </div>
