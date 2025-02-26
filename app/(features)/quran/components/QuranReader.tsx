@@ -280,7 +280,7 @@ export default function QuranReader() {
           <div className="w-full md:w-auto flex flex-col justify-end">
             <Button
               onClick={goToLastRead}
-              className="text-green-500 hover:text-green-700 w-full md:w-auto xl:mt-6"
+              className="text-green-500 w-full md:w-auto xl:mt-6"
               disabled={!lastRead}
             >
               Kembali ke Bacaan Terakhir
