@@ -13,7 +13,7 @@ export default function MobileMenu({
     { path: "/", label: "Home" },
     { path: "/imsakiyah", label: "Imsakiyah" },
     { path: "/doa", label: "Doa" },
-    { path: "/bookmarks", label: "Bookmarks" },
+    { path: "/asmaulhusna", label: "Asmaul Husna" },
   ]
   return (
     <div
