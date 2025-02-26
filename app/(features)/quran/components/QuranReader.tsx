@@ -321,7 +321,7 @@ export default function QuranReader() {
               className={`border-b p-4 ${
                 lastRead?.surah === currentSurah &&
                 lastRead?.ayah === ayat.nomorAyat
-                  ? " border-l-4 border-red-500"
+                  ? " border-l-4 border-red-500 bg-yellow-100"
                   : ""
               }`}
             >
