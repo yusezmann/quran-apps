@@ -23,7 +23,7 @@ export default function QuranReader() {
     ayah: number
   } | null>(null)
 
-  const [selectedQari, setSelectedQari] = useState("01")
+  const [selectedQari, setSelectedQari] = useState("05")
   const {
     data: surah,
     isLoading,
@@ -98,15 +98,8 @@ export default function QuranReader() {
   const goToLastRead = () => {
     if (lastRead) {
       setCurrentSurah(lastRead.surah)
-
-      // Tunggu hingga surat selesai dimuat, baru set ayat terakhir
       setTimeout(() => {
         setCurrentAyah(lastRead.ayah)
-
-        // Setelah ayat di-set, tunggu sedikit dan scroll ke ayatnya
-        setTimeout(() => {
-          scrollToAyah(lastRead.ayah)
-        }, 300)
       }, 500)
     }
   }
@@ -284,18 +277,10 @@ export default function QuranReader() {
               placeholder="Pilih Qari"
             />
           </div>
-          <div className="w-full md:w-auto flex justify-end">
-            <span></span>
+          <div className="w-full md:w-auto flex flex-col justify-end">
             <Button
-              onClick={() => {
-                if (lastRead) {
-                  setCurrentSurah(lastRead.surah)
-                  setTimeout(() => {
-                    setCurrentAyah(lastRead.ayah)
-                  }, 500)
-                }
-              }}
-              className="text-green-500 hover:text-green-700 w-full md:w-auto"
+              onClick={goToLastRead}
+              className="text-green-500 hover:text-green-700 w-full md:w-auto xl:mt-6"
               disabled={!lastRead}
             >
               Kembali ke Bacaan Terakhir
