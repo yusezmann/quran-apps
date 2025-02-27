@@ -1,3 +1,5 @@
+import { Hadith } from "../interfaces/hadits.interface"
+
 export const fetchHaditsArbain = async () => {
   const response = await fetch(
     `${process.env.NEXT_PUBLIC_PRAYER_API_URL}/hadits/arbain/all`,
@@ -9,9 +11,10 @@ export const fetchHaditsArbain = async () => {
   return data.data
 }
 
-// const fetchHadith = async ({ queryKey }) => {
-//     const [_key, kitab, page] = queryKey;
-//     const res = await fetch(`https://api.myquran.com/v2/hadits/${kitab}?page=${page}`);
-//     if (!res.ok) throw new Error("Gagal mengambil data hadits");
-//     return res.json();
-//   };
+export const fetchHadiths = async (): Promise<Hadith[]> => {
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_PRAYER_API_URL}/hadits/arbain/all`,
+  )
+  const data = await res.json()
+  return data.data
+}

@@ -353,8 +353,10 @@ export default function QuranReader() {
                   {lastRead?.surah === currentSurah &&
                   lastRead?.ayah === ayat.nomorAyat ? (
                     <Button
+                      type="default"
+                      shape="circle"
                       onClick={removeLastReadAyah}
-                      className="text-red-500 hover:text-red-700"
+                      className="text-red-500 hover:text-red-700 border-red-500"
                     >
                       <Bookmark className="h-4 w-4" />
                     </Button>

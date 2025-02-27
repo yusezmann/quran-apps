@@ -31,15 +31,17 @@ const Doa = () => {
   if (error) return <div className="p-4">Error: {error.message}</div>
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen">
       <Header />
-      <Image
-        src="/assets/images/kaabah.jpg"
-        alt="Kaabah"
-        fill
-        sizes="(max-width: 768px) 100vw"
-        className="object-cover brightness-50"
-      />
+      <div className="absolute top-0 left-0 w-full h-[100vh] -z-10">
+        <Image
+          src="/assets/images/kaabah.jpg"
+          alt="Kaabah"
+          layout="fill"
+          objectFit="cover"
+          className="brightness-50"
+        />
+      </div>
       <div className="px-2 xl:px-16 py-8">
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mt-[65px]">
           {/* Untuk mode mobile, tampilkan DuaDetails di atas */}
