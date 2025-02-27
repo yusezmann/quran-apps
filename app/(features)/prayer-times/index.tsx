@@ -20,6 +20,7 @@ import MethodSelector from "./components/MethodSelector"
 import PrayerTimesList from "./components/PrayerTimeList"
 import AdzanSettings from "../adzan/components/AdzanSetting"
 import CountdownTest from "./components/Countdown"
+import Marquee from "react-fast-marquee"
 
 const PRAYER_METHODS = [
   { id: "kemenag", name: "Kemenag", params: { subuh: 20, isya: 18 } },
@@ -313,6 +314,18 @@ const PrayerTimeComponent = () => {
 
   return (
     <section className="mb-0">
+      {/* <Marquee
+        speed={50}
+        pauseOnHover={true}
+        gradient={false}
+        direction="left"
+        className="p-4 bg-transparent"
+      >
+        <p className="text-gray-500 text-center ">
+          🔥 Berita terbaru hari ini! 🚀 | 💰 Pasar saham melonjak tinggi! 📈 |
+          🏆 Tim favorit menang besar! 🎉
+        </p>
+      </Marquee> */}
       {prayerTimes && (
         <>
           <div className="relative h-[50vh] md:h-60 xl:h-[100vh] border-none rounded-b-2xl xl:rounded-b-none overflow-hidden">
