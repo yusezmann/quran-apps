@@ -9,6 +9,7 @@ import Image from "next/image"
 import DuaList from "./components/list-doa"
 import DuaDetails from "./components/doa-view"
 import { Footer } from "@/components/footer"
+import { Alert, Spin } from "antd"
 
 const Doa = () => {
   const { setDuas, setIsLoading, duas, selectedDuaId, setSelectedDuaId } =
@@ -28,7 +29,11 @@ const Doa = () => {
 
   const selectedDua = duas.find((d) => d.judul === selectedDuaId)
 
-  if (error) return <div className="p-4">Error: {error.message}</div>
+  if (isLoading) return <Spin className="flex justify-center mt-4" />
+  if (error)
+    return (
+      <Alert message="Error loading cities" type="error" className="mt-4" />
+    )
 
   return (
     <div className="min-h-screen">

@@ -10,6 +10,7 @@ import { fetchHadiths } from "./services/hadits.service"
 import HadithList from "./components/HaditsList"
 import HadithDetails from "./components/HaditsView"
 import { Footer } from "@/components/footer"
+import { Alert, Spin } from "antd"
 
 const Hadits = () => {
   const { setHadiths } = useHadithStore()
@@ -43,13 +44,16 @@ const Hadits = () => {
     (hadith) => hadith.no === selectedHadithId,
   )
 
-  if (isLoading) return <p>Loading...</p>
-  if (error) return <p>Error loading data: {error.message}</p>
+  if (isLoading) return <Spin className="flex justify-center mt-4" />
+  if (error)
+    return (
+      <Alert message="Error loading cities" type="error" className="mt-4" />
+    )
 
   return (
     <div>
       <Header />
-      <div className="absolute top-0 left-0 w-full h-[100vh] -z-10">
+      <div className="absolute top-0 left-0 w-full h-full -z-10">
         <Image
           src="/assets/images/kaabah.jpg"
           alt="Kaabah"

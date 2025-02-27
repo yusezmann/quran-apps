@@ -7,7 +7,7 @@ const HadithDetails: React.FC<HadithDetailsProps> = ({ hadith }) => {
   if (!hadith) {
     return (
       <div className="flex items-center justify-center h-full">
-        <p className="text-lg text-gray-500">No hadith selected</p>
+        <p className="text-lg text-white">No hadith selected</p>
       </div>
     )
   }
