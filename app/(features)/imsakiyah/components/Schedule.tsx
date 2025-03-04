@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { Table, Select } from "antd"
+import { Table, Select, Button } from "antd"
 import { useScheduleStore } from "../store/scheduleStore"
 import { useSchedule } from "../hooks/useSchedule"
 import { format, isValid, setMonth, parse, parseISO } from "date-fns"
@@ -10,6 +10,12 @@ import { toHijri } from "hijri-converter"
 import { useState } from "react"
 import { City } from "../interfaces/imsakiyah.interface"
 import CitySelector from "./CitySelector"
+import { jsPDF } from "jspdf"
+import autoTable from "jspdf-autotable"
+import { Download } from "lucide-react"
+import { BiSolidFilePdf } from "react-icons/bi"
+import { VscFile, VscFilePdf } from "react-icons/vsc"
+import { BsFiletypeCsv } from "react-icons/bs"
 
 const { Option } = Select
 
@@ -52,6 +58,45 @@ const Schedule: React.FC = () => {
   const [selectedMonth, setSelectedMonth] = useState<number>(
     new Date().getMonth(),
   )
+
+  const downloadPDF = () => {
+    if (!schedule?.jadwal) return
+    const doc = new jsPDF()
+    doc.text(
+      `Jadwal Shalat - ${selectedCity.lokasi} - ${months[selectedMonth]}`,
+      10,
+      10,
+    )
+    autoTable(doc, {
+      head: [
+        [
+          "Tanggal",
+          "Imsak",
+          "Subuh",
+          "Terbit",
+          "Dhuha",
+          "Dzuhur",
+          "Ashar",
+          "Maghrib",
+          "Isya",
+        ],
+      ],
+      body: schedule.jadwal.map((day) => [
+        day.tanggal,
+        day.imsak,
+        day.subuh,
+        day.terbit,
+        day.dhuha,
+        day.dzuhur,
+        day.ashar,
+        day.maghrib,
+        day.isya,
+      ]),
+    })
+    doc.save(
+      `jadwal-shalat-${selectedCity.lokasi}-${months[selectedMonth]}.pdf`,
+    )
+  }
 
   const selectedDate = setMonth(new Date(currentDate), selectedMonth)
   const {
@@ -177,6 +222,12 @@ const Schedule: React.FC = () => {
             ))}
           </Select>
         </div>
+      </div>
+      <div
+        className="float-right border-none bg-none text-red-600 mb-4 cursor-pointer"
+        onClick={downloadPDF}
+      >
+        <VscFilePdf className="h-10 w-10" />
       </div>
 
       <Table
