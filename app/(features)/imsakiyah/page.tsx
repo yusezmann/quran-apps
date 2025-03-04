@@ -9,11 +9,6 @@ import { City } from "./interfaces/imsakiyah.interface"
 import { Footer } from "@/components/footer"
 
 const Imsakiyah = () => {
-  const [selectedCity, setSelectedCity] = useState<City>({
-    id: "1301",
-    lokasi: "KOTA JAKARTA",
-  })
-
   return (
     <div className="relative min-h-screen">
       {/* Background Image */}
@@ -34,8 +29,8 @@ const Imsakiyah = () => {
           <h2 className="text-3xl font-bold mb-4 text-gray-600 text-center">
             Jadwal Imsakiyah dan Shalat
           </h2>
-          <CitySelector onCityChange={setSelectedCity} />
-          <Schedule cityId={selectedCity.id} />
+
+          <Schedule />
         </div>
       </div>
       <Footer />

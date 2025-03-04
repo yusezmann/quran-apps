@@ -1,12 +1,17 @@
 "use client"
 
 import type React from "react"
-import { Table } from "antd"
+import { Table, Select } from "antd"
 import { useScheduleStore } from "../store/scheduleStore"
 import { useSchedule } from "../hooks/useSchedule"
-import { format, isValid } from "date-fns"
+import { format, isValid, setMonth, parse, parseISO } from "date-fns"
 import { id } from "date-fns/locale"
 import { toHijri } from "hijri-converter"
+import { useState } from "react"
+import { City } from "../interfaces/imsakiyah.interface"
+import CitySelector from "./CitySelector"
+
+const { Option } = Select
 
 const hijriMonths = [
   "Muharram",
@@ -23,13 +28,37 @@ const hijriMonths = [
   "Dzulhijjah",
 ]
 
-type ScheduleProps = {
-  cityId: string
-}
+const months = [
+  "Januari",
+  "Februari",
+  "Maret",
+  "April",
+  "Mei",
+  "Juni",
+  "Juli",
+  "Agustus",
+  "September",
+  "Oktober",
+  "November",
+  "Desember",
+]
 
-const Schedule: React.FC<ScheduleProps> = ({ cityId }) => {
+const Schedule: React.FC = () => {
   const { currentDate } = useScheduleStore()
-  const { data: schedule, isLoading, error } = useSchedule(cityId, currentDate)
+  const [selectedCity, setSelectedCity] = useState<City>({
+    id: "1301",
+    lokasi: "KOTA JAKARTA",
+  })
+  const [selectedMonth, setSelectedMonth] = useState<number>(
+    new Date().getMonth(),
+  )
+
+  const selectedDate = setMonth(new Date(currentDate), selectedMonth)
+  const {
+    data: schedule,
+    isLoading,
+    error,
+  } = useSchedule(selectedCity.id, selectedDate)
 
   if (isLoading) return <div>Loading schedule...</div>
   if (error) return <div>Error loading schedule</div>
@@ -37,13 +66,24 @@ const Schedule: React.FC<ScheduleProps> = ({ cityId }) => {
   const today = new Date()
 
   const parseDate = (dateString: string): Date => {
-    const cleanDateString = dateString.replace(/^[A-Za-z]+,\s*/, "").trim()
-    const [day, month, year] = cleanDateString.split("/")
-    return new Date(
-      Number.parseInt(year),
-      Number.parseInt(month) - 1,
-      Number.parseInt(day),
-    )
+    if (!dateString) return new Date(NaN)
+
+    // Hapus nama hari jika ada (format "Sabtu, 01/03/2025")
+    const cleanedDate = dateString.replace(/^[A-Za-z]+,\s*/, "")
+
+    // Jika formatnya YYYY-MM-DD, gunakan parseISO
+    if (cleanedDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      return parseISO(cleanedDate)
+    }
+
+    const formats = ["d/M/yyyy", "dd/MM/yyyy", "yyyy-MM-dd"] // Tambahkan kemungkinan format lain
+    for (const formatStr of formats) {
+      const date = parse(cleanedDate, formatStr, new Date())
+      if (isValid(date)) return date
+    }
+
+    console.warn("Invalid Date:", cleanedDate) // Debugging jika gagal
+    return new Date(NaN)
   }
 
   const columns = [
@@ -106,12 +146,39 @@ const Schedule: React.FC<ScheduleProps> = ({ cityId }) => {
       return {
         ...day,
         key: day.tanggal,
-        className: isToday ? "bg-yellow-100" : "",
+        className: isToday ? "bg-green-300" : "",
       }
     }) || []
 
   return (
     <div style={{ overflowX: "auto" }}>
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-2 xl:gap-4 mb-4">
+        <div className="flex flex-col">
+          <label htmlFor="city-selector" className="font-light text-gray-400">
+            Pilih Kota
+          </label>
+          <CitySelector onCityChange={setSelectedCity} />
+        </div>
+        <div className="flex flex-col">
+          <label htmlFor="month-selector" className="font-light text-gray-400">
+            Pilih Bulan
+          </label>
+          <Select
+            id="month-selector"
+            value={selectedMonth}
+            onChange={setSelectedMonth}
+            className="w-full md:w-1/2"
+            aria-label="Pilih Bulan"
+          >
+            {months.map((monthName, index) => (
+              <Option key={index} value={index}>
+                {monthName}
+              </Option>
+            ))}
+          </Select>
+        </div>
+      </div>
+
       <Table
         columns={columns}
         dataSource={dataSource}

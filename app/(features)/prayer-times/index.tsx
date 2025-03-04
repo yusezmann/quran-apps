@@ -21,6 +21,7 @@ import PrayerTimesList from "./components/PrayerTimeList"
 import AdzanSettings from "../adzan/components/AdzanSetting"
 import CountdownTest from "./components/Countdown"
 import Marquee from "react-fast-marquee"
+import AdhanNotification from "../adzan/components/AdzanNotification"
 
 const PRAYER_METHODS = [
   { id: "kemenag", name: "Kemenag", params: { subuh: 20, isya: 18 } },
@@ -336,6 +337,7 @@ const PrayerTimeComponent = () => {
               sizes="(max-width: 768px) 100vw"
               className="object-cover brightness-50 rounded-b-2xl xl:rounded-b-none"
             />
+
             <div className="absolute inset-0 flex flex-col justify-between p-4 xl:p-6 text-white z-10 mt-[85px]">
               <div className="flex flex-wrap justify-between items-start xl:px-12 ">
                 <div className="flex flex-col min-w-0">
@@ -371,9 +373,6 @@ const PrayerTimeComponent = () => {
                 </div>
               </div>
 
-              {/* <div className="flex justify-between items-center text-sm px-2 xl:px-6 relative -top-8 xl:top-[85px] mt-4">
-                <AdzanSettings />
-              </div> */}
               <div className="flex justify-between items-center text-sm px-2 xl:px-6 relative -top-8 xl:-top-16">
                 <div className="flex items-center gap-2">
                   <span>{selectedMethod.name}</span>
@@ -402,6 +401,7 @@ const PrayerTimeComponent = () => {
                     {selectedMethod.params.isya}°
                   </span>
                 </div>
+                {/* <AdhanNotification /> */}
               </div>
             </div>
           </div>
