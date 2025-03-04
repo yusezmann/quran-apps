@@ -59,11 +59,13 @@ const Schedule: React.FC = () => {
     new Date().getMonth(),
   )
 
+  const years = new Date().getFullYear()
+
   const downloadPDF = () => {
     if (!schedule?.jadwal) return
     const doc = new jsPDF()
     doc.text(
-      `Jadwal Shalat - ${selectedCity.lokasi} - ${months[selectedMonth]}`,
+      `Jadwal Shalat - ${selectedCity.lokasi} - ${months[selectedMonth]} ${years}`,
       10,
       10,
     )
