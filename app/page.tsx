@@ -16,7 +16,7 @@ export default function Home() {
           <div className="lg:col-span-1 hidden xl:block">
             <SurahList />
           </div>
-          <div className="lg:col-span-3 mb-8">
+          <div className="lg:col-span-3 mb-24">
             <QuranReader />
           </div>
         </div>
