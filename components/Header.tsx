@@ -7,6 +7,7 @@ import Image from "next/image"
 import { useEffect, useState } from "react"
 import { usePathname } from "next/navigation"
 import MobileMenu from "./mobile-menu"
+import Nav from "./Nav"
 
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false)
@@ -57,7 +58,7 @@ export default function Header() {
             ),
           )}
         </div>
-        <div className="xl:hidden">
+        {/* <div className="xl:hidden">
           <Button
             type="default"
             shape="circle"
@@ -67,12 +68,13 @@ export default function Header() {
             className="bg-transparent border-white/60 hover:border-accent-hover"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           />
-        </div>
+        </div> */}
       </div>
-      <MobileMenu
+      {/* <MobileMenu
         isOpen={isMenuOpen}
         toggleMenu={() => setIsMenuOpen(!isMenuOpen)}
-      />
+      /> */}
+      <Nav />
     </nav>
   )
 }

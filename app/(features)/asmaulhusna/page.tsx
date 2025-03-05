@@ -112,7 +112,9 @@ export default function AsmaulHusnaPage() {
           </div>
         </div>
       </div>
-      <Footer />
+      <div className="hidden xl:block">
+        <Footer />
+      </div>
     </>
   )
 }

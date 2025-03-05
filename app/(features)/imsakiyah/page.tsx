@@ -25,7 +25,7 @@ const Imsakiyah = () => {
 
       <Header />
       <div className="container mx-auto px-4 py-8 relative z-10">
-        <div className="mt-24 bg-white bg-opacity-80 p-4 rounded-lg shadow-lg">
+        <div className="mt-24 bg-white bg-opacity-80 p-4 rounded-lg shadow-lg mb-20">
           <h2 className="text-3xl font-bold mb-4 text-gray-600 text-center">
             Jadwal Imsakiyah dan Shalat
           </h2>
@@ -33,7 +33,9 @@ const Imsakiyah = () => {
           <Schedule />
         </div>
       </div>
-      <Footer />
+      <div className="hidden xl:block">
+        <Footer />
+      </div>
     </div>
   )
 }

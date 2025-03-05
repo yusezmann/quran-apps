@@ -21,7 +21,9 @@ export default function Home() {
           </div>
         </div>
       </main>
-      <Footer />
+      <div className="hidden xl:block">
+        <Footer />
+      </div>
     </div>
   )
 }
