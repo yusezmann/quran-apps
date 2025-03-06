@@ -11,8 +11,9 @@ import {
   fetchTafsir,
   type Surah,
 } from "@/app/(features)/quran/services/quranService"
-import { Button, Modal, Select } from "antd"
+import { Button, Card, Modal, Select } from "antd"
 import { LeftOutlined, RightOutlined } from "@ant-design/icons"
+import { FaBookOpen } from "react-icons/fa"
 
 export default function QuranReader() {
   const currentSurah = useQuranStore((state) => state.currentSurah)
@@ -21,6 +22,7 @@ export default function QuranReader() {
   const [lastRead, setLastRead] = useState<{
     surah: number
     ayah: number
+    name: string
   } | null>(null)
 
   const [selectedQari, setSelectedQari] = useState("05")
@@ -49,8 +51,16 @@ export default function QuranReader() {
     setIsModalOpen(true)
   }
 
-  const setLastReadAyah = (surahNumber: number, ayahNumber: number) => {
-    const lastReadData = { surah: surahNumber, ayah: ayahNumber }
+  const setLastReadAyah = (
+    surahNumber: number,
+    ayahNumber: number,
+    nameSurah: string,
+  ) => {
+    const lastReadData = {
+      surah: surahNumber,
+      ayah: ayahNumber,
+      name: nameSurah,
+    }
     localStorage.setItem("lastRead", JSON.stringify(lastReadData))
     setLastRead(lastReadData)
   }
@@ -107,11 +117,9 @@ export default function QuranReader() {
   // Fungsi untuk scroll ke ayat yang dituju
   const scrollToAyah = (ayahNumber: number) => {
     const ayahElement = document.getElementById(`ayah-${ayahNumber}`)
-    console.log("Mencari elemen:", `ayah-${ayahNumber}`, ayahElement) // Debugging
 
     if (ayahElement) {
       ayahElement.scrollIntoView({ behavior: "smooth", block: "center" })
-      console.log("Berhasil scroll ke ayat:", ayahNumber)
     } else {
       console.log("Ayat tidak ditemukan!")
     }
@@ -160,7 +168,11 @@ export default function QuranReader() {
         setAudioError(null)
 
         // Simpan bacaan terakhir ke localStorage
-        const lastReadData = { surah: currentSurah, ayah: ayahNumber }
+        const lastReadData = {
+          surah: currentSurah,
+          ayah: ayahNumber,
+          name: surah?.namaLatin,
+        }
         localStorage.setItem("lastRead", JSON.stringify(lastReadData))
         setLastRead(lastReadData)
       } else {
@@ -260,6 +272,7 @@ export default function QuranReader() {
             disabled={!surah?.suratSelanjutnya}
           />
         </div>
+
         <div className="p-4 space-y-4 md:space-y-0 md:flex md:justify-between md:items-center">
           <div className="w-full md:w-auto flex flex-col">
             <label className="text-sm font-medium text-gray-600">Qari:</label>
@@ -277,15 +290,6 @@ export default function QuranReader() {
               placeholder="Pilih Qari"
             />
           </div>
-          <div className="w-full md:w-auto flex flex-col justify-end">
-            <Button
-              onClick={goToLastRead}
-              className="text-green-500 w-full md:w-auto xl:mt-6"
-              disabled={!lastRead}
-            >
-              Kembali ke Bacaan Terakhir
-            </Button>
-          </div>
         </div>
 
         <div className="p-4 block xl:hidden">
@@ -300,6 +304,28 @@ export default function QuranReader() {
             className="mb-4 w-full"
           />
         </div>
+
+        {lastRead && (
+          <div className="w-full md:w-auto flex flex-col justify-end px-4 py-4">
+            <Card
+              onClick={goToLastRead}
+              className="text-green-500 w-full md:w-auto xl:mt-6 cursor-pointer"
+            >
+              <div className="flex items-center gap-6">
+                <FaBookOpen className="h-8 w-8" />
+                <div className="flex flex-col">
+                  <span className="text-sm font italic">Terakhir Dibaca</span>
+                  <span className="text-sm font-bold">
+                    {lastRead?.name ?? "Tidak diketahui"}
+                  </span>
+                  <span className="text-sm font italic">
+                    Ayat {lastRead?.ayah}
+                  </span>
+                </div>
+              </div>
+            </Card>
+          </div>
+        )}
 
         {audioError && (
           <div
@@ -365,7 +391,11 @@ export default function QuranReader() {
                       type="default"
                       shape="circle"
                       onClick={() =>
-                        setLastReadAyah(currentSurah, ayat.nomorAyat)
+                        setLastReadAyah(
+                          currentSurah,
+                          ayat.nomorAyat,
+                          surah?.namaLatin,
+                        )
                       }
                     >
                       <Bookmark className="h-4 w-4" />
