@@ -19,7 +19,7 @@ const PrayerTimesList: React.FC<PrayerTimesListProps> = ({
       >
         <div className="flex flex-row flex-wrap gap-4 items-center justify-center">
           {Object.entries(prayerTimes.jadwal).map(([key, value]) => {
-            if (["tanggal", "date", "terbit", "dhuha", "imsak"].includes(key))
+            if (["tanggal", "date", "terbit", "dhuha"].includes(key))
               return null
             return (
               <div key={`mobile-${key}`} className="flex flex-col items-center">

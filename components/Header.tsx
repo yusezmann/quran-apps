@@ -29,18 +29,20 @@ export default function Header() {
       }`}
     >
       <div className="px-4 md:px-16 py-6 flex items-center justify-between">
-        <Link
-          href="/"
-          className="flex text-2xl font-bold items-center gap-2 hover:text-accent-hover"
-        >
-          <Image
-            src="/assets/logo/logo.png"
-            alt="logo"
-            width={50}
-            height={50}
-          />
-          <h2 className="text-white">Al Quran</h2>
-        </Link>
+        <div className="hidden xl:block">
+          <Link
+            href="/"
+            className="flex text-2xl font-bold items-center gap-2 hover:text-accent-hover"
+          >
+            <Image
+              src="/assets/logo/logo.png"
+              alt="logo"
+              width={50}
+              height={50}
+            />
+            <h2 className="text-white">Al Quran</h2>
+          </Link>
+        </div>
         <div className="hidden xl:flex gap-6">
           {["/", "/imsakiyah", "/doa", "/asmaulhusna", "/hadits"].map(
             (path, idx) => (
