@@ -29,10 +29,18 @@ const Doa = () => {
 
   const selectedDua = duas.find((d) => d.judul === selectedDuaId)
 
-  if (isLoading) return <Spin className="flex justify-center mt-4" />
+  if (isLoading)
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <Spin size="large" />
+      </div>
+    )
+
   if (error)
     return (
-      <Alert message="Error loading cities" type="error" className="mt-4" />
+      <div className="flex justify-center items-center h-screen">
+        <Alert message="Terjadi kesalahan!" type="error" showIcon />
+      </div>
     )
 
   return (
