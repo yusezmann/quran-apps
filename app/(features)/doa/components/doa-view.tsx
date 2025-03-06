@@ -9,11 +9,7 @@ interface DuaDetailsProps {
 
 export default function DuaDetails({ dua }: DuaDetailsProps) {
   if (!dua) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-lg text-white">No dua selected</p>
-      </div>
-    )
+    return null
   }
 
   return (

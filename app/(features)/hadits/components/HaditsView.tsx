@@ -5,11 +5,7 @@ const { Title, Paragraph } = Typography
 
 const HadithDetails: React.FC<HadithDetailsProps> = ({ hadith }) => {
   if (!hadith) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-lg text-white">No hadith selected</p>
-      </div>
-    )
+    return null
   }
 
   return (

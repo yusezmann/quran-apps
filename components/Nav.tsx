@@ -15,7 +15,11 @@ import {
 } from "react-icons/hi2"
 
 const links = [
-  { name: "imsakiyah", path: "/imsakiyah", icon: "/assets/icons/ruku.png" },
+  {
+    name: "imsakiyah",
+    path: "/imsakiyah",
+    icon: "/assets/icons/time-call.png",
+  },
   { name: "doa", path: "/doa", icon: "/assets/icons/praying.png" },
   { name: "home", path: "/", icon: "/assets/icons/home.png" },
   { name: "asmaulhusna", path: "/asmaulhusna", icon: "/assets/icons/99.png" },
@@ -50,7 +54,6 @@ const Nav = () => {
             </div>
 
             {/* icon */}
-            {/* <div>{link.icon}</div> */}
             <Image
               src={link.icon}
               alt={link.name}

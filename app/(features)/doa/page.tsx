@@ -56,7 +56,7 @@ const Doa = () => {
         />
       </div>
       <div className="px-2 xl:px-16 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mt-[65px] mb-20">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mt-[35px] mb-20">
           {/* Untuk mode mobile, tampilkan DuaDetails di atas */}
           <div className="md:hidden">
             <DuaDetails dua={selectedDua} />
