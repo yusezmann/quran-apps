@@ -27,7 +27,7 @@ export function Footer() {
           © {new Date().getFullYear()} Made with{" "}
           <span className="text-red-500">❤️</span> by{" "}
           <Link
-            href="https://github.com/yusezmann/quran-apps"
+            href="https://usman-nine.vercel.app/"
             target="_blank"
             rel="noopener noreferrer"
             className="text-green-300 hover:text-green-400 transition-colors"
