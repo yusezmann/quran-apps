@@ -54,18 +54,22 @@ export default function AsmaulHusnaPage() {
           />
         </div>
         <div className="container mx-auto relative z-10">
-          <div className="relative z-10 top-[40px] md:top-24">
+          <div className="relative z-10 top-[65px]  xl:top-[70px] ">
             <h1 className="text-2xl font-bold text-center text-white mb-6  p-2 rounded-md">
               Asmaul Husna ( اَسْمَاءُ الْحُسْنٰى )
             </h1>
           </div>
           <div className="relative z-10 flex justify-center items-center top-[200px] md:top-24">
-            <div className="w-full flex justify-center">
+            <div className="w-full flex justify-center cursor-pointer">
               <Swiper
                 spaceBetween={30}
-                slidesPerView={1}
+                slidesPerView={1} // Default untuk mobile
                 className="flex justify-center items-center"
                 onSlideChange={handleSlideChange}
+                breakpoints={{
+                  768: { slidesPerView: 2 }, // Tablet: 2 slide
+                  1024: { slidesPerView: 3 }, // Desktop: 3 slide
+                }}
               >
                 {husna.map((item) => (
                   <SwiperSlide
@@ -93,7 +97,7 @@ export default function AsmaulHusnaPage() {
                 ))}
 
                 <SliderBtns
-                  containerStyle="flex gap-2 absolute left-0 right-0 bottom-[calc(50%_-_22px)] xl:bottom-0 z-20 w-full justify-between xl:w-max xl:justify-none"
+                  containerStyle="flex gap-2 absolute left-0 right-0 bottom-[calc(50%_-_22px)] z-20 w-full justify-between"
                   btnStyle="bg-accent rounded-full hover:bg-accent-hover hover:text-white/60 text-primary text-[12px] w-[24px] h-[24px] flex justify-center items-center transition-all"
                 />
               </Swiper>
