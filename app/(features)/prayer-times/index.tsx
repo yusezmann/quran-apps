@@ -338,7 +338,7 @@ const PrayerTimeComponent = () => {
               className="object-cover brightness-50 rounded-b-2xl xl:rounded-b-none"
             />
 
-            <div className="absolute inset-0 flex flex-col justify-between p-4 xl:p-6 text-white z-10 mt-[45px]">
+            <div className="absolute inset-0 flex flex-col justify-between p-4 xl:p-6 text-white z-10 mt-[45px] xl:mt-[85px]">
               <div className="flex flex-wrap justify-between items-start xl:px-12 ">
                 <div className="flex flex-col min-w-0">
                   <h2 className="text-2xl font-bold flex">

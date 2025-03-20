@@ -19,7 +19,8 @@ const config: Config = {
     },
     fontFamily: {
       primary: ["var(--font-poppins)"],
-      secondary: ["var(--font-arabic)"],
+      secondary: ["var(--font-reem-kufi)"],
+      tertiary: ["var(--font-amiri)"],
     },
     extend: {
       colors: {

@@ -19,7 +19,10 @@ export default function DuaDetails({ dua }: DuaDetailsProps) {
 
         <div className="space-y-4">
           <div>
-            <Paragraph className="text-2xl font-secondary mt-8" dir="rtl">
+            <Paragraph
+              className="text-2xl font-tertiary mt-8 leading-loose"
+              dir="rtl"
+            >
               {dua.arab}
             </Paragraph>
           </div>

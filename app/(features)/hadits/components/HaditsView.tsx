@@ -14,7 +14,10 @@ const HadithDetails: React.FC<HadithDetailsProps> = ({ hadith }) => {
         <Title level={2}>Hadits {hadith.judul}</Title>
         <div className="space-y-4">
           <div>
-            <Paragraph className="text-2xl font-secondary mt-8" dir="rtl">
+            <Paragraph
+              className="text-2xl font-tertiary leading-loose mt-8"
+              dir="rtl"
+            >
               {hadith.arab}
             </Paragraph>
           </div>

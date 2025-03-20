@@ -411,7 +411,7 @@ export default function QuranReader() {
                   </Button>
                 </div>
               </div>
-              <p className="text-right text-gray-800 text-2xl mb-4 leading-loose">
+              <p className="text-right text-gray-800 text-2xl mb-4 font-tertiary leading-loose">
                 {ayat.teksArab}
               </p>
               <p className="text-sm text-yellow-600 mb-2 italic font-bold">

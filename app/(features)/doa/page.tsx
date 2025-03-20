@@ -46,17 +46,18 @@ const Doa = () => {
   return (
     <div className="min-h-screen">
       <Header />
-      <div className="absolute top-0 left-0 w-full h-[100vh] -z-10">
+      <div className="absolute inset-0 -z-10">
         <Image
           src="/assets/images/kaabah.jpg"
           alt="Kaabah"
-          layout="fill"
-          objectFit="cover"
-          className="brightness-50"
+          fill
+          sizes="100vw"
+          className="object-cover brightness-50 w-full h-full"
+          priority
         />
       </div>
       <div className="px-2 xl:px-16 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mt-[35px] mb-20">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mt-[35px] xl:mt-[85px] mb-20">
           {/* Untuk mode mobile, tampilkan DuaDetails di atas */}
           <div className="md:hidden">
             <DuaDetails dua={selectedDua} />

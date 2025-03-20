@@ -1,7 +1,6 @@
 import { Toaster } from "sonner"
 import type { Metadata } from "next"
-import localFont from "next/font/local"
-import { Poppins, Noto_Naskh_Arabic } from "next/font/google"
+import { Poppins, Scheherazade_New, Reem_Kufi } from "next/font/google"
 import "./globals.css"
 import { QueryProvider } from "@/components/providers/query-provider"
 
@@ -11,10 +10,16 @@ const poppins = Poppins({
   variable: "--font-poppins",
 })
 
-const notoNaskhArabic = Noto_Naskh_Arabic({
+const reemkufi = Reem_Kufi({
   subsets: ["arabic"],
   weight: ["400", "700"], // Pilih variasi font
-  variable: "--font-arabic", // Variabel untuk digunakan di CSS
+  variable: "--font-reem-kufi",
+})
+
+const amiriQuran = Scheherazade_New({
+  subsets: ["arabic"],
+  weight: ["400"],
+  variable: "--font-amiri",
 })
 
 export const metadata: Metadata = {
@@ -30,7 +35,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${poppins.variable} ${notoNaskhArabic.variable} bg-gray-100  dark:bg-[#1c1c22]`}
+        className={`${poppins.variable} ${reemkufi.variable} ${amiriQuran.variable} bg-gray-100  dark:bg-[#1c1c22]`}
       >
         <QueryProvider>{children}</QueryProvider>
         <Toaster />
