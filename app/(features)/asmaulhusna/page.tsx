@@ -72,21 +72,21 @@ export default function AsmaulHusnaPage() {
                     key={item.id}
                     className="flex flex-col items-center justify-center w-full"
                   >
-                    <h2 className="text-md font-bold text-white text-center mb-8">
+                    <h2 className="text-md font-bold text-white text-center mb-4">
                       {item.id}. {item.latin}
                     </h2>
                     <div className="flex justify-center">
                       <Card
                         key={item.id}
-                        className="w-[280px] h-[280px] xl:w-[350px] xl:h-[350px] flex flex-col items-center justify-center text-center shadow-lg bg-white/90 rounded-full"
+                        className="w-[280px] h-[280px] xl:w-[280px] xl:h-[280px] flex flex-col items-center justify-center text-center shadow-lg bg-white/90 rounded-full"
                         bordered
                       >
-                        <p className="text-[70px] xl:text-[100px] font-secondary font-bold mt-2 text-green-600 text-center">
+                        <p className="text-[70px] xl:text-[80px] font-secondary font-bold mt-2 text-green-600 text-center">
                           {item.arab}
                         </p>
                       </Card>
                     </div>
-                    <p className="text-white mt-1 italic  text-sm text-center mt-8">
+                    <p className="text-white italic  text-sm text-center mt-6">
                       {item.indo}
                     </p>
                   </SwiperSlide>
