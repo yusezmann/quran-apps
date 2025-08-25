@@ -1,19 +1,32 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useHusna } from "../asmaulhusna/hooks/useHusna"
 import { useHusnaStore } from "../asmaulhusna/store/husnaStore"
 import Header from "@/components/Header"
 import Image from "next/image"
-import { Alert, Card, Spin } from "antd"
+import { Alert, Spin } from "antd"
 import { Swiper, SwiperSlide } from "swiper/react"
+import { Navigation, Pagination, Autoplay } from "swiper/modules"
 import "swiper/css"
+import "swiper/css/navigation"
+import "swiper/css/pagination"
+import "./asmaulhusna.css"
 import SliderBtns from "./components/SliderBtns"
+import AsmaulHusnaCard from "./components/AsmaulHusnaCard"
+import AsmaulHusnaInfo from "./components/AsmaulHusnaInfo"
+import ProgressBar from "./components/ProgressBar"
+import QuickNavigation from "./components/QuickNavigation"
+import ReadingStats from "./components/ReadingStats"
+import MobileSliderControls from "./components/MobileSliderControls"
 import { Footer } from "@/components/footer"
 
 export default function AsmaulHusnaPage() {
   const { husna, setHusna } = useHusnaStore()
   const { data, error, isLoading } = useHusna()
+  const [currentSlide, setCurrentSlide] = useState(0)
+  const [swiperInstance, setSwiperInstance] = useState<any>(null)
+  const [isAutoplayActive, setIsAutoplayActive] = useState(true)
 
   useEffect(() => {
     if (data && data !== husna) {
@@ -23,89 +36,159 @@ export default function AsmaulHusnaPage() {
 
   if (isLoading)
     return (
-      <div className="flex justify-center items-center h-screen">
-        <Spin size="large" />
+      <div className="flex justify-center items-center h-screen bg-gradient-to-br from-green-900 to-blue-900">
+        <div className="text-center">
+          <Spin size="large" />
+          <p className="text-white mt-4 text-lg">Memuat Asmaul Husna...</p>
+        </div>
       </div>
     )
 
   if (error)
     return (
-      <div className="flex justify-center items-center h-screen">
-        <Alert message="Terjadi kesalahan!" type="error" showIcon />
+      <div className="flex justify-center items-center h-screen bg-gradient-to-br from-green-900 to-blue-900">
+        <Alert 
+          message="Terjadi kesalahan!" 
+          description="Gagal memuat data Asmaul Husna. Silakan coba lagi."
+          type="error" 
+          showIcon 
+          className="max-w-md"
+        />
       </div>
     )
 
-  const handleSlideChange = (swiper: { activeIndex: number }) => {
+  const handleSlideChange = (swiper: any) => {
     const currentIndex = swiper.activeIndex
-    console.log("Current slide index:", currentIndex)
+    setCurrentSlide(currentIndex)
+  }
+
+  const handleSlideTo = (index: number) => {
+    if (swiperInstance) {
+      swiperInstance.slideTo(index)
+    }
+  }
+
+  const toggleAutoplay = () => {
+    setIsAutoplayActive(!isAutoplayActive)
+    if (swiperInstance) {
+      if (isAutoplayActive) {
+        swiperInstance.autoplay.stop()
+      } else {
+        swiperInstance.autoplay.start()
+      }
+    }
   }
 
   return (
     <>
       <Header />
-      <div className="flex flex-col min-h-screen">
+      <ProgressBar currentSlide={currentSlide} totalSlides={husna.length} />
+      <div className="flex flex-col min-h-screen relative">
+        {/* Background Image dengan overlay */}
         <div className="absolute top-0 left-0 w-full h-full -z-10">
           <Image
             src="/assets/images/kaabah.jpg"
             alt="Kaabah"
             layout="fill"
             objectFit="cover"
-            className="brightness-50"
+            className="brightness-40"
+            priority
           />
+          {/* Overlay gradient */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70"></div>
         </div>
-        <div className="container mx-auto relative z-10">
-          <div className="relative z-10 top-[65px]  xl:top-[70px] ">
-            <h1 className="text-2xl font-bold text-center text-white mb-6  p-2 rounded-md">
-              Asmaul Husna ( اَسْمَاءُ الْحُسْنٰى )
-            </h1>
+
+        {/* Main Content */}
+        <div className="container mx-auto relative z-10 flex-1">
+          {/* Header Section */}
+          <div 
+            className="relative z-10 top-[65px] xl:top-[70px] text-center px-4"
+          >
+            {/* <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 drop-shadow-2xl">
+              Asmaul Husna
+            </h1> */}
+            <p className="text-xl md:text-2xl text-white/90 mb-2 drop-shadow-lg arabic-text-header">
+              اَسْمَاءُ الْحُسْنٰى
+            </p>
+            <p className="text-white/80 text-sm md:text-base max-w-2xl mx-auto leading-relaxed">
+              99 Nama Allah yang Maha Indah dan Agung
+            </p>
+            
+            {/* Decorative line */}
+            <div className="w-24 h-1 bg-gradient-to-r from-green-400 to-blue-500 mx-auto mt-6 rounded-full"></div>
           </div>
-          <div className="relative z-10 flex justify-center items-center top-[200px] md:top-24">
-            <div className="w-full flex justify-center cursor-pointer">
+
+          {/* Swiper Section */}
+          <div className="relative z-10 flex justify-center items-center top-[100px] md:top-24 lg:top-20">
+            <div className="w-full max-w-7xl px-4">
               <Swiper
                 spaceBetween={30}
-                slidesPerView={1} // Default untuk mobile
-                className="flex justify-center items-center"
+                slidesPerView={1}
+                centeredSlides={true}
+                loop={false}
+                navigation={false}
+                pagination={false}
+                autoplay={{
+                  delay: 5000,
+                  disableOnInteraction: false,
+                }}
+                modules={[Navigation, Pagination, Autoplay]}
+                className="asmaul-husna-swiper"
                 onSlideChange={handleSlideChange}
+                onSwiper={setSwiperInstance}
                 breakpoints={{
-                  768: { slidesPerView: 2 }, // Tablet: 2 slide
-                  1024: { slidesPerView: 3 }, // Desktop: 3 slide
+                  640: { slidesPerView: 1, spaceBetween: 20 },
+                  768: { slidesPerView: 1, spaceBetween: 30 },
+                  1024: { slidesPerView: 1, spaceBetween: 40 },
+                  1280: { slidesPerView: 1, spaceBetween: 50 },
                 }}
               >
-                {husna.map((item) => (
-                  <SwiperSlide
-                    key={item.id}
-                    className="flex flex-col items-center justify-center w-full"
-                  >
-                    <h2 className="text-md font-bold text-white text-center mb-4">
-                      {item.id}. {item.latin}
-                    </h2>
-                    <div className="flex justify-center">
-                      <Card
-                        key={item.id}
-                        className="w-[280px] h-[280px] xl:w-[280px] xl:h-[280px] flex flex-col items-center justify-center text-center shadow-lg bg-white/90 rounded-full"
-                        bordered
-                      >
-                        <p className="text-[70px] xl:text-[80px] font-secondary font-bold mt-2 text-green-600 text-center">
-                          {item.arab}
-                        </p>
-                      </Card>
-                    </div>
-                    <p className="text-white italic  text-sm text-center mt-6">
-                      {item.indo}
-                    </p>
+                {husna.map((item, index) => (
+                  <SwiperSlide key={item.id}>
+                    <AsmaulHusnaCard 
+                      item={item} 
+                      index={index} 
+                      isActive={index === currentSlide}
+                    />
                   </SwiperSlide>
                 ))}
 
-                <SliderBtns
-                  containerStyle="flex gap-2 absolute left-0 right-0 bottom-[calc(50%_-_22px)] z-20 w-full justify-between"
-                  btnStyle="bg-accent rounded-full hover:bg-accent-hover hover:text-white/60 text-primary text-[12px] w-[24px] h-[24px] flex justify-center items-center transition-all"
-                />
+                {/* Navigation Buttons - Desktop */}
+                <div className="hidden md:block">
+                  <SliderBtns
+                    containerStyle="flex gap-2 sm:gap-4 absolute left-2 right-2 sm:left-4 sm:right-4 top-1/2 -translate-y-1/2 z-20 w-auto justify-between pointer-events-none"
+                    btnStyle="bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 text-white text-lg w-10 h-10 sm:w-12 sm:h-12 flex justify-center items-center transition-all duration-300 pointer-events-auto border border-white/30 shadow-lg touch-manipulation"
+                    iconsStyle="text-lg sm:text-xl"
+                  />
+                </div>
+
+                {/* Mobile Controls */}
+                <div className="md:hidden">
+                  <MobileSliderControls 
+                    isAutoplayActive={isAutoplayActive}
+                    onToggleAutoplay={toggleAutoplay}
+                  />
+                </div>
               </Swiper>
+
             </div>
+          </div>
+
+          {/* Quick Navigation */}
+          <div className="mt-16 md:mt-28 space-y-8 md:space-y-12 pb-24 md:pb-32">
+            <QuickNavigation onNavigate={handleSlideTo} />
+
+            {/* Reading Stats */}
+            <ReadingStats currentSlide={currentSlide} totalSlides={husna.length} />
+
+            {/* Info Section */}
+            <AsmaulHusnaInfo currentSlide={currentSlide} totalSlides={husna.length} />
           </div>
         </div>
       </div>
-      <div className="hidden xl:block absolute bottom-0 w-full">
+
+      {/* Footer */}
+      <div className="hidden sm:block bottom-0 w-full">
         <Footer />
       </div>
     </>

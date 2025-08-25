@@ -1,6 +1,6 @@
 import { Toaster } from "sonner"
 import type { Metadata } from "next"
-import { Poppins, Scheherazade_New, Reem_Kufi } from "next/font/google"
+import { Poppins, Scheherazade_New, Reem_Kufi, Noto_Nastaliq_Urdu, Noto_Sans_Arabic, Amiri, Cairo } from "next/font/google"
 import "./globals.css"
 import { QueryProvider } from "@/components/providers/query-provider"
 
@@ -12,7 +12,7 @@ const poppins = Poppins({
 
 const reemkufi = Reem_Kufi({
   subsets: ["arabic"],
-  weight: ["400", "700"], // Pilih variasi font
+  weight: ["400", "700"],
   variable: "--font-reem-kufi",
 })
 
@@ -20,6 +20,33 @@ const amiriQuran = Scheherazade_New({
   subsets: ["arabic"],
   weight: ["400"],
   variable: "--font-amiri",
+})
+
+// Font khusus untuk Asmaul Husna - lebih jelas dan mudah dibaca
+const notoNastaliq = Noto_Nastaliq_Urdu({
+  subsets: ["arabic"],
+  weight: ["400"],
+  variable: "--font-noto-nastaliq",
+})
+
+const notoSansArabic = Noto_Sans_Arabic({
+  subsets: ["arabic"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-noto-sans-arabic",
+})
+
+// Font Amiri - sangat bagus untuk teks Arab, lebih jelas dan mudah dibaca
+const amiri = Amiri({
+  subsets: ["arabic"],
+  weight: ["400", "700"],
+  variable: "--font-amiri-husna",
+})
+
+// Font Cairo - sangat jelas dan mudah dibaca untuk teks Arab
+const cairo = Cairo({
+  subsets: ["arabic"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-cairo",
 })
 
 export const metadata: Metadata = {
@@ -35,7 +62,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${poppins.variable} ${reemkufi.variable} ${amiriQuran.variable} bg-gray-100  dark:bg-[#1c1c22]`}
+        className={`${poppins.variable} ${reemkufi.variable} ${amiriQuran.variable} ${notoNastaliq.variable} ${notoSansArabic.variable} ${amiri.variable} ${cairo.variable} bg-gray-100 dark:bg-[#1c1c22]`}
       >
         <QueryProvider>{children}</QueryProvider>
         <Toaster />

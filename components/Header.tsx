@@ -22,6 +22,11 @@ export default function Header() {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
+  // Close mobile menu when route changes
+  useEffect(() => {
+    setIsMenuOpen(false)
+  }, [pathname])
+
   return (
     <nav
       className={`fixed w-full z-50 transition-colors duration-300 ${
@@ -29,6 +34,7 @@ export default function Header() {
       }`}
     >
       <div className="px-4 md:px-16 py-6 flex items-center justify-between">
+        {/* Logo - Hidden on mobile */}
         <div className="hidden xl:block">
           <Link
             href="/"
@@ -43,6 +49,24 @@ export default function Header() {
             <h2 className="text-white">Al Quran</h2>
           </Link>
         </div>
+
+        {/* Mobile Logo */}
+        <div className="xl:hidden">
+          <Link
+            href="/"
+            className="flex text-xl font-bold items-center gap-2"
+          >
+            <Image
+              src="/assets/logo/logo.png"
+              alt="logo"
+              width={40}
+              height={40}
+            />
+            <h2 className="text-white">Al Quran</h2>
+          </Link>
+        </div>
+
+        {/* Desktop Navigation */}
         <div className="hidden xl:flex gap-6">
           {["/", "/imsakiyah", "/doa", "/asmaulhusna", "/hadits"].map(
             (path, idx) => (
@@ -60,23 +84,31 @@ export default function Header() {
             ),
           )}
         </div>
-        {/* <div className="xl:hidden">
+
+        {/* Mobile Menu Button */}
+        {/* <div className="sm:hidden">
           <Button
             type="default"
             shape="circle"
             icon={
-              <MenuOutlined className="text-white/60 hover:text-accent-hover" />
+              <MenuOutlined className="text-white/80 hover:text-white transition-colors duration-200" />
             }
-            className="bg-transparent border-white/60 hover:border-accent-hover"
+            className="bg-white/20 border-white/30 hover:bg-white/30 hover:border-white/50 transition-all duration-200 backdrop-blur-sm"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           />
         </div> */}
       </div>
+
+      {/* Mobile Menu */}
       {/* <MobileMenu
         isOpen={isMenuOpen}
         toggleMenu={() => setIsMenuOpen(!isMenuOpen)}
       /> */}
-      <Nav />
+      
+      {/* Desktop Navigation Bar */}
+      <div className="sm:hidden">
+        <Nav />
+      </div>
     </nav>
   )
 }

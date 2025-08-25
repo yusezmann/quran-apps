@@ -12,10 +12,7 @@ import { City } from "../interfaces/imsakiyah.interface"
 import CitySelector from "./CitySelector"
 import { jsPDF } from "jspdf"
 import autoTable from "jspdf-autotable"
-import { Download } from "lucide-react"
-import { BiSolidFilePdf } from "react-icons/bi"
-import { VscFile, VscFilePdf } from "react-icons/vsc"
-import { BsFiletypeCsv } from "react-icons/bs"
+import { VscFilePdf } from "react-icons/vsc"
 
 const { Option } = Select
 
