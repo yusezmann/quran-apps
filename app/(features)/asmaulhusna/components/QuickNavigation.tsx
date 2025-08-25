@@ -29,7 +29,7 @@ const QuickNavigation = ({ onNavigate }: QuickNavigationProps) => {
   )
 
   return (
-    <div className="relative z-10 text-center px-4 mb-6 md:mb-8 mt-20">
+    <div className="relative z-10 text-center px-4 mb-6 md:mb-8">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="bg-white/20 backdrop-blur-sm rounded-full px-4 md:px-6 py-2 md:py-3 text-white font-medium border border-white/30 hover:bg-white/30 hover:scale-105 transition-all duration-300 text-sm md:text-base"
