@@ -1,18 +1,18 @@
 "use client"
 
 import type React from "react"
-import { Table, Select, Button } from "antd"
+import { Table, Select, Button, Card, Spin, Alert, Empty } from "antd"
 import { useScheduleStore } from "../store/scheduleStore"
 import { useSchedule } from "../hooks/useSchedule"
 import { format, isValid, setMonth, parse, parseISO } from "date-fns"
 import { id } from "date-fns/locale"
 import { toHijri } from "hijri-converter"
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { City } from "../interfaces/imsakiyah.interface"
 import CitySelector from "./CitySelector"
 import { jsPDF } from "jspdf"
 import autoTable from "jspdf-autotable"
-import { VscFilePdf } from "react-icons/vsc"
+import { Download, Calendar, Clock, MapPin, RefreshCw } from "lucide-react"
 
 const { Option } = Select
 
@@ -46,6 +46,17 @@ const months = [
   "Desember",
 ]
 
+const prayerNames = [
+  { key: "imsak", label: "Imsak", icon: "🌙" },
+  { key: "subuh", label: "Subuh", icon: "🌅" },
+  { key: "terbit", label: "Terbit", icon: "☀️" },
+  { key: "dhuha", label: "Dhuha", icon: "🌤️" },
+  { key: "dzuhur", label: "Dzuhur", icon: "☀️" },
+  { key: "ashar", label: "Ashar", icon: "🌆" },
+  { key: "maghrib", label: "Maghrib", icon: "🌇" },
+  { key: "isya", label: "Isya", icon: "🌙" },
+]
+
 const Schedule: React.FC = () => {
   const { currentDate } = useScheduleStore()
   const [selectedCity, setSelectedCity] = useState<City>({
@@ -57,6 +68,45 @@ const Schedule: React.FC = () => {
   )
 
   const years = new Date().getFullYear()
+
+  const selectedDate = setMonth(new Date(currentDate), selectedMonth)
+  const {
+    data: schedule,
+    isLoading,
+    error,
+    refetch,
+  } = useSchedule(selectedCity.id, selectedDate)
+
+  const today = new Date()
+
+  const parseDate = (dateString: string): Date => {
+    if (!dateString) return new Date(NaN)
+
+    // Hapus nama hari jika ada (format "Sabtu, 01/03/2025")
+    const cleanedDate = dateString.replace(/^[A-Za-z]+,\s*/, "")
+
+    // Jika formatnya YYYY-MM-DD, gunakan parseISO
+    if (cleanedDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      return parseISO(cleanedDate)
+    }
+
+    const formats = ["d/M/yyyy", "dd/MM/yyyy", "yyyy-MM-dd"]
+    for (const formatStr of formats) {
+      const date = parse(cleanedDate, formatStr, new Date())
+      if (isValid(date)) return date
+    }
+
+    return new Date(NaN)
+  }
+
+  // Find today's schedule
+  const todaySchedule = useMemo(() => {
+    if (!schedule?.jadwal) return null
+    return schedule.jadwal.find((day) => {
+      const date = parseDate(day.tanggal)
+      return isValid(date) && date.toDateString() === today.toDateString()
+    })
+  }, [schedule, today])
 
   const downloadPDF = () => {
     if (!schedule?.jadwal) return
@@ -97,44 +147,13 @@ const Schedule: React.FC = () => {
     )
   }
 
-  const selectedDate = setMonth(new Date(currentDate), selectedMonth)
-  const {
-    data: schedule,
-    isLoading,
-    error,
-  } = useSchedule(selectedCity.id, selectedDate)
-
-  if (isLoading) return <div>Loading schedule...</div>
-  if (error) return <div>Error loading schedule</div>
-
-  const today = new Date()
-
-  const parseDate = (dateString: string): Date => {
-    if (!dateString) return new Date(NaN)
-
-    // Hapus nama hari jika ada (format "Sabtu, 01/03/2025")
-    const cleanedDate = dateString.replace(/^[A-Za-z]+,\s*/, "")
-
-    // Jika formatnya YYYY-MM-DD, gunakan parseISO
-    if (cleanedDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
-      return parseISO(cleanedDate)
-    }
-
-    const formats = ["d/M/yyyy", "dd/MM/yyyy", "yyyy-MM-dd"] // Tambahkan kemungkinan format lain
-    for (const formatStr of formats) {
-      const date = parse(cleanedDate, formatStr, new Date())
-      if (isValid(date)) return date
-    }
-
-    console.warn("Invalid Date:", cleanedDate) // Debugging jika gagal
-    return new Date(NaN)
-  }
-
   const columns = [
     {
       title: "Hari",
       dataIndex: "tanggal",
       key: "hari",
+      width: 100,
+      fixed: "left" as const,
       render: (text: string) => {
         const date = parseDate(text)
         return isValid(date)
@@ -146,6 +165,7 @@ const Schedule: React.FC = () => {
       title: "Tanggal",
       dataIndex: "tanggal",
       key: "tanggal",
+      width: 150,
       render: (text: string) => {
         const date = parseDate(text)
         return isValid(date)
@@ -154,9 +174,10 @@ const Schedule: React.FC = () => {
       },
     },
     {
-      title: "Tanggal Hijriah",
+      title: "Hijriah",
       dataIndex: "tanggal",
       key: "tanggal_hijriah",
+      width: 150,
       render: (text: string) => {
         const date = parseDate(text)
         if (isValid(date)) {
@@ -172,14 +193,14 @@ const Schedule: React.FC = () => {
         return "Invalid Date"
       },
     },
-    { title: "Imsak", dataIndex: "imsak", key: "imsak" },
-    { title: "Subuh", dataIndex: "subuh", key: "subuh" },
-    { title: "Terbit", dataIndex: "terbit", key: "terbit" },
-    { title: "Dhuha", dataIndex: "dhuha", key: "dhuha" },
-    { title: "Dzuhur", dataIndex: "dzuhur", key: "dzuhur" },
-    { title: "Ashar", dataIndex: "ashar", key: "ashar" },
-    { title: "Maghrib", dataIndex: "maghrib", key: "maghrib" },
-    { title: "Isya", dataIndex: "isya", key: "isya" },
+    { title: "Imsak", dataIndex: "imsak", key: "imsak", width: 80 },
+    { title: "Subuh", dataIndex: "subuh", key: "subuh", width: 80 },
+    { title: "Terbit", dataIndex: "terbit", key: "terbit", width: 80 },
+    { title: "Dhuha", dataIndex: "dhuha", key: "dhuha", width: 80 },
+    { title: "Dzuhur", dataIndex: "dzuhur", key: "dzuhur", width: 80 },
+    { title: "Ashar", dataIndex: "ashar", key: "ashar", width: 80 },
+    { title: "Maghrib", dataIndex: "maghrib", key: "maghrib", width: 80 },
+    { title: "Isya", dataIndex: "isya", key: "isya", width: 80 },
   ]
 
   const dataSource =
@@ -190,53 +211,161 @@ const Schedule: React.FC = () => {
       return {
         ...day,
         key: day.tanggal,
-        className: isToday ? "bg-green-300" : "",
+        isToday,
       }
     }) || []
 
+  if (isLoading)
+    return (
+      <div className="flex justify-center items-center py-12">
+        <div className="flex flex-col items-center gap-4">
+          <Spin size="large" />
+          <p className="text-gray-500">Memuat jadwal shalat...</p>
+        </div>
+      </div>
+    )
+
+  if (error)
+    return (
+      <div className="py-4">
+        <Alert
+          message="Gagal Memuat Jadwal"
+          description="Tidak dapat memuat jadwal shalat. Silakan coba lagi."
+          type="error"
+          showIcon
+          action={
+            <Button
+              size="small"
+              danger
+              icon={<RefreshCw className="w-4 h-4" />}
+              onClick={() => refetch()}
+            >
+              Coba Lagi
+            </Button>
+          }
+        />
+      </div>
+    )
+
+  if (!schedule?.jadwal || schedule.jadwal.length === 0)
+    return (
+      <Empty
+        description="Jadwal tidak tersedia"
+        image={Empty.PRESENTED_IMAGE_SIMPLE}
+      />
+    )
+
   return (
-    <div style={{ overflowX: "auto" }}>
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-2 xl:gap-4 mb-4">
-        <div className="flex flex-col">
-          <label htmlFor="city-selector" className="font-light text-gray-400">
+    <div className="space-y-6">
+      {/* Filters Section */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <div className="flex flex-col gap-2">
+          <label
+            htmlFor="city-selector"
+            className="text-sm font-medium text-gray-700 flex items-center gap-2"
+          >
+            <MapPin className="w-4 h-4" />
             Pilih Kota
           </label>
           <CitySelector onCityChange={setSelectedCity} />
         </div>
-        <div className="flex flex-col">
-          <label htmlFor="month-selector" className="font-light text-gray-400">
+        <div className="flex flex-col gap-2">
+          <label
+            htmlFor="month-selector"
+            className="text-sm font-medium text-gray-700 flex items-center gap-2"
+          >
+            <Calendar className="w-4 h-4" />
             Pilih Bulan
           </label>
           <Select
             id="month-selector"
             value={selectedMonth}
             onChange={setSelectedMonth}
-            className="w-full md:w-1/2"
-            aria-label="Pilih Bulan"
+            className="w-full"
+            size="large"
+            suffixIcon={<Calendar className="w-4 h-4 text-gray-400" />}
           >
             {months.map((monthName, index) => (
               <Option key={index} value={index}>
-                {monthName}
+                {monthName} {years}
               </Option>
             ))}
           </Select>
         </div>
       </div>
-      <div
-        className="float-right border-none bg-none text-red-600 mb-4 cursor-pointer"
-        onClick={downloadPDF}
-      >
-        <VscFilePdf className="h-10 w-10" />
+
+      {/* Today's Schedule Card */}
+      {todaySchedule && (
+        <Card
+          className="bg-gradient-to-r from-green-50 via-emerald-50 to-green-50 border-2 border-green-200 shadow-lg"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="bg-green-500 p-2 rounded-lg">
+                <Clock className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-800">
+                  Jadwal Hari Ini
+                </h3>
+                <p className="text-sm text-gray-600">
+                  {format(today, "EEEE, d MMMM yyyy", { locale: id })}
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-3">
+            {prayerNames.map((prayer) => (
+              <div
+                key={prayer.key}
+                className="bg-white rounded-lg p-3 text-center border border-gray-200 hover:shadow-md transition-shadow"
+              >
+                <div className="text-2xl mb-1">{prayer.icon}</div>
+                <div className="text-xs font-medium text-gray-600 mb-1">
+                  {prayer.label}
+                </div>
+                <div className="text-sm font-bold text-gray-800">
+                  {todaySchedule[prayer.key as keyof typeof todaySchedule]}
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {/* Download Button */}
+      <div className="flex justify-end">
+        <Button
+          type="primary"
+          size="large"
+          icon={<Download className="w-4 h-4" />}
+          onClick={downloadPDF}
+          className="bg-green-600 hover:bg-green-700 border-green-600 hover:border-green-700"
+        >
+          Unduh PDF
+        </Button>
       </div>
 
-      <Table
-        columns={columns}
-        dataSource={dataSource}
-        rowClassName={(record) => record.className}
-        bordered
-        pagination={false}
-        scroll={{ x: "max-content" }}
-      />
+      {/* Schedule Table */}
+      <div className="overflow-x-auto">
+        <Table
+          columns={columns}
+          dataSource={dataSource}
+          rowClassName={(record) =>
+            record.isToday
+              ? "bg-gradient-to-r from-green-100 to-emerald-100 font-semibold"
+              : ""
+          }
+          bordered
+          pagination={{
+            pageSize: 31,
+            showSizeChanger: false,
+            showTotal: (total) => `Total ${total} hari`,
+          }}
+          scroll={{ x: "max-content" }}
+          size="middle"
+        />
+      </div>
     </div>
   )
 }
