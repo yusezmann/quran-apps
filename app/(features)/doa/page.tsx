@@ -50,15 +50,36 @@ const Doa = () => {
 
   if (error)
     return (
-      <div className="flex justify-center items-center h-screen bg-gradient-to-br from-red-50 to-red-100">
-        <div className="max-w-md w-full mx-4">
-          <Alert 
-            message="Terjadi Kesalahan!" 
-            description="Gagal memuat data doa. Silakan refresh halaman atau coba lagi nanti."
-            type="error" 
-            showIcon 
-            className="shadow-lg rounded-lg border-0"
+      <div className="min-h-screen relative">
+        <Header />
+        <div className="absolute inset-0 -z-10">
+          <Image
+            src="/assets/images/kaabah.jpg"
+            alt="Kaabah"
+            fill
+            sizes="100vw"
+            className="object-cover w-full h-full brightness-50"
+            priority
           />
+        </div>
+        <div className="flex justify-center items-center min-h-screen relative z-10 px-4">
+          <div className="max-w-md w-full">
+            <Alert 
+              message="Terjadi Kesalahan!" 
+              description="Gagal memuat data doa. Silakan refresh halaman atau coba lagi nanti."
+              type="error" 
+              showIcon 
+              className="shadow-xl rounded-2xl border-0 bg-white/95 backdrop-blur-sm"
+              action={
+                <button
+                  onClick={() => window.location.reload()}
+                  className="mt-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
+                >
+                  Refresh Halaman
+                </button>
+              }
+            />
+          </div>
         </div>
       </div>
     )
@@ -133,12 +154,15 @@ const Doa = () => {
         <Footer />
       </div>
 
-      {/* Floating stats */}
-      <div className="fixed bottom-6 right-6 z-50 hidden xl:block">
-        <div className="bg-white/90 backdrop-blur-sm rounded-full px-4 py-2 shadow-lg border border-white/20">
-          <div className="flex items-center text-sm">
-            <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
-            <span className="text-gray-700 font-medium">{duas.length} Doa Tersedia</span>
+      {/* Floating stats with smooth animation */}
+      <div className="fixed bottom-6 right-6 z-50 hidden xl:block animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="bg-white/95 backdrop-blur-md rounded-full px-5 py-3 shadow-xl border border-white/30 hover:shadow-2xl transition-all duration-300 hover:scale-105">
+          <div className="flex items-center gap-3 text-sm">
+            <div className="relative">
+              <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+              <div className="absolute inset-0 w-3 h-3 bg-green-500 rounded-full animate-ping opacity-75"></div>
+            </div>
+            <span className="text-gray-700 font-semibold">{duas.length} Doa Tersedia</span>
           </div>
         </div>
       </div>

@@ -52,7 +52,7 @@ export default function DuaDetails({ dua }: DuaDetailsProps) {
 
         <div className="space-y-8 px-2">
           {/* Teks Arab dengan design elegant yang konsisten */}
-          <div className="bg-gradient-to-r from-gray-50 to-slate-50 p-6 xl:p-10 rounded-2xl border border-gray-200 shadow-sm">
+          <div className="bg-gradient-to-r from-gray-50 to-slate-50 p-8 rounded-2xl border border-gray-200 shadow-sm">
             <div className="text-right">
               <div className="mb-4">
                 <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
@@ -60,11 +60,11 @@ export default function DuaDetails({ dua }: DuaDetailsProps) {
                 </span>
               </div>
               <Paragraph
-                className="!text-3xl xl:!text-4xl !leading-loose xl:!leading-[3.5] !text-gray-800 !mb-0 font-tertiary"
+                className="!text-3xl xl:!text-4xl !leading-loose !text-gray-800 !mb-0 font-tertiary"
                 dir="rtl"
                 style={{ 
-                  textShadow: '0 1px 2px rgba(0,0,0,0.1)',
-                  wordSpacing: '0.2em'
+                  lineHeight: '2.5',
+                  textShadow: '0 1px 2px rgba(0,0,0,0.1)'
                 }}
               >
                 {dua.arab}

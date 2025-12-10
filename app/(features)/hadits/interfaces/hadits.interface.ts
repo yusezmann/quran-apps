@@ -14,7 +14,8 @@ export interface HadithStore {
 export interface HadithListProps {
   hadiths: Hadith[]
   selectedHadithId: string | null
-  setSelectedHadithId: (id: string) => void
+  setSelectedHadithId: (id: string | null) => void
+  isMobile?: boolean
 }
 
 export interface HadithDetailsProps {

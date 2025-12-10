@@ -1,5 +1,5 @@
-import { useState } from "react"
-import { BookOpen, Search, Star, Bookmark, ChevronDown } from "lucide-react"
+import { useState, useEffect, useRef } from "react"
+import { BookOpen, Search, Star, Bookmark, ChevronDown, X } from "lucide-react"
 import { Badge } from "antd"
 import { DuaListProps } from "../interfaces/doa.interface"
 
@@ -15,10 +15,55 @@ const DuaList: React.FC<ExtendedDuaListProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState("")
   const [isMobileExpanded, setIsMobileExpanded] = useState(false)
+  const [focusedIndex, setFocusedIndex] = useState(-1)
+  const searchInputRef = useRef<HTMLInputElement>(null)
+  const listRef = useRef<HTMLDivElement>(null)
 
   const filteredDuas = duas.filter((dua: any) =>
     dua.judul.toLowerCase().includes(searchTerm.toLowerCase()),
   )
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!isMobile && filteredDuas.length > 0) {
+        if (e.key === "ArrowDown") {
+          e.preventDefault()
+          setFocusedIndex((prev) => 
+            prev < filteredDuas.length - 1 ? prev + 1 : 0
+          )
+        } else if (e.key === "ArrowUp") {
+          e.preventDefault()
+          setFocusedIndex((prev) => 
+            prev > 0 ? prev - 1 : filteredDuas.length - 1
+          )
+        } else if (e.key === "Enter" && focusedIndex >= 0) {
+          e.preventDefault()
+          setSelectedDuaId(filteredDuas[focusedIndex].judul)
+          setFocusedIndex(-1)
+        } else if (e.key === "Escape") {
+          setFocusedIndex(-1)
+          searchInputRef.current?.blur()
+        } else if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+          e.preventDefault()
+          searchInputRef.current?.focus()
+        }
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [filteredDuas, focusedIndex, isMobile, setSelectedDuaId])
+
+  // Scroll focused item into view
+  useEffect(() => {
+    if (focusedIndex >= 0 && listRef.current) {
+      const focusedElement = listRef.current.children[focusedIndex] as HTMLElement
+      if (focusedElement) {
+        focusedElement.scrollIntoView({ behavior: "smooth", block: "nearest" })
+      }
+    }
+  }, [focusedIndex])
 
   const selectedDua = duas.find(dua => dua.judul === selectedDuaId)
 
@@ -59,29 +104,49 @@ const DuaList: React.FC<ExtendedDuaListProps> = ({
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
+                ref={searchInputRef}
                 type="text"
                 placeholder="Cari doa..."
-                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 bg-white shadow-sm transition-all duration-200 text-gray-700 placeholder-gray-400"
+                className="w-full pl-10 pr-10 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 bg-white shadow-sm transition-all duration-200 text-gray-700 placeholder-gray-400"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value)
+                  setFocusedIndex(-1)
+                }}
               />
+              {searchTerm && (
+                <button
+                  onClick={() => {
+                    setSearchTerm("")
+                    searchInputRef.current?.focus()
+                  }}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  aria-label="Clear search"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
             </div>
           </div>
 
           {/* Mobile Doa List */}
           <div className="max-h-60 overflow-y-auto custom-scrollbar">
             {filteredDuas.length > 0 ? (
-              <div className="divide-y divide-gray-100">
+              <div ref={listRef} className="divide-y divide-gray-100">
                 {filteredDuas.map((dua: any, index: number) => (
                   <div
                     key={dua.judul}
                     className={`cursor-pointer transition-all duration-200 hover:bg-green-50 ${
                       selectedDuaId === dua.judul ? "bg-green-100 border-r-4 border-green-500" : ""
+                    } ${
+                      focusedIndex === index ? "ring-2 ring-green-500 ring-inset" : ""
                     }`}
                     onClick={() => {
                       setSelectedDuaId(dua.judul)
                       setIsMobileExpanded(false)
                     }}
+                    onMouseEnter={() => setFocusedIndex(index)}
+                    onMouseLeave={() => setFocusedIndex(-1)}
                   >
                     <div className="p-3 flex items-center">
                       <div className={`flex items-center justify-center w-8 h-8 rounded-lg mr-3 text-xs font-semibold ${
@@ -163,24 +228,45 @@ const DuaList: React.FC<ExtendedDuaListProps> = ({
         <div className="relative group">
           <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 transition-colors group-focus-within:text-green-500" />
           <input
+            ref={searchInputRef}
             type="text"
             placeholder="Cari doa yang diinginkan..."
-            className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 bg-white shadow-sm transition-all duration-200 text-gray-700 placeholder-gray-400 hover:shadow-md"
+            className="w-full pl-12 pr-20 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 bg-white shadow-sm transition-all duration-200 text-gray-700 placeholder-gray-400 hover:shadow-md"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setSearchTerm(e.target.value)
+              setFocusedIndex(-1)
+            }}
           />
+          {searchTerm && (
+            <button
+              onClick={() => {
+                setSearchTerm("")
+                searchInputRef.current?.focus()
+              }}
+              className="absolute right-12 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+              aria-label="Clear search"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
           <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
             <kbd className="px-2 py-1 text-xs text-gray-500 bg-gray-100 border border-gray-200 rounded">
               ⌘K
             </kbd>
           </div>
         </div>
+        {searchTerm && (
+          <div className="mt-2 text-xs text-gray-500">
+            {filteredDuas.length} doa ditemukan
+          </div>
+        )}
       </div>
 
       {/* List dengan design premium */}
       <div className="overflow-y-auto max-h-[calc(100vh-280px)] custom-scrollbar">
         {filteredDuas.length > 0 ? (
-          <div className="divide-y divide-gray-100">
+          <div ref={listRef} className="divide-y divide-gray-100">
             {filteredDuas.map((dua: any, index: number) => (
               <div
                 key={dua.judul}
@@ -188,8 +274,18 @@ const DuaList: React.FC<ExtendedDuaListProps> = ({
                   selectedDuaId === dua.judul 
                     ? "bg-gradient-to-r from-green-50 to-emerald-50 border-r-4 border-green-500 shadow-sm" 
                     : ""
+                } ${
+                  focusedIndex === index ? "ring-2 ring-green-500 ring-inset bg-green-50/30" : ""
                 }`}
-                onClick={() => setSelectedDuaId(dua.judul)}
+                onClick={() => {
+                  setSelectedDuaId(dua.judul)
+                  setFocusedIndex(-1)
+                }}
+                onMouseEnter={() => setFocusedIndex(index)}
+                onMouseLeave={() => setFocusedIndex(-1)}
+                tabIndex={0}
+                role="button"
+                aria-label={`Pilih doa: ${dua.judul}`}
               >
                 <div className="p-5 flex items-center relative">
                   {/* Bookmark indicator untuk item terpilih */}
