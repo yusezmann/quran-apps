@@ -128,7 +128,6 @@ const HadithDetails: React.FC<HadithDetailsProps> = ({ hadith }) => {
                 dir="rtl"
                 style={{
                   textShadow: "0 1px 2px rgba(0,0,0,0.1)",
-                  wordSpacing: "0.2em",
                 }}
               >
                 {hadith.arab}

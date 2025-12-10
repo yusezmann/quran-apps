@@ -60,11 +60,11 @@ export default function DuaDetails({ dua }: DuaDetailsProps) {
                 </span>
               </div>
               <Paragraph
-                className="!text-3xl xl:!text-4xl !leading-loose !text-gray-800 !mb-0 font-tertiary"
+                className="!text-3xl xl:!text-4xl !leading-[2.4] xl:!leading-[3.0] !text-gray-800 !mb-0 font-tertiary"
                 dir="rtl"
-                style={{ 
-                  lineHeight: '2.5',
-                  textShadow: '0 1px 2px rgba(0,0,0,0.1)'
+                style={{
+                  letterSpacing: "0.015em",
+                  textShadow: "0 1px 2px rgba(0,0,0,0.1)",
                 }}
               >
                 {dua.arab}
