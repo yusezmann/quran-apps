@@ -60,10 +60,9 @@ export default function DuaDetails({ dua }: DuaDetailsProps) {
                 </span>
               </div>
               <Paragraph
-                className="!text-3xl xl:!text-4xl !leading-loose !text-gray-800 !mb-0 font-arabic"
+                className="!text-3xl xl:!text-4xl !leading-loose !text-gray-800 !mb-0 font-tertiary"
                 dir="rtl"
                 style={{ 
-                  fontFamily: '"Amiri", "Scheherazade New", "Times New Roman", serif',
                   lineHeight: '2.5',
                   textShadow: '0 1px 2px rgba(0,0,0,0.1)'
                 }}
@@ -100,7 +99,7 @@ export default function DuaDetails({ dua }: DuaDetailsProps) {
           {/* Footer dengan doa penutup yang konsisten */}
           <div className="bg-gradient-to-r from-emerald-50 via-green-50 to-emerald-50 p-6 rounded-2xl border border-emerald-200 text-center">
             <div className="space-y-3">
-              <Paragraph className="!text-lg !text-emerald-700 !mb-0 font-arabic" style={{ fontFamily: '"Amiri", serif' }}>
+              <Paragraph className="!text-lg !text-emerald-700 !mb-0 font-tertiary" dir="rtl">
                 آمِيْنَ يَا رَبَّ الْعَالَمِيْنَ
               </Paragraph>
               <Paragraph className="!text-sm !text-emerald-600 !mb-0 font-medium">
