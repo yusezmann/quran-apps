@@ -1,9 +1,11 @@
 export interface Dua {
   id: string
-  judul: string // Changed from 'doa' to 'judul'
-  arab: string
+  judul: string
+  doa: string // Teks Arab dari API
   latin: string
-  indo: string
+  artinya: string // Terjemahan Indonesia dari API
+  ayat?: string
+  source?: string
 }
 
 export interface ApiResponse {
