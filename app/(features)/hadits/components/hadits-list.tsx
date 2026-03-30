@@ -86,7 +86,7 @@ const HadithList: React.FC<HadithListProps> = ({
                 <BookOpen className="w-4 h-4" />
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-sm truncate">
+                <h3 className="font-semibold text-sm line-clamp-2 leading-snug">
                   {selectedHadith
                     ? `Hadits ${selectedHadith.no}: ${selectedHadith.judul}`
                     : "Pilih Hadits"}
