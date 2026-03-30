@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react"
 import { BookOpen, Search, Star, Bookmark, ChevronDown, X } from "lucide-react"
-import { Badge } from "antd"
-import { DuaListProps } from "../interfaces/doa.interface"
+import { Dua, DuaListProps } from "../interfaces/doa.interface"
 
 interface ExtendedDuaListProps extends DuaListProps {
   isMobile?: boolean
@@ -19,9 +18,16 @@ const DuaList: React.FC<ExtendedDuaListProps> = ({
   const searchInputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
 
-  const filteredDuas = duas.filter((dua: any) =>
+  const filteredDuas = duas.filter((dua: Dua) =>
     dua.judul.toLowerCase().includes(searchTerm.toLowerCase()),
   )
+
+  // Auto-expand mobile list when nothing is selected yet (first load)
+  useEffect(() => {
+    if (isMobile && !selectedDuaId && duas.length === 0) {
+      setIsMobileExpanded(true)
+    }
+  }, [isMobile, selectedDuaId, duas.length])
 
   // Keyboard navigation
   useEffect(() => {
@@ -29,12 +35,12 @@ const DuaList: React.FC<ExtendedDuaListProps> = ({
       if (!isMobile && filteredDuas.length > 0) {
         if (e.key === "ArrowDown") {
           e.preventDefault()
-          setFocusedIndex((prev) => 
+          setFocusedIndex((prev) =>
             prev < filteredDuas.length - 1 ? prev + 1 : 0
           )
         } else if (e.key === "ArrowUp") {
           e.preventDefault()
-          setFocusedIndex((prev) => 
+          setFocusedIndex((prev) =>
             prev > 0 ? prev - 1 : filteredDuas.length - 1
           )
         } else if (e.key === "Enter" && focusedIndex >= 0) {
@@ -71,7 +77,7 @@ const DuaList: React.FC<ExtendedDuaListProps> = ({
     return (
       <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg overflow-hidden relative z-10 border border-white/20">
         {/* Mobile Collapsed Header */}
-        <div 
+        <div
           className="bg-gradient-to-r from-green-600 via-green-600 to-emerald-600 text-white p-4 cursor-pointer"
           onClick={() => setIsMobileExpanded(!isMobileExpanded)}
         >
@@ -133,7 +139,7 @@ const DuaList: React.FC<ExtendedDuaListProps> = ({
           <div className="max-h-60 overflow-y-auto custom-scrollbar">
             {filteredDuas.length > 0 ? (
               <div ref={listRef} className="divide-y divide-gray-100">
-                {filteredDuas.map((dua: any, index: number) => (
+                {filteredDuas.map((dua: Dua, index: number) => (
                   <div
                     key={dua.judul}
                     className={`cursor-pointer transition-all duration-200 hover:bg-green-50 ${
@@ -206,7 +212,7 @@ const DuaList: React.FC<ExtendedDuaListProps> = ({
       <div className="bg-gradient-to-r from-green-600 via-green-600 to-emerald-600 text-white p-6 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-10 translate-x-10"></div>
         <div className="absolute bottom-0 left-0 w-16 h-16 bg-white/5 rounded-full translate-y-8 -translate-x-8"></div>
-        
+
         <div className="relative z-10 flex items-center justify-between">
           <div className="flex items-center">
             <div className="bg-white/20 backdrop-blur-sm p-3 rounded-xl mr-4 border border-white/30">
@@ -267,12 +273,12 @@ const DuaList: React.FC<ExtendedDuaListProps> = ({
       <div className="overflow-y-auto max-h-[calc(100vh-280px)] custom-scrollbar">
         {filteredDuas.length > 0 ? (
           <div ref={listRef} className="divide-y divide-gray-100">
-            {filteredDuas.map((dua: any, index: number) => (
+            {filteredDuas.map((dua: Dua, index: number) => (
               <div
                 key={dua.judul}
                 className={`cursor-pointer group relative transition-all duration-200 hover:bg-gradient-to-r hover:from-green-50/50 hover:to-emerald-50/50 ${
-                  selectedDuaId === dua.judul 
-                    ? "bg-gradient-to-r from-green-50 to-emerald-50 border-r-4 border-green-500 shadow-sm" 
+                  selectedDuaId === dua.judul
+                    ? "bg-gradient-to-r from-green-50 to-emerald-50 border-r-4 border-green-500 shadow-sm"
                     : ""
                 } ${
                   focusedIndex === index ? "ring-2 ring-green-500 ring-inset bg-green-50/30" : ""
@@ -294,7 +300,7 @@ const DuaList: React.FC<ExtendedDuaListProps> = ({
                       <Bookmark className="w-4 h-4 text-green-600 fill-current" />
                     </div>
                   )}
-                  
+
                   {/* Number badge dengan design premium */}
                   <div className={`relative flex items-center justify-center w-12 h-12 rounded-2xl mr-4 transition-all duration-200 ${
                     selectedDuaId === dua.judul
@@ -310,11 +316,11 @@ const DuaList: React.FC<ExtendedDuaListProps> = ({
                       </div>
                     )}
                   </div>
-                  
+
                   <div className="flex-1 min-w-0 ml-2">
                     <h3 className={`font-semibold transition-colors duration-200 truncate ${
-                      selectedDuaId === dua.judul 
-                        ? "text-green-800" 
+                      selectedDuaId === dua.judul
+                        ? "text-green-800"
                         : "text-gray-800 group-hover:text-green-700"
                     }`}>
                       {dua.judul || "Doa Tanpa Judul"}
@@ -327,8 +333,8 @@ const DuaList: React.FC<ExtendedDuaListProps> = ({
 
                   {/* Arrow indicator dengan animasi */}
                   <div className={`transition-all duration-200 ${
-                    selectedDuaId === dua.judul 
-                      ? "text-green-600 transform translate-x-1 scale-110" 
+                    selectedDuaId === dua.judul
+                      ? "text-green-600 transform translate-x-1 scale-110"
                       : "text-gray-300 group-hover:text-green-500 group-hover:transform group-hover:translate-x-1"
                   }`}>
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

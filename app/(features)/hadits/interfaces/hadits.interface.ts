@@ -5,10 +5,19 @@ export interface Hadith {
   judul: string
 }
 
-// Zustand store untuk menyimpan data hadits
+export interface ApiResponse {
+  code: number
+  message: string
+  data: Hadith[]
+}
+
 export interface HadithStore {
   hadiths: Hadith[]
+  selectedHadithId: string | null
+  isLoading: boolean
   setHadiths: (hadiths: Hadith[]) => void
+  setSelectedHadithId: (id: string | null) => void
+  setIsLoading: (isLoading: boolean) => void
 }
 
 export interface HadithListProps {

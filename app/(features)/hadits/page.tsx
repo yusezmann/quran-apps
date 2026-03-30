@@ -1,68 +1,46 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect } from "react"
 import Header from "@/components/Header"
 import Image from "next/image"
-import { useHadithStore } from "./store/haditsStore"
+import { useHadithStore } from "./store/hadits-store"
 import { useQuery } from "@tanstack/react-query"
-import { Hadith } from "./interfaces/hadits.interface"
 import { fetchHadiths } from "./services/hadits.service"
-import HadithList from "./components/HaditsList"
-import HadithDetails from "./components/HaditsView"
+import HadithList from "./components/hadits-list"
+import HadithDetails from "./components/hadits-view"
 import { Footer } from "@/components/footer"
-import { Alert, Spin, Button } from "antd"
-import { BookOpen, RefreshCw } from "lucide-react"
+import { Alert, Spin } from "antd"
+import { FaMosque } from "react-icons/fa"
 
 const Hadits = () => {
-  const { setHadiths } = useHadithStore()
-  const [selectedHadithId, setSelectedHadithId] = useState<string | null>(null)
+  const { setHadiths, setIsLoading, hadiths, selectedHadithId, setSelectedHadithId } =
+    useHadithStore()
 
-  const {
-    data: hadiths,
-    isLoading,
-    error,
-    refetch,
-  } = useQuery<Hadith[], Error>({
+  const { data, isLoading, error } = useQuery({
     queryKey: ["hadiths"],
     queryFn: fetchHadiths,
-    retry: 2,
   })
 
   useEffect(() => {
-    if (hadiths) {
-      setHadiths(hadiths)
-      // Auto select first hadith if none selected
-      if (!selectedHadithId && hadiths.length > 0) {
-        setSelectedHadithId(hadiths[0].no)
+    setIsLoading(isLoading)
+    if (data?.data) {
+      setHadiths(data.data)
+      if (!selectedHadithId && data.data.length > 0) {
+        setSelectedHadithId(data.data[0].no)
       }
     }
-  }, [hadiths, setHadiths, selectedHadithId])
+  }, [data, isLoading, setHadiths, setIsLoading, selectedHadithId, setSelectedHadithId])
 
-  const selectedHadith = hadiths?.find(
-    (hadith) => hadith.no === selectedHadithId,
-  )
+  const selectedHadith = hadiths.find((h) => h.no === selectedHadithId)
 
   if (isLoading)
     return (
-      <div className="min-h-screen relative">
-        <Header />
-        <div className="absolute inset-0 -z-10">
-          <Image
-            src="/assets/images/kaabah.jpg"
-            alt="Kaabah"
-            fill
-            sizes="100vw"
-            className="object-cover brightness-50"
-            priority
-          />
-        </div>
-        <div className="flex flex-col justify-center items-center min-h-screen relative z-10">
-          <div className="bg-white/95 backdrop-blur-sm p-8 rounded-2xl shadow-xl">
-            <div className="flex flex-col items-center">
-              <BookOpen className="w-12 h-12 text-green-600 mb-4 animate-pulse" />
-              <Spin size="large" />
-              <p className="mt-4 text-gray-600 font-medium">Memuat kumpulan hadits...</p>
-            </div>
+      <div className="flex flex-col justify-center items-center h-screen bg-gradient-to-br from-green-50 to-emerald-100">
+        <div className="bg-white p-8 rounded-2xl shadow-xl">
+          <div className="flex flex-col items-center">
+            <FaMosque className="w-12 h-12 text-green-600 mb-4 animate-pulse" />
+            <Spin size="large" />
+            <p className="mt-4 text-gray-600 font-medium">Memuat kumpulan hadits...</p>
           </div>
         </div>
       </div>
@@ -78,7 +56,7 @@ const Hadits = () => {
             alt="Kaabah"
             fill
             sizes="100vw"
-            className="object-cover brightness-50"
+            className="object-cover w-full h-full brightness-50"
             priority
           />
         </div>
@@ -91,14 +69,12 @@ const Hadits = () => {
               showIcon
               className="shadow-xl rounded-2xl border-0 bg-white/95 backdrop-blur-sm"
               action={
-                <Button
-                  size="small"
-                  danger
-                  icon={<RefreshCw className="w-4 h-4" />}
-                  onClick={() => refetch()}
+                <button
+                  onClick={() => window.location.reload()}
+                  className="mt-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
                 >
-                  Coba Lagi
-                </Button>
+                  Refresh Halaman
+                </button>
               }
             />
           </div>
@@ -109,7 +85,7 @@ const Hadits = () => {
   return (
     <div className="min-h-screen relative">
       <Header />
-      
+
       {/* Background dengan overlay gradient */}
       <div className="absolute inset-0 -z-10">
         <Image
@@ -120,7 +96,6 @@ const Hadits = () => {
           className="object-cover w-full h-full"
           priority
         />
-        {/* Gradient overlay untuk readability */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/40"></div>
         <div className="absolute inset-0 bg-gradient-to-r from-green-900/10 to-emerald-900/10"></div>
       </div>
@@ -141,11 +116,11 @@ const Hadits = () => {
       <div className="relative z-10 px-4 xl:px-16 pb-20">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            
-            {/* Mobile: Hadith List di atas */}
+
+            {/* Mobile: Hadith List + Details */}
             <div className="lg:hidden col-span-1 space-y-4">
               <HadithList
-                hadiths={hadiths || []}
+                hadiths={hadiths}
                 selectedHadithId={selectedHadithId}
                 setSelectedHadithId={setSelectedHadithId}
                 isMobile={true}
@@ -156,14 +131,14 @@ const Hadits = () => {
             {/* Desktop: Hadith List */}
             <div className="hidden lg:block lg:col-span-4 xl:col-span-3">
               <HadithList
-                hadiths={hadiths || []}
+                hadiths={hadiths}
                 selectedHadithId={selectedHadithId}
                 setSelectedHadithId={setSelectedHadithId}
                 isMobile={false}
               />
             </div>
 
-            {/* Desktop: Hadith Details di samping */}
+            {/* Desktop: Hadith Details */}
             <div className="hidden lg:block lg:col-span-8 xl:col-span-9">
               <HadithDetails hadith={selectedHadith} />
             </div>
@@ -184,7 +159,7 @@ const Hadits = () => {
               <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
               <div className="absolute inset-0 w-3 h-3 bg-green-500 rounded-full animate-ping opacity-75"></div>
             </div>
-            <span className="text-gray-700 font-semibold">{hadiths?.length || 0} Hadits Tersedia</span>
+            <span className="text-gray-700 font-semibold">{hadiths.length} Hadits Tersedia</span>
           </div>
         </div>
       </div>

@@ -63,6 +63,19 @@ export default function DuaDetails({ dua }: DuaDetailsProps) {
             </Paragraph>
           </div>
 
+          {/* Latin / Transliterasi */}
+          {dua.latin && (
+            <div className="bg-gray-50 rounded-xl px-5 sm:px-7 py-4 sm:py-5 border border-gray-100">
+              <div className="flex items-center mb-2 sm:mb-3">
+                <div className="w-1 h-5 sm:h-6 bg-amber-500 rounded-full mr-3"></div>
+                <span className="text-amber-700 font-semibold text-sm sm:text-base">Latin</span>
+              </div>
+              <Paragraph className="!text-gray-600 !text-sm sm:!text-base !leading-[1.8] sm:!leading-[2.0] !mb-0 italic pl-2">
+                {dua.latin}
+              </Paragraph>
+            </div>
+          )}
+
           {/* Divider */}
           <div className="flex items-center py-4">
             <div className="flex-1 h-px bg-gray-200"></div>
@@ -82,6 +95,28 @@ export default function DuaDetails({ dua }: DuaDetailsProps) {
               "{dua.artinya}"
             </Paragraph>
           </div>
+
+          {/* Sumber / Referensi */}
+          {(dua.ayat || dua.source) && (
+            <div className="flex flex-wrap gap-2 pt-2">
+              {dua.ayat && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700 border border-emerald-200">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                  </svg>
+                  {dua.ayat}
+                </span>
+              )}
+              {dua.source && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 border border-blue-200">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  {dua.source}
+                </span>
+              )}
+            </div>
+          )}
 
           {/* Footer Aamiin */}
           <div className="bg-gradient-to-r from-emerald-50 to-green-50 px-5 sm:px-8 py-5 sm:py-6 rounded-xl text-center border border-emerald-100 mt-4">
