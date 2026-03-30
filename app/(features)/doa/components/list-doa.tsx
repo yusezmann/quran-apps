@@ -87,7 +87,7 @@ const DuaList: React.FC<ExtendedDuaListProps> = ({
                 <BookOpen className="w-4 h-4" />
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-sm truncate">
+                <h3 className="font-semibold text-sm line-clamp-2 leading-snug">
                   {selectedDua ? selectedDua.judul : "Pilih Doa"}
                 </h3>
                 <p className="text-white/80 text-xs">
@@ -318,7 +318,7 @@ const DuaList: React.FC<ExtendedDuaListProps> = ({
                   </div>
 
                   <div className="flex-1 min-w-0 ml-2">
-                    <h3 className={`font-semibold transition-colors duration-200 truncate ${
+                    <h3 className={`font-semibold transition-colors duration-200 line-clamp-2 leading-snug ${
                       selectedDuaId === dua.judul
                         ? "text-green-800"
                         : "text-gray-800 group-hover:text-green-700"
