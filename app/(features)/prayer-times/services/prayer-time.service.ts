@@ -47,28 +47,44 @@ export async function getPrayerTimesByCoords(
   lon: number,
 ): Promise<City | null> {
   try {
-    // 1. Ambil nama kota dari Nominatim (OpenStreetMap)
     const res = await fetch(
       `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`,
       { headers: { 'User-Agent': 'QuranApps/1.0' } }
     )
     const data = await res.json()
-    const locationName = data.address.city || data.address.town || data.address.village || data.address.county
     
-    if (!locationName) return null;
+    if (!data || !data.address) return null;
 
-    // 2. Bersihkan nama kota (misal: "South Jakarta" -> "Jakarta")
-    const cleanName = locationName.replace(/city|kota|kabupaten|south|north|east|west|selatan|utara|timur|barat|pusat/gi, "").trim()
-    
-    // 3. Cari kota di MyQuran API
-    const cities = await getCities(cleanName)
-    if (cities && cities.length > 0) {
-      return cities[0]
+    // Kumpulkan kandidat nama daerah tingkat Kota/Kabupaten
+    const candidates = [
+      data.address.city,
+      data.address.regency,
+      data.address.county,
+      data.address.state_district,
+      data.address.municipality,
+      data.address.city_district,
+      data.address.town
+    ].filter(Boolean);
+
+    for (const candidate of candidates) {
+      // Bersihkan nama kota (misal: "Kota Jakarta Selatan" -> "Jakarta")
+      const cleanName = candidate.replace(/city|kota|kabupaten|south|north|east|west|selatan|utara|timur|barat|pusat/gi, "").trim();
+      
+      if (cleanName.length > 2) {
+        try {
+          const cities = await getCities(cleanName);
+          if (cities && cities.length > 0) {
+            return cities[0];
+          }
+        } catch (e) {
+          console.error(`Gagal mencari kota untuk kandidat: ${cleanName}`);
+        }
+      }
     }
     
-    return null
+    return null;
   } catch (error) {
-    console.error("Reverse geocoding error:", error)
-    return null
+    console.error("Reverse geocoding error:", error);
+    return null;
   }
 }
