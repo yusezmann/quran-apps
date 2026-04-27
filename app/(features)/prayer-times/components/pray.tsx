@@ -3,6 +3,7 @@
 import {
   getCities,
   getPrayerTimes,
+  getPrayerTimesByCoords,
 } from "@/app/(features)/prayer-times/services/prayer-time.service"
 import {
   City,
