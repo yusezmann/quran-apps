@@ -14,6 +14,7 @@ import {
   getPrayerTimesByCoords,
 } from "@/app/(features)/prayer-times/services/prayer-time.service"
 import { toast } from "sonner"
+import { getCurrentLocation } from "@/lib/geolocation"
 
 const LocationSelector: React.FC<LocationSelectorProps> = ({
   isOpen,
@@ -43,80 +44,50 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
     }
   }
 
-  const detectLocation = () => {
-    if (!navigator.geolocation) {
-      toast.error("Geolocation tidak didukung di browser Anda")
-      return
-    }
-
+  const detectLocation = async () => {
     setIsDetectingLocation(true)
 
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords
-        if (latitude && longitude) {
-          toast.success(
-            `Lokasi berhasil dideteksi: (${latitude}, ${longitude})`,
+    try {
+      const position = await getCurrentLocation()
+      const { latitude, longitude } = position
+      
+      if (latitude && longitude) {
+        toast.success(
+          `Lokasi berhasil dideteksi: (${latitude}, ${longitude})`,
+        )
+
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_LOCATION_API_URL}/reverse?lat=${latitude}&lon=${longitude}&format=json`,
+        )
+        const data = await response.json()
+        const locationName =
+          data.address.city ||
+          data.address.town ||
+          data.address.village ||
+          data.address.county
+
+        if (locationName) {
+          const results = await getCities(
+            locationName.replace(/city/gi, ""),
           )
 
-          try {
-            const response = await fetch(
-              `${process.env.NEXT_PUBLIC_LOCATION_API_URL}/reverse?lat=${latitude}&lon=${longitude}&format=json`,
-            )
-            const data = await response.json()
-            const locationName =
-              data.address.city ||
-              data.address.town ||
-              data.address.village ||
-              data.address.county
-
-            if (locationName) {
-              const results = await getCities(
-                locationName.replace(/city/gi, ""),
-              )
-
-              if (results && results.length > 0) {
-                setSearchResults(results || [])
-              } else {
-                toast.error("Kota tidak ditemukan pada API")
-              }
-            } else {
-              toast.error("Nama kota tidak ditemukan dari koordinat")
-            }
-          } catch (error) {
-            console.error("Gagal mendapatkan daftar kota:", error)
-            toast.error("Gagal mendapatkan daftar kota dari koordinat")
+          if (results && results.length > 0) {
+            setSearchResults(results || [])
+          } else {
+            toast.error("Kota tidak ditemukan pada API")
           }
         } else {
-          toast.error("Gagal mendeteksi lokasi: koordinat tidak valid")
+          toast.error("Nama kota tidak ditemukan dari koordinat")
         }
-        setIsDetectingLocation(false)
-      },
-      (error) => {
-        console.error("Geolocation error:", error)
-        let errorMessage = "Gagal mendapatkan lokasi"
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            errorMessage += ": Izin akses lokasi ditolak"
-            break
-          case error.POSITION_UNAVAILABLE:
-            errorMessage += ": Informasi lokasi tidak tersedia"
-            break
-          case error.TIMEOUT:
-            errorMessage += ": Waktu permintaan lokasi habis"
-            break
-          default:
-            errorMessage += ": " + error.message
-        }
-        toast.error(errorMessage)
-        setIsDetectingLocation(false)
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 20000,
-        maximumAge: 300000,
-      },
-    )
+      } else {
+        toast.error("Gagal mendeteksi lokasi: koordinat tidak valid")
+      }
+    } catch (error: any) {
+      console.error("Geolocation error:", error)
+      toast.error("Gagal mendapatkan lokasi: " + (error.message || "Error tidak diketahui"))
+    } finally {
+      setIsDetectingLocation(false)
+    }
   }
 
   return (

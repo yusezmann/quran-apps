@@ -22,7 +22,7 @@ import AdzanSettings from "../adzan/components/AdzanSetting"
 import CountdownTest from "./components/Countdown"
 import Marquee from "react-fast-marquee"
 import AdhanNotification from "../adzan/components/AdzanNotification"
-
+import { getCurrentLocation } from "@/lib/geolocation"
 const PRAYER_METHODS = [
   { id: "kemenag", name: "Kemenag", params: { subuh: 20, isya: 18 } },
   { id: "mwl", name: "Muslim World League", params: { subuh: 18, isya: 17 } },
@@ -131,69 +131,39 @@ const PrayerTimeComponent = () => {
     setSearchResults([])
   }
 
-  const detectLocation = () => {
-    if (!navigator.geolocation) {
-      toast.error("Geolocation tidak didukung di browser Anda")
-      return
-    }
-
+  const detectLocation = async () => {
     setIsDetectingLocation(true)
 
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords
-        if (latitude && longitude) {
-          toast.success(
-            `Lokasi berhasil dideteksi: (${latitude}, ${longitude})`,
-          )
+    try {
+      const position = await getCurrentLocation()
+      const { latitude, longitude } = position
+      
+      if (latitude && longitude) {
+        toast.success(
+          `Lokasi berhasil dideteksi: (${latitude}, ${longitude})`,
+        )
 
-          try {
-            const cityId = await getPrayerTimesByCoords(latitude, longitude)
-            if (cityId) {
-              const cities = await getCities(cityId)
-              if (cities && cities.length > 0) {
-                setSearchResults(cities)
-                handleCitySelect(cities[0])
-              } else {
-                toast.error("Kota tidak ditemukan pada API")
-              }
-            } else {
-              toast.error("Gagal mendapatkan ID kota dari koordinat")
-            }
-          } catch (error) {
-            console.error("Gagal mendapatkan daftar kota:", error)
-            toast.error("Gagal mendapatkan daftar kota dari koordinat")
+        const cityId = await getPrayerTimesByCoords(latitude, longitude)
+        if (cityId) {
+          const cities = await getCities(cityId)
+          if (cities && cities.length > 0) {
+            setSearchResults(cities)
+            handleCitySelect(cities[0])
+          } else {
+            toast.error("Kota tidak ditemukan pada API")
           }
         } else {
-          toast.error("Gagal mendeteksi lokasi: koordinat tidak valid")
+          toast.error("Gagal mendapatkan ID kota dari koordinat")
         }
-        setIsDetectingLocation(false)
-      },
-      (error) => {
-        console.error("Geolocation error:", error)
-        let errorMessage = "Gagal mendapatkan lokasi"
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            errorMessage += ": Izin akses lokasi ditolak"
-            break
-          case error.POSITION_UNAVAILABLE:
-            errorMessage += ": Informasi lokasi tidak tersedia"
-            break
-          case error.TIMEOUT:
-            errorMessage += ": Waktu permintaan lokasi habis"
-            break
-          default:
-            errorMessage += ": " + error.message
-        }
-        toast.error(errorMessage)
-        setIsDetectingLocation(false)
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 20000,
-        maximumAge: 300000,
-      },
-    )
+      } else {
+        toast.error("Gagal mendeteksi lokasi: koordinat tidak valid")
+      }
+    } catch (error: any) {
+      console.error("Geolocation error:", error)
+      toast.error("Gagal mendapatkan lokasi: " + (error.message || "Error tidak diketahui"))
+    } finally {
+      setIsDetectingLocation(false)
+    }
   }
 
   // Fungsi untuk memainkan suara adzan
