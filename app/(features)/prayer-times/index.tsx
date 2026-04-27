@@ -143,17 +143,12 @@ const PrayerTimeComponent = () => {
           `Lokasi berhasil dideteksi: (${latitude}, ${longitude})`,
         )
 
-        const cityId = await getPrayerTimesByCoords(latitude, longitude)
-        if (cityId) {
-          const cities = await getCities(cityId)
-          if (cities && cities.length > 0) {
-            setSearchResults(cities)
-            handleCitySelect(cities[0])
-          } else {
-            toast.error("Kota tidak ditemukan pada API")
-          }
+        const city = await getPrayerTimesByCoords(latitude, longitude)
+        if (city) {
+          setSearchResults([city])
+          handleCitySelect(city)
         } else {
-          toast.error("Gagal mendapatkan ID kota dari koordinat")
+          toast.error("Kota tidak ditemukan pada API")
         }
       } else {
         toast.error("Gagal mendeteksi lokasi: koordinat tidak valid")

@@ -45,10 +45,30 @@ export async function getCities(search: string): Promise<City[]> {
 export async function getPrayerTimesByCoords(
   lat: number,
   lon: number,
-): Promise<string> {
-  const res = await fetch(
-    `${PRAYER_API_BASE}/sholat/kota/koordinat/${lat}/${lon}`,
-  )
-  const data = await res.json()
-  return data.data.id
+): Promise<City | null> {
+  try {
+    // 1. Ambil nama kota dari Nominatim (OpenStreetMap)
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`,
+      { headers: { 'User-Agent': 'QuranApps/1.0' } }
+    )
+    const data = await res.json()
+    const locationName = data.address.city || data.address.town || data.address.village || data.address.county
+    
+    if (!locationName) return null;
+
+    // 2. Bersihkan nama kota (misal: "South Jakarta" -> "Jakarta")
+    const cleanName = locationName.replace(/city|kota|kabupaten|south|north|east|west|selatan|utara|timur|barat|pusat/gi, "").trim()
+    
+    // 3. Cari kota di MyQuran API
+    const cities = await getCities(cleanName)
+    if (cities && cities.length > 0) {
+      return cities[0]
+    }
+    
+    return null
+  } catch (error) {
+    console.error("Reverse geocoding error:", error)
+    return null
+  }
 }

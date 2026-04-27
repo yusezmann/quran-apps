@@ -131,28 +131,11 @@ const PrayerTimeComponent = () => {
           `Lokasi berhasil dideteksi: (${latitude}, ${longitude})`,
         )
 
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_LOCATION_API_URL}/reverse?lat=${latitude}&lon=${longitude}&format=json`,
-        )
-        const data = await response.json()
-        const locationName =
-          data.address.city ||
-          data.address.town ||
-          data.address.village ||
-          data.address.county
-
-        if (locationName) {
-          const results = await getCities(
-            locationName.replace(/city/gi, ""),
-          )
-
-          if (results && results.length > 0) {
-            setSearchResults(results || [])
-          } else {
-            toast.error("Kota tidak ditemukan pada API")
-          }
+        const city = await getPrayerTimesByCoords(latitude, longitude)
+        if (city) {
+          setSearchResults([city])
         } else {
-          toast.error("Nama kota tidak ditemukan dari koordinat")
+          toast.error("Kota tidak ditemukan pada API")
         }
       } else {
         toast.error("Gagal mendeteksi lokasi: koordinat tidak valid")
