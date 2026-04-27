@@ -8,10 +8,11 @@ import type { City } from "../interfaces/imsakiyah.interface"
 import { MapPin, RefreshCw } from "lucide-react"
 
 type CityProps = {
+  value?: string
   onCityChange: (city: City) => void
 }
 
-const CitySelector: React.FC<CityProps> = ({ onCityChange }) => {
+const CitySelector: React.FC<CityProps> = ({ value, onCityChange }) => {
   const {
     data: cities,
     isLoading,
@@ -58,6 +59,7 @@ const CitySelector: React.FC<CityProps> = ({ onCityChange }) => {
   return (
     <div className="w-full">
       <Select
+        value={value}
         showSearch
         className="w-full"
         placeholder="Cari atau pilih kota..."

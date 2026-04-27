@@ -13,7 +13,10 @@ import CitySelector from "./CitySelector"
 import QiblaCompass from "./QiblaCompass"
 import { jsPDF } from "jspdf"
 import autoTable from "jspdf-autotable"
-import { Download, Calendar, Clock, MapPin, RefreshCw } from "lucide-react"
+import { Download, Calendar, Clock, MapPin, RefreshCw, Compass } from "lucide-react"
+import { getCurrentLocation } from "@/lib/geolocation"
+import { getPrayerTimesByCoords } from "@/app/(features)/prayer-times/services/prayer-time.service"
+import { toast } from "sonner"
 
 const { Option } = Select
 
@@ -67,6 +70,30 @@ const Schedule: React.FC = () => {
   const [selectedMonth, setSelectedMonth] = useState<number>(
     new Date().getMonth(),
   )
+  const [isDetectingLocation, setIsDetectingLocation] = useState(false)
+
+  const detectLocation = async () => {
+    setIsDetectingLocation(true)
+    try {
+      const position = await getCurrentLocation()
+      if (position.latitude && position.longitude) {
+        toast.success(`Lokasi didapatkan. Mencari kota terdekat...`)
+        const city = await getPrayerTimesByCoords(position.latitude, position.longitude)
+        if (city) {
+          setSelectedCity(city)
+          toast.success(`Berhasil! Lokasi diatur ke ${city.lokasi}`)
+        } else {
+          toast.error("Kota Anda tidak ditemukan di database.")
+        }
+      } else {
+        toast.error("Gagal mendeteksi lokasi.")
+      }
+    } catch (error: any) {
+      toast.error("Gagal mendapatkan lokasi: " + (error.message || "Error tidak diketahui"))
+    } finally {
+      setIsDetectingLocation(false)
+    }
+  }
 
   const years = new Date().getFullYear()
 
@@ -261,14 +288,26 @@ const Schedule: React.FC = () => {
       {/* Filters Section */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         <div className="flex flex-col gap-2">
-          <label
-            htmlFor="city-selector"
-            className="text-sm font-medium text-gray-700 flex items-center gap-2"
-          >
-            <MapPin className="w-4 h-4" />
-            Pilih Kota
-          </label>
-          <CitySelector onCityChange={setSelectedCity} />
+          <div className="flex items-center justify-between">
+            <label
+              htmlFor="city-selector"
+              className="text-sm font-medium text-gray-700 flex items-center gap-2"
+            >
+              <MapPin className="w-4 h-4" />
+              Pilih Kota
+            </label>
+            <Button 
+              type="text" 
+              size="small" 
+              className="text-green-600 flex items-center gap-1 hover:text-green-700 p-0"
+              onClick={detectLocation}
+              loading={isDetectingLocation}
+            >
+              {!isDetectingLocation && <Compass className="w-4 h-4" />}
+              Deteksi Lokasi
+            </Button>
+          </div>
+          <CitySelector value={selectedCity.id} onCityChange={setSelectedCity} />
         </div>
         <div className="flex flex-col gap-2">
           <label
