@@ -10,6 +10,7 @@ import { toHijri } from "hijri-converter"
 import { useState, useMemo } from "react"
 import { City } from "../interfaces/imsakiyah.interface"
 import CitySelector from "./CitySelector"
+import QiblaCompass from "./QiblaCompass"
 import { jsPDF } from "jspdf"
 import autoTable from "jspdf-autotable"
 import { Download, Calendar, Clock, MapPin, RefreshCw } from "lucide-react"
@@ -294,41 +295,13 @@ const Schedule: React.FC = () => {
         </div>
       </div>
 
-      {/* Today's Schedule Card */}
-      {todaySchedule && (
+      {/* Qibla Direction Card */}
+      {schedule?.koordinat && (
         <Card
           className="bg-gradient-to-r from-green-50 via-emerald-50 to-green-50 border-2 border-green-200 shadow-lg"
         >
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="bg-green-500 p-2 rounded-lg">
-                <Clock className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-gray-800">
-                  Jadwal Hari Ini
-                </h3>
-                <p className="text-sm text-gray-600">
-                  {format(today, "EEEE, d MMMM yyyy", { locale: id })}
-                </p>
-              </div>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-3">
-            {prayerNames.map((prayer) => (
-              <div
-                key={prayer.key}
-                className="bg-white rounded-lg p-3 text-center border border-gray-200 hover:shadow-md transition-shadow"
-              >
-                <div className="text-2xl mb-1">{prayer.icon}</div>
-                <div className="text-xs font-medium text-gray-600 mb-1">
-                  {prayer.label}
-                </div>
-                <div className="text-sm font-bold text-gray-800">
-                  {todaySchedule[prayer.key as keyof typeof todaySchedule]}
-                </div>
-              </div>
-            ))}
+          <div className="flex flex-col items-center justify-center">
+            <QiblaCompass lat={schedule.koordinat.lat} lon={schedule.koordinat.lon} lokasi={schedule.lokasi} />
           </div>
         </Card>
       )}
