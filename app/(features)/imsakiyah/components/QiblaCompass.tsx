@@ -28,7 +28,48 @@ const getQiblaDirection = (lat: number, lon: number) => {
 const QiblaCompass = ({ lat, lon, lokasi }: QiblaCompassProps) => {
   const [heading, setHeading] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const qiblaAngle = getQiblaDirection(lat, lon)
+  const [actualLat, setActualLat] = useState<number>(lat)
+  const [actualLon, setActualLon] = useState<number>(lon)
+  const [isLoadingCoords, setIsLoadingCoords] = useState<boolean>(lat === 0 && lon === 0)
+
+  useEffect(() => {
+    const fetchCoords = async () => {
+      if (lat === 0 && lon === 0 && lokasi) {
+        setIsLoadingCoords(true)
+        try {
+          // Clean up location name for better search results
+          const cleanName = lokasi.replace(/KOTA|KAB\.|KABUPATEN/gi, "").trim()
+          const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${cleanName}&format=json&limit=1`, {
+            headers: { 'User-Agent': 'QuranApps/1.0' }
+          })
+          const data = await res.json()
+          if (data && data.length > 0) {
+            setActualLat(parseFloat(data[0].lat))
+            setActualLon(parseFloat(data[0].lon))
+          } else {
+            // Default to Jakarta if not found
+            setActualLat(-6.2088)
+            setActualLon(106.8456)
+            setError("Gagal mendapat koordinat akurat. Menggunakan default (Jakarta).")
+          }
+        } catch (err) {
+          // Default to Jakarta
+          setActualLat(-6.2088)
+          setActualLon(106.8456)
+          setError("Gagal mendapat koordinat. Menggunakan default (Jakarta).")
+        } finally {
+          setIsLoadingCoords(false)
+        }
+      } else {
+        setActualLat(lat)
+        setActualLon(lon)
+      }
+    }
+    
+    fetchCoords()
+  }, [lat, lon, lokasi])
+
+  const qiblaAngle = getQiblaDirection(actualLat, actualLon)
 
   useEffect(() => {
     const handleOrientation = (e: any) => {
@@ -82,6 +123,12 @@ const QiblaCompass = ({ lat, lon, lokasi }: QiblaCompassProps) => {
 
   return (
     <div className="flex flex-col items-center justify-center w-full py-4 relative">
+      {isLoadingCoords && (
+        <div className="absolute top-0 flex items-center justify-center w-full h-full bg-white/80 z-20 z-index-50">
+          <span className="text-green-600 font-medium animate-pulse">Menghitung koordinat kota...</span>
+        </div>
+      )}
+      
       {error && (
         <div className="absolute top-0 right-0 flex items-center gap-1 text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-full border border-amber-200">
           <AlertCircle className="w-3 h-3" /> {error}

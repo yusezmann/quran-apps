@@ -59,6 +59,7 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
         const city = await getPrayerTimesByCoords(latitude, longitude)
         if (city) {
           setSearchResults([city])
+          handleSelect(city) // Langsung pilih dan tutup modal
         } else {
           toast.error("Kota tidak ditemukan pada API")
         }

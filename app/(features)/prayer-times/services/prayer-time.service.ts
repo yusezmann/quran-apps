@@ -55,26 +55,33 @@ export async function getPrayerTimesByCoords(
     
     if (!data || !data.address) return null;
 
-    // Kumpulkan kandidat nama daerah tingkat Kota/Kabupaten
+    // Kumpulkan kandidat nama daerah tingkat Kota/Kabupaten beserta tipe aslinya
     const candidates = [
-      data.address.city,
-      data.address.regency,
-      data.address.county,
-      data.address.state_district,
-      data.address.municipality,
-      data.address.city_district,
-      data.address.town
-    ].filter(Boolean);
+      { name: data.address.city, isKota: true },
+      { name: data.address.municipality, isKota: true },
+      { name: data.address.regency, isKota: false },
+      { name: data.address.county, isKota: false },
+      { name: data.address.state_district, isKota: false },
+      { name: data.address.city_district, isKota: true },
+      { name: data.address.town, isKota: true }
+    ].filter(c => c.name);
 
     for (const candidate of candidates) {
       // Bersihkan nama kota (misal: "Kota Jakarta Selatan" -> "Jakarta")
-      const cleanName = candidate.replace(/city|kota|kabupaten|south|north|east|west|selatan|utara|timur|barat|pusat/gi, "").trim();
+      const cleanName = candidate.name.replace(/city|kota|kabupaten|south|north|east|west|selatan|utara|timur|barat|pusat/gi, "").trim();
       
       if (cleanName.length > 2) {
         try {
           const cities = await getCities(cleanName);
           if (cities && cities.length > 0) {
-            return cities[0];
+            // Cari yang paling cocok berdasarkan tipe (Kota vs Kabupaten)
+            const exactMatch = cities.find((c: City) => {
+              const lok = c.lokasi.toLowerCase();
+              const isLocKota = lok.includes("kota");
+              return candidate.isKota ? isLocKota : !isLocKota;
+            });
+            
+            return exactMatch || cities[0];
           }
         } catch (e) {
           console.error(`Gagal mencari kota untuk kandidat: ${cleanName}`);

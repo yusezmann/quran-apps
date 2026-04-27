@@ -296,12 +296,12 @@ const Schedule: React.FC = () => {
       </div>
 
       {/* Qibla Direction Card */}
-      {schedule?.koordinat && (
+      {schedule && (
         <Card
           className="bg-gradient-to-r from-green-50 via-emerald-50 to-green-50 border-2 border-green-200 shadow-lg"
         >
           <div className="flex flex-col items-center justify-center">
-            <QiblaCompass lat={schedule.koordinat.lat} lon={schedule.koordinat.lon} lokasi={schedule.lokasi} />
+            <QiblaCompass lat={schedule.koordinat?.lat || 0} lon={schedule.koordinat?.lon || 0} lokasi={schedule.lokasi} />
           </div>
         </Card>
       )}
