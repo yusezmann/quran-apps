@@ -12,7 +12,8 @@ import CitySelector from "./CitySelector"
 import QiblaCompass from "./QiblaCompass"
 import { jsPDF } from "jspdf"
 import autoTable from "jspdf-autotable"
-import { Download, Calendar, MapPin, RefreshCw, Compass, Navigation } from "lucide-react"
+import { Download, Calendar, MapPin, RefreshCw, Compass } from "lucide-react"
+import KaabaIcon from "@/components/KaabaIcon"
 import { useDetectCity } from "@/app/(features)/prayer-times/hooks/useDetectCity"
 import { useHijriOffset } from "@/app/(features)/hijri-date/hooks/useHijriOffset"
 import { formatHijri } from "@/lib/hijri"
@@ -301,7 +302,7 @@ const Schedule: React.FC = () => {
             className="rounded-2xl border border-gray-200 bg-white p-4 md:p-6"
           >
             <h3 className="mb-2 flex items-center gap-2 text-base md:text-lg font-semibold text-gray-900">
-              <Navigation className="h-5 w-5 text-green-600" />
+              <KaabaIcon size={22} />
               Arah Kiblat
             </h3>
             <QiblaCompass

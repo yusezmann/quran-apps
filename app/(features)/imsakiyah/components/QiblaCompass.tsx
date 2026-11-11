@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import { Compass, AlertCircle } from "lucide-react"
+import KaabaIcon from "@/components/KaabaIcon"
 
 interface QiblaCompassProps {
   lat: number
@@ -165,57 +166,146 @@ const QiblaCompass = ({ lat, lon, lokasi }: QiblaCompassProps) => {
         </div>
       )}
       
-      <div className="relative w-52 h-52 md:w-56 md:h-56 rounded-full border-8 border-green-100 shadow-inner flex items-center justify-center bg-white overflow-hidden mb-6">
-        {/* Compass markings (N, E, S, W) that rotate with the device */}
-        <div 
-          className="absolute w-full h-full transition-transform duration-500 ease-out"
-          style={{ transform: `rotate(${compassRotation}deg)` }}
-        >
-          {/* North */}
-          <div className="absolute top-2 left-1/2 -translate-x-1/2 text-red-500 font-bold text-lg">U</div>
-          {/* East */}
-          <div className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-lg">T</div>
-          {/* South */}
-          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-gray-400 font-bold text-lg">S</div>
-          {/* West */}
-          <div className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-lg">B</div>
-          
-          {/* Dial lines */}
-          {[...Array(12)].map((_, i) => (
-            <div 
-              key={i} 
-              className="absolute top-0 left-1/2 -translate-x-1/2 w-0.5 h-full"
-              style={{ transform: `rotate(${i * 30}deg)` }}
-            >
-              <div className="w-full h-3 bg-gray-200"></div>
-              <div className="w-full h-3 bg-gray-200 absolute bottom-0"></div>
-            </div>
-          ))}
-        </div>
+      {/* ---- Piringan kompas (SVG) ----
+          Grup 1: piringan berskala, berputar -heading agar "U" selalu ke utara.
+          Grup 2: pembawa Ka'bah, berputar (kiblat - heading) sehingga Ka'bah berada di tepi
+                  pada arah kiblat; ikon di dalamnya diputar balik agar selalu tegak.
+          Penanda di atas (tetap) = arah depan ponsel. */}
+      <div className="relative mb-6 w-64 h-64 md:w-72 md:h-72">
+        <svg viewBox="0 0 300 300" className="h-full w-full overflow-visible" role="img" aria-label={`Kompas kiblat, arah ${Math.round(qiblaAngle)} derajat dari utara`}>
+          <defs>
+            <radialGradient id="dialFace" cx="50%" cy="45%" r="60%">
+              <stop offset="0%" stopColor="#ffffff" />
+              <stop offset="100%" stopColor="#f0fdf4" />
+            </radialGradient>
+            <filter id="kaabaGlow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="6" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
 
-        {/* Qibla Pointer */}
-        <div 
-          className="absolute w-full h-full transition-transform duration-500 ease-out flex items-center justify-center"
-          style={{ transform: `rotate(${pointerRotation}deg)` }}
-        >
-          <div className="absolute top-6">
-             {/* Use a large navigation arrow */}
-             <svg width="40" height="100" viewBox="0 0 40 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-               <path d="M20 0L40 40L20 30L0 40L20 0Z" fill="#16a34a"/>
-               <path d="M20 100L40 60L20 70L0 60L20 100Z" fill="#e5e7eb"/>
-             </svg>
-          </div>
-        </div>
-        
-        {/* Center dot */}
-        <div className="w-4 h-4 rounded-full bg-green-600 shadow-md z-10"></div>
+          {/* Cincin luar: hijau saat menghadap kiblat */}
+          <circle
+            cx="150"
+            cy="150"
+            r="146"
+            fill="url(#dialFace)"
+            stroke={isFacingQibla ? "#16a34a" : "#d1fae5"}
+            strokeWidth={isFacingQibla ? 6 : 4}
+            className="transition-[stroke] duration-300"
+          />
+
+          {/* Grup 1: piringan berskala */}
+          <g
+            className="transition-transform duration-500 ease-out"
+            style={{ transform: `rotate(${compassRotation}deg)`, transformOrigin: "150px 150px" }}
+          >
+            {Array.from({ length: 72 }, (_, i) => {
+              const deg = i * 5
+              const major = deg % 30 === 0
+              const cardinal = deg % 90 === 0
+              return (
+                <line
+                  key={deg}
+                  x1="150"
+                  y1={cardinal ? 12 : major ? 14 : 16}
+                  x2="150"
+                  y2={cardinal ? 34 : major ? 28 : 22}
+                  stroke={deg === 0 ? "#dc2626" : major ? "#6b7280" : "#d1d5db"}
+                  strokeWidth={major ? 2 : 1}
+                  strokeLinecap="round"
+                  transform={`rotate(${deg} 150 150)`}
+                />
+              )
+            })}
+            {[30, 60, 120, 150, 210, 240, 300, 330].map((deg) => (
+              <text
+                key={deg}
+                x="150"
+                y="45"
+                textAnchor="middle"
+                fontSize="10"
+                fill="#9ca3af"
+                transform={`rotate(${deg} 150 150)`}
+              >
+                {deg}
+              </text>
+            ))}
+            {[
+              { label: "U", deg: 0, color: "#dc2626" },
+              { label: "T", deg: 90, color: "#374151" },
+              { label: "S", deg: 180, color: "#374151" },
+              { label: "B", deg: 270, color: "#374151" },
+            ].map(({ label, deg, color }) => (
+              <text
+                key={label}
+                x="150"
+                y="56"
+                textAnchor="middle"
+                fontSize="18"
+                fontWeight="700"
+                fill={color}
+                transform={`rotate(${deg} 150 150)`}
+              >
+                {label}
+              </text>
+            ))}
+          </g>
+
+          {/* Grup 2: garis & Ka'bah pada arah kiblat */}
+          <g
+            className="transition-transform duration-500 ease-out"
+            style={{ transform: `rotate(${pointerRotation}deg)`, transformOrigin: "150px 150px" }}
+          >
+            <line
+              x1="150"
+              y1="150"
+              x2="150"
+              y2="92"
+              stroke="#16a34a"
+              strokeWidth="3"
+              strokeDasharray="5 5"
+              strokeLinecap="round"
+              opacity="0.7"
+            />
+            <g transform="translate(150 70)">
+              <g
+                className="transition-transform duration-500 ease-out"
+                style={{
+                  transform: `rotate(${-pointerRotation}deg)`,
+                  transformBox: "fill-box",
+                  transformOrigin: "center",
+                }}
+                filter={isFacingQibla ? "url(#kaabaGlow)" : undefined}
+              >
+                <circle r="21" fill="white" stroke={isFacingQibla ? "#16a34a" : "#e5e7eb"} strokeWidth="2" />
+                <g transform="translate(-15 -16)">
+                  <KaabaIcon size={30} />
+                </g>
+              </g>
+            </g>
+          </g>
+
+          {/* Penanda arah ponsel (tetap di atas) */}
+          <polygon
+            points="140,-14 160,-14 150,2"
+            fill={isFacingQibla ? "#16a34a" : "#374151"}
+            className="transition-[fill] duration-300"
+          />
+
+          {/* Titik pusat */}
+          <circle cx="150" cy="150" r="7" fill="#16a34a" stroke="white" strokeWidth="3" />
+        </svg>
       </div>
-      
-      <div className="text-center">
+
+      <div className="text-center leading-snug">
         <h4 className="text-3xl font-bold text-green-700 mb-1">
           {Math.round(qiblaAngle)}°
         </h4>
-        <p className="text-gray-600 font-medium">
+        <p className="text-gray-600 font-medium leading-snug">
           Arah Kiblat dari Utara untuk {lokasi}
         </p>
         {error && (
@@ -232,7 +322,7 @@ const QiblaCompass = ({ lat, lon, lokasi }: QiblaCompassProps) => {
           >
             {isFacingQibla
               ? "✓ Anda sudah menghadap kiblat"
-              : "Putar ponsel hingga panah hijau menunjuk lurus ke atas"}
+              : "Putar ponsel hingga Ka'bah tepat di bawah penanda atas"}
           </p>
         )}
         {heading === null && needsPermission && isTouchDevice && !error && (

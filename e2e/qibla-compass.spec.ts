@@ -36,7 +36,7 @@ test("kompas kiblat merespons sensor Android tanpa harus menekan tombol izin", a
 
   // Menghadap utara -> belum menghadap kiblat, tombol izin tidak muncul karena data sudah masuk
   await sendAndroidHeading(page, 0)
-  await expect(compass(page).getByText("Putar ponsel hingga panah hijau menunjuk lurus ke atas")).toBeVisible()
+  await expect(compass(page).getByText("Putar ponsel hingga Ka'bah tepat di bawah penanda atas")).toBeVisible()
   await expect(compass(page).getByRole("button", { name: "Aktifkan kompas" })).toHaveCount(0)
 
   // Menghadap tepat ke arah kiblat
