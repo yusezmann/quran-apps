@@ -36,7 +36,8 @@ test("Imsakiyah: deteksi lokasi di latitude 0 mengisi kota", async ({ page }) =>
   await expect(toast(page, "Berhasil! Lokasi diatur ke KOTA PONTIANAK")).toBeVisible()
   // Select menampilkan nama kota, bukan id mentah
   await expect(page.locator(".ant-select-selection-item").first()).toHaveText("KOTA PONTIANAK")
-  await expect(page.getByText("Arah Kiblat dari Utara untuk KOTA PONTIANAK")).toBeVisible()
+  // Jadwal hari ini termuat untuk kota baru
+  await expect(page.getByRole("region", { name: "Jadwal hari ini" })).toBeVisible()
   await page.screenshot({ path: "test-results/imsakiyah-detect.png" })
 })
 

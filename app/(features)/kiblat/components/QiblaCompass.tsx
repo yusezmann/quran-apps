@@ -3,74 +3,19 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { Compass, AlertCircle } from "lucide-react"
 import KaabaIcon from "@/components/KaabaIcon"
+import { getQiblaDirection, type Coords } from "@/lib/qibla"
 
 interface QiblaCompassProps {
-  lat: number
-  lon: number
-  lokasi: string
+  /** Koordinat pengguna (GPS) atau kota; null selama masih dicari. */
+  coords: Coords | null
+  isLoadingCoords?: boolean
 }
 
-const getQiblaDirection = (lat: number, lon: number) => {
-  const PI = Math.PI
-  const latK = 21.422487 * (PI / 180.0)
-  const lonK = 39.826206 * (PI / 180.0)
-  const phi = lat * (PI / 180.0)
-  const lambda = lon * (PI / 180.0)
-
-  let qibla = Math.atan2(
-    Math.sin(lonK - lambda),
-    Math.cos(phi) * Math.tan(latK) - Math.sin(phi) * Math.cos(lonK - lambda)
-  )
-
-  qibla = qibla * (180.0 / PI)
-  return (qibla + 360) % 360
-}
-
-const QiblaCompass = ({ lat, lon, lokasi }: QiblaCompassProps) => {
+const QiblaCompass = ({ coords, isLoadingCoords = false }: QiblaCompassProps) => {
   const [heading, setHeading] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [actualLat, setActualLat] = useState<number>(lat)
-  const [actualLon, setActualLon] = useState<number>(lon)
-  const [isLoadingCoords, setIsLoadingCoords] = useState<boolean>(lat === 0 && lon === 0)
 
-  useEffect(() => {
-    const fetchCoords = async () => {
-      if (lat === 0 && lon === 0 && lokasi) {
-        setIsLoadingCoords(true)
-        try {
-          // Clean up location name for better search results
-          const cleanName = lokasi.replace(/KOTA|KAB\.|KABUPATEN/gi, "").trim()
-          const res = await fetch(
-            `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(cleanName)}&format=json&limit=1`,
-          )
-          const data = await res.json()
-          if (data && data.length > 0) {
-            setActualLat(parseFloat(data[0].lat))
-            setActualLon(parseFloat(data[0].lon))
-          } else {
-            // Default to Jakarta if not found
-            setActualLat(-6.2088)
-            setActualLon(106.8456)
-            setError("Gagal mendapat koordinat akurat. Menggunakan default (Jakarta).")
-          }
-        } catch (err) {
-          // Default to Jakarta
-          setActualLat(-6.2088)
-          setActualLon(106.8456)
-          setError("Gagal mendapat koordinat. Menggunakan default (Jakarta).")
-        } finally {
-          setIsLoadingCoords(false)
-        }
-      } else {
-        setActualLat(lat)
-        setActualLon(lon)
-      }
-    }
-    
-    fetchCoords()
-  }, [lat, lon, lokasi])
-
-  const qiblaAngle = getQiblaDirection(actualLat, actualLon)
+  const qiblaAngle = coords ? getQiblaDirection(coords.lat, coords.lon) : 0
 
   // ---- Sensor kompas ----
   // Catatan penting: Chrome/WebView Android versi baru JUGA punya
@@ -162,7 +107,7 @@ const QiblaCompass = ({ lat, lon, lokasi }: QiblaCompassProps) => {
     <div className="flex flex-col items-center justify-center w-full py-4 relative">
       {isLoadingCoords && (
         <div className="absolute top-0 flex items-center justify-center w-full h-full bg-white/80 z-20">
-          <span className="text-green-600 font-medium animate-pulse">Menghitung koordinat kota...</span>
+          <span className="text-green-600 font-medium animate-pulse">Menentukan lokasi...</span>
         </div>
       )}
       
@@ -171,7 +116,7 @@ const QiblaCompass = ({ lat, lon, lokasi }: QiblaCompassProps) => {
           Grup 2: pembawa Ka'bah, berputar (kiblat - heading) sehingga Ka'bah berada di tepi
                   pada arah kiblat; ikon di dalamnya diputar balik agar selalu tegak.
           Penanda di atas (tetap) = arah depan ponsel. */}
-      <div className="relative mb-6 w-64 h-64 md:w-72 md:h-72">
+      <div className={`relative mb-6 ${isTouchDevice ? "w-64 h-64 md:w-72 md:h-72" : "w-52 h-52"}`}>
         <svg viewBox="0 0 300 300" className="h-full w-full overflow-visible" role="img" aria-label={`Kompas kiblat, arah ${Math.round(qiblaAngle)} derajat dari utara`}>
           <defs>
             <radialGradient id="dialFace" cx="50%" cy="45%" r="60%">
@@ -305,9 +250,7 @@ const QiblaCompass = ({ lat, lon, lokasi }: QiblaCompassProps) => {
         <h4 className="text-3xl font-bold text-green-700 mb-1">
           {Math.round(qiblaAngle)}°
         </h4>
-        <p className="text-gray-600 font-medium leading-snug">
-          Arah Kiblat dari Utara untuk {lokasi}
-        </p>
+        <p className="text-gray-600 font-medium leading-snug">dari arah utara</p>
         {error && (
           <p className="mt-3 inline-flex items-center gap-1 text-xs text-amber-700 bg-amber-50 px-2 py-1 rounded-full border border-amber-200">
             <AlertCircle className="w-3 h-3" /> {error}
@@ -338,7 +281,7 @@ const QiblaCompass = ({ lat, lon, lokasi }: QiblaCompassProps) => {
           <p className="text-xs text-gray-500 mt-2">
             {isTouchDevice
               ? "Sensor kompas belum terbaca. Arah ditampilkan relatif terhadap utara."
-              : "Arah ditampilkan relatif terhadap utara. Buka di ponsel untuk kompas langsung."}
+              : "Laptop/PC tidak memiliki sensor kompas. Buka di ponsel untuk kompas langsung."}
           </p>
         )}
       </div>

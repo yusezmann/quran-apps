@@ -68,7 +68,7 @@ export default function Header() {
 
         {/* Desktop Navigation */}
         <div className="hidden xl:flex gap-6">
-          {["/", "/imsakiyah", "/doa", "/asmaulhusna", "/hadits"].map(
+          {["/", "/imsakiyah", "/kiblat", "/doa", "/asmaulhusna", "/hadits"].map(
             (path, idx) => (
               <Link
                 key={path}
@@ -79,7 +79,7 @@ export default function Header() {
                     : "text-white/85 hover:text-white"
                 }
               >
-                {["Beranda", "Imsakiyah", "Doa", "Asmaul Husna", "Hadits"][idx]}
+                {["Beranda", "Imsakiyah", "Kiblat", "Doa", "Asmaul Husna", "Hadits"][idx]}
               </Link>
             ),
           )}

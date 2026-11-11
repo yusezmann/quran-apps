@@ -17,10 +17,10 @@ const compass = (page: Page) => page.getByRole("region", { name: "Arah kiblat" }
 
 /** Tunggu koordinat kota selesai dihitung, baru baca sudut kiblat (hindari race). */
 async function openCompass(page: Page) {
-  await page.goto("/imsakiyah")
+  await page.goto("/kiblat")
   await expect(compass(page)).toBeVisible()
   await page.waitForLoadState("networkidle")
-  await expect(compass(page).getByText("Menghitung koordinat kota...")).toHaveCount(0)
+  await expect(compass(page).getByText("Menentukan lokasi...")).toHaveCount(0)
 }
 
 /** Ambil sudut rotasi (derajat) dari style transform elemen. */
@@ -54,4 +54,14 @@ test("melewati 0°/360° tidak membuat muka kompas berputar satu lingkaran penuh
   await sendAndroidHeading(page, 1)
   // Lanjut 2° (ke -361), bukan melompat balik ke -1 (yang memutar 358°)
   await expect.poll(() => rotationOf(page, 0)).toBeCloseTo(-361, 0)
+})
+
+test("Beranda punya pintasan Arah Kiblat (dengan derajat) yang membuka halaman /kiblat", async ({ page }) => {
+  await page.goto("/")
+  const shortcut = page.getByRole("link", { name: /Arah Kiblat/ })
+  await expect(shortcut).toBeVisible()
+  await expect(shortcut).toContainText(/\d+°/)
+  await shortcut.click()
+  await expect(page).toHaveURL(/\/kiblat/)
+  await expect(compass(page)).toBeVisible()
 })

@@ -2,6 +2,11 @@
 
 import { useCallback, useEffect, useState } from "react"
 import Image from "next/image"
+import Link from "next/link"
+import KaabaIcon from "@/components/KaabaIcon"
+import { getQiblaDirection } from "@/lib/qibla"
+import { DEFAULT_CITY, getSavedCity, saveCity } from "@/lib/saved-city"
+import { useCityCoords } from "@/app/(features)/kiblat/hooks/useCityCoords"
 import { Button } from "antd"
 import { Info, Loader2, MapPin } from "lucide-react"
 import { toast } from "sonner"
@@ -40,7 +45,8 @@ export const adzanList = [
 
 const PrayerTimeComponent = () => {
   const [prayerTimes, setPrayerTimes] = useState<PrayerTime | null>(null)
-  const [cityId, setCityId] = useState<string>("1301") // Default to Jakarta
+  // Kota tersimpan (dipakai bersama halaman Kiblat); default Jakarta
+  const [cityId, setCityId] = useState<string>(() => getSavedCity()?.id ?? DEFAULT_CITY.id)
   const [loading, setLoading] = useState(true)
   const [currentTime, setCurrentTime] = useState(new Date())
   const [nextPrayer, setNextPrayer] = useState<{
@@ -57,7 +63,7 @@ const PrayerTimeComponent = () => {
   const { detectCity, isDetecting: isDetectingLocation } = useDetectCity()
 
   useEffect(() => {
-    fetchPrayerTimes()
+    // (jadwal diambil oleh efek [cityId, selectedMethod] di bawah)
     const timer = setInterval(() => {
       setCurrentTime(new Date())
     }, 1000)
@@ -75,6 +81,16 @@ const PrayerTimeComponent = () => {
   useEffect(() => {
     fetchPrayerTimes()
   }, [cityId, selectedMethod])
+
+  // Simpan kota yang sedang dipakai agar tetap sama saat aplikasi dibuka ulang & di halaman Kiblat
+  useEffect(() => {
+    if (prayerTimes?.id && prayerTimes.lokasi) {
+      saveCity({ id: String(prayerTimes.id), lokasi: prayerTimes.lokasi })
+    }
+  }, [prayerTimes?.id, prayerTimes?.lokasi])
+
+  const { data: cityCoords } = useCityCoords(prayerTimes?.lokasi)
+  const qiblaDegree = cityCoords ? Math.round(getQiblaDirection(cityCoords.lat, cityCoords.lon)) : null
 
   useEffect(() => {
     if ("Notification" in window) {
@@ -296,6 +312,15 @@ const PrayerTimeComponent = () => {
                   >
                     <MapPin className="h-4 w-4" /> Salah Lokasi?
                   </button>
+                  <Link
+                    href="/kiblat"
+                    className="mt-2 self-start inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs xl:text-sm font-medium text-white backdrop-blur-sm ring-1 ring-white/30 hover:bg-white/25"
+                  >
+                    <span className="rounded-full bg-white p-0.5">
+                      <KaabaIcon size={16} />
+                    </span>
+                    Arah Kiblat{qiblaDegree !== null && <span className="text-white/80">· {qiblaDegree}°</span>}
+                  </Link>
                 </div>
                 <div className="text-right text-[10px] xl:text-sm">
                   <HijriDateDisplay currentTime={currentTime} />

@@ -9,10 +9,10 @@ import { id } from "date-fns/locale"
 import { useState, useMemo } from "react"
 import type { City, PrayerSchedule } from "../interfaces/imsakiyah.interface"
 import CitySelector from "./CitySelector"
-import QiblaCompass from "./QiblaCompass"
+import Link from "next/link"
 import { jsPDF } from "jspdf"
 import autoTable from "jspdf-autotable"
-import { Download, Calendar, MapPin, RefreshCw, Compass } from "lucide-react"
+import { Download, Calendar, MapPin, RefreshCw, Compass, ChevronRight } from "lucide-react"
 import KaabaIcon from "@/components/KaabaIcon"
 import { useDetectCity } from "@/app/(features)/prayer-times/hooks/useDetectCity"
 import { useHijriOffset } from "@/app/(features)/hijri-date/hooks/useHijriOffset"
@@ -295,23 +295,20 @@ const Schedule: React.FC = () => {
           ))}
         </ul>
 
-        {/* Arah kiblat — fitur pendukung, ditempatkan setelah jadwal */}
-        {schedule && (
-          <section
-            aria-label="Arah kiblat"
-            className="rounded-2xl border border-gray-200 bg-white p-4 md:p-6"
-          >
-            <h3 className="mb-2 flex items-center gap-2 text-base md:text-lg font-semibold text-gray-900">
-              <KaabaIcon size={22} />
-              Arah Kiblat
-            </h3>
-            <QiblaCompass
-              lat={schedule.koordinat?.lat || 0}
-              lon={schedule.koordinat?.lon || 0}
-              lokasi={schedule.lokasi}
-            />
-          </section>
-        )}
+        {/* Arah kiblat kini halaman tersendiri (/kiblat); di sini cukup pintasan */}
+        <Link
+          href="/kiblat"
+          className="group flex items-center gap-4 rounded-2xl border border-gray-200 bg-white p-4 transition-colors hover:border-green-400 hover:bg-green-50"
+        >
+          <div className="rounded-xl bg-green-50 p-2 group-hover:bg-white">
+            <KaabaIcon size={32} />
+          </div>
+          <div className="flex-1 leading-snug">
+            <p className="font-semibold text-gray-900">Arah Kiblat</p>
+            <p className="text-sm text-gray-500">Buka kompas kiblat untuk lokasi Anda</p>
+          </div>
+          <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-green-600" />
+        </Link>
       </>
     )
   }
