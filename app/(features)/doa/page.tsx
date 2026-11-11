@@ -6,6 +6,7 @@ import { fetchDuas } from "./services/doa.service"
 import { useStore } from "./store/doa-store"
 import Header from "@/components/Header"
 import PageBackground from "@/components/PageBackground"
+import DoaHaditsTabs from "@/components/DoaHaditsTabs"
 import DuaList from "./components/list-doa"
 import DuaDetails from "./components/doa-view"
 import { Footer } from "@/components/footer"
@@ -82,6 +83,7 @@ const Doa = () => {
       {/* Hero section */}
       <div className="relative z-10 pt-28 pb-8">
         <div className="text-center px-4 mb-8">
+          <DoaHaditsTabs />
           <h1 className="text-3xl xl:text-4xl font-bold text-white mb-2 drop-shadow-lg">
             Kumpulan Doa Harian
           </h1>

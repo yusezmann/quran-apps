@@ -3,6 +3,7 @@
 import { useEffect } from "react"
 import Header from "@/components/Header"
 import PageBackground from "@/components/PageBackground"
+import DoaHaditsTabs from "@/components/DoaHaditsTabs"
 import { useHadithStore } from "./store/hadits-store"
 import { useQuery } from "@tanstack/react-query"
 import { fetchHadiths } from "./services/hadits.service"
@@ -81,6 +82,7 @@ const Hadits = () => {
       {/* Hero section */}
       <div className="relative z-10 pt-28 pb-8">
         <div className="text-center px-4 mb-8">
+          <DoaHaditsTabs />
           <h1 className="text-3xl xl:text-4xl font-bold text-white mb-2 drop-shadow-lg">
             Hadits Arbain Nawawi
           </h1>

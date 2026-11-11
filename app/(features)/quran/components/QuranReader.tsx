@@ -18,6 +18,8 @@ import { FaBookOpen } from "react-icons/fa"
 export default function QuranReader() {
   const currentSurah = useQuranStore((state) => state.currentSurah)
   const setCurrentSurah = useQuranStore((state) => state.setCurrentSurah)
+  const scrollTarget = useQuranStore((state) => state.scrollTarget)
+  const setScrollTarget = useQuranStore((state) => state.setScrollTarget)
   const [selectedAyah, setSelectedAyah] = useState<number | null>(null)
   const [lastRead, setLastRead] = useState<{
     surah: number
@@ -105,12 +107,11 @@ export default function QuranReader() {
     }
   }, [])
 
+  // Lompat ke ayat tanpa memutar audio (sebelumnya memakai currentAyah sehingga bilah audio ikut muncul)
   const goToLastRead = () => {
     if (lastRead) {
       setCurrentSurah(lastRead.surah)
-      setTimeout(() => {
-        setCurrentAyah(lastRead.ayah)
-      }, 500)
+      setScrollTarget(lastRead.ayah)
     }
   }
 
@@ -124,6 +125,17 @@ export default function QuranReader() {
       console.log("Ayat tidak ditemukan!")
     }
   }
+
+  // Scroll ke ayat target setelah surah yang benar selesai dimuat
+  useEffect(() => {
+    if (!scrollTarget || !surah || surah.nomor !== currentSurah) return
+    const timer = setTimeout(() => {
+      scrollToAyah(scrollTarget)
+      setScrollTarget(null)
+    }, 300)
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scrollTarget, surah, currentSurah])
 
   // Gunakan useEffect untuk menangani perubahan currentAyah
   useEffect(() => {

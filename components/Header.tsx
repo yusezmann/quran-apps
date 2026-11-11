@@ -8,6 +8,7 @@ import { useEffect, useState } from "react"
 import { usePathname } from "next/navigation"
 import MobileMenu from "./mobile-menu"
 import Nav from "./Nav"
+import { NAV_ITEMS, isNavActive } from "./nav-items"
 
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false)
@@ -68,21 +69,20 @@ export default function Header() {
 
         {/* Desktop Navigation */}
         <div className="hidden xl:flex gap-6">
-          {["/", "/imsakiyah", "/kiblat", "/doa", "/asmaulhusna", "/hadits"].map(
-            (path, idx) => (
-              <Link
-                key={path}
-                href={path}
-                className={
-                  pathname === path
-                    ? "text-white font-bold border-b-2 border-white"
-                    : "text-white/85 hover:text-white"
-                }
-              >
-                {["Beranda", "Imsakiyah", "Kiblat", "Doa", "Asmaul Husna", "Hadits"][idx]}
-              </Link>
-            ),
-          )}
+          {NAV_ITEMS.map(({ label, path }) => (
+            <Link
+              key={path}
+              href={path}
+              aria-current={isNavActive(path, pathname) ? "page" : undefined}
+              className={
+                isNavActive(path, pathname)
+                  ? "text-white font-bold border-b-2 border-white"
+                  : "text-white/85 hover:text-white"
+              }
+            >
+              {label}
+            </Link>
+          ))}
         </div>
 
         {/* Mobile Menu Button */}
