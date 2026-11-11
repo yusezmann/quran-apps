@@ -279,16 +279,18 @@ const Schedule: React.FC = () => {
                 row.isToday ? "border-green-500 bg-green-50" : "border-gray-200 bg-white"
               }`}
             >
-              <div className="mb-2 flex items-baseline justify-between gap-2">
-                <span className="font-semibold text-gray-900">
+              {/* flex-wrap + nowrap per elemen: di layar sempit tanggal Hijriah turun ke baris
+                  berikutnya secara utuh, badge "Hari ini" tidak pernah terpotong */}
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5 leading-snug">
+                <span className="flex items-center gap-2 whitespace-nowrap font-semibold text-gray-900">
                   {isValid(row.date) ? format(row.date, "EEEE, d MMM", { locale: id }) : row.tanggal}
                   {row.isToday && (
-                    <span className="ml-2 rounded-full bg-green-600 px-2 py-0.5 text-[10px] font-semibold text-white align-middle">
+                    <span className="shrink-0 rounded-full bg-green-600 px-2 py-0.5 text-[10px] font-semibold leading-none text-white">
                       Hari ini
                     </span>
                   )}
                 </span>
-                <span className="text-xs text-gray-500 text-right">{row.hijri}</span>
+                <span className="whitespace-nowrap text-xs text-gray-500">{row.hijri}</span>
               </div>
               <PrayerTimesGrid row={row} />
             </li>
