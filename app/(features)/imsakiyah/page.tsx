@@ -13,7 +13,7 @@ const Imsakiyah = () => {
 
       <Header />
       <div className="container mx-auto px-4 py-12 relative z-10">
-        <div className="mt-6 xl:mt-20 bg-white rounded-2xl shadow-xl mb-24 xl:mb-20 overflow-hidden">
+        <div className="mt-6 xl:mt-20 bg-white rounded-2xl shadow-xl mb-10 xl:mb-20 overflow-hidden">
           {/* Header Section */}
           <div className="bg-gradient-to-r from-green-600 via-green-600 to-emerald-600 px-6 xl:px-8 py-6 xl:py-8 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16"></div>
@@ -43,7 +43,7 @@ const Imsakiyah = () => {
           </div>
         </div>
       </div>
-      <div className="hidden xl:block">
+      <div className="relative z-10">
         <Footer />
       </div>
     </div>

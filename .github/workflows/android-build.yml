@@ -68,6 +68,9 @@ jobs:
           cd android && ./gradlew assembleRelease
           mkdir -p ../dist
           cp app/build/outputs/apk/release/app-release.apk "../dist/quran-apps-v${VERSION_NAME}.apk"
+          # Nama tetap untuk link "selalu terbaru":
+          # https://github.com/<owner>/<repo>/releases/latest/download/quran-apps.apk
+          cp app/build/outputs/apk/release/app-release.apk ../dist/quran-apps.apk
 
       # ---- Cadangan: APK debug jika keystore belum di-set (perilaku lama) ----
       - name: Build debug APK (keystore belum di-set)

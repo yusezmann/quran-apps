@@ -2,17 +2,29 @@
 
 import Link from "next/link"
 import Image from "next/image"
-import { Github, Globe } from "lucide-react"
+import { useEffect, useState } from "react"
+import { Capacitor } from "@capacitor/core"
+import { Download, Github, Globe } from "lucide-react"
 
 // TODO: ganti dengan nama lengkap Anda jika ingin ditampilkan
 const AUTHOR = "yusezmann"
 const PORTFOLIO_URL = "https://usman-nine.vercel.app/"
 const REPO_URL = "https://github.com/yusezmann/quran-apps"
+// Link tetap GitHub yang selalu mengarah ke APK di Release terbaru
+// (file "quran-apps.apk" dilampirkan di setiap Release oleh android-build.yml)
+const APK_URL = `${REPO_URL}/releases/latest/download/quran-apps.apk`
 
 export function Footer() {
+  // Tombol unduh tidak relevan jika halaman dibuka dari dalam aplikasi Android itu sendiri
+  const [isNativeApp, setIsNativeApp] = useState(false)
+  useEffect(() => {
+    setIsNativeApp(Capacitor.isNativePlatform())
+  }, [])
+
   return (
-    <footer className="bg-[#010511] text-gray-400 py-6 border-t border-gray-800 px-4 mt-auto">
-      <div className="container mx-auto flex flex-col md:flex-row items-center justify-between text-center md:text-left gap-4">
+    // pb ekstra di mobile/tablet agar tidak tertutup navigasi bawah
+    <footer className="bg-[#010511] text-gray-400 pt-8 pb-28 xl:py-6 border-t border-gray-800 px-4 mt-auto">
+      <div className="container mx-auto flex flex-col xl:flex-row items-center justify-between text-center xl:text-left gap-5">
         {/* Logo & Nama */}
         <Link
           href="/"
@@ -26,6 +38,18 @@ export function Footer() {
           />
           <span className="text-lg md:text-xl text-white">Al Quran</span>
         </Link>
+
+        {!isNativeApp && (
+          <a
+            href={APK_URL}
+            className="inline-flex items-center gap-2 rounded-full bg-green-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-green-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
+            rel="noopener"
+          >
+            <Download className="h-4 w-4" />
+            Unduh Aplikasi Android
+            <span className="font-normal text-green-100">(APK)</span>
+          </a>
+        )}
 
         <div className="flex flex-col md:flex-row items-center gap-3 md:gap-6 text-sm">
           <p>

@@ -19,12 +19,12 @@ export default function Home() {
               <SurahList />
             </div>
           </aside>
-          <div className="xl:col-span-3 mb-28 xl:mb-16">
+          <div className="xl:col-span-3 mb-10 xl:mb-16">
             <QuranReader />
           </div>
         </div>
       </main>
-      <div className="hidden xl:block">
+      <div className="relative z-10">
         <Footer />
       </div>
     </div>

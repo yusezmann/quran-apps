@@ -125,8 +125,8 @@ const Doa = () => {
         </div>
       </div>
 
-      {/* Footer hanya di desktop */}
-      <div className="hidden xl:block relative z-10">
+      {/* Footer (juga di mobile: berisi tombol unduh APK) */}
+      <div className="relative z-10">
         <Footer />
       </div>
     </div>

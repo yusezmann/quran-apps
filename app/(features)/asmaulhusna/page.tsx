@@ -173,8 +173,8 @@ export default function AsmaulHusnaPage() {
         </div>
       </div>
 
-      {/* Footer - dengan spacing yang tepat */}
-      <div className="hidden sm:block">
+      {/* Footer (juga di mobile: berisi tombol unduh APK) */}
+      <div className="relative z-10">
         <Footer />
       </div>
     </>
