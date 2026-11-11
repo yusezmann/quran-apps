@@ -2,9 +2,8 @@
 
 import type React from "react"
 import { Table, Select, Button, Spin, Alert, Empty } from "antd"
-import { useScheduleStore } from "../store/scheduleStore"
 import { useSchedule } from "../hooks/useSchedule"
-import { format, isValid, setMonth, parse, parseISO, isSameDay } from "date-fns"
+import { format, isValid, parse, parseISO, isSameDay } from "date-fns"
 import { id } from "date-fns/locale"
 import { useState, useMemo } from "react"
 import type { City, PrayerSchedule } from "../interfaces/imsakiyah.interface"
@@ -34,6 +33,18 @@ const months = [
   "November",
   "Desember",
 ]
+
+/**
+ * Rentang data API myquran (dicek Nov 2026): 2024–2040. Di luar itu API membalas "Data not found".
+ * Yang ditampilkan: 2 tahun ke belakang s.d. 5 tahun ke depan, dibatasi rentang tersebut.
+ */
+const API_MIN_YEAR = 2024
+const API_MAX_YEAR = 2040
+const getYearOptions = (currentYear: number) => {
+  const from = Math.max(API_MIN_YEAR, currentYear - 2)
+  const to = Math.min(API_MAX_YEAR, currentYear + 5)
+  return Array.from({ length: Math.max(0, to - from + 1) }, (_, i) => from + i)
+}
 
 const prayerNames = [
   { key: "imsak", label: "Imsak" },
@@ -111,12 +122,14 @@ const PrayerTimesGrid = ({
 )
 
 const Schedule: React.FC = () => {
-  const { currentDate } = useScheduleStore()
   const [selectedCity, setSelectedCity] = useState<City>({
     id: "1301",
     lokasi: "KOTA JAKARTA",
   })
-  const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth())
+  const now = new Date()
+  const [selectedMonth, setSelectedMonth] = useState<number>(now.getMonth())
+  const [selectedYear, setSelectedYear] = useState<number>(now.getFullYear())
+  const isCurrentMonth = selectedYear === now.getFullYear() && selectedMonth === now.getMonth()
   const { detectCity, isDetecting: isDetectingLocation } = useDetectCity()
   const hijriOffset = useHijriOffset()
 
@@ -126,8 +139,9 @@ const Schedule: React.FC = () => {
     if (city) setSelectedCity({ id: city.id, lokasi: city.lokasi })
   }
 
-  const year = new Date().getFullYear()
-  const selectedDate = setMonth(new Date(currentDate), selectedMonth)
+  const year = selectedYear
+  const selectedDate = new Date(selectedYear, selectedMonth, 1)
+  const yearOptions = getYearOptions(now.getFullYear())
   const { data: schedule, isLoading, error, refetch } = useSchedule(
     selectedCity.id,
     selectedDate,
@@ -162,7 +176,7 @@ const Schedule: React.FC = () => {
         ...prayerNames.map((p) => row[p.key as PrayerKey]),
       ]),
     })
-    doc.save(`jadwal-sholat-${selectedCity.lokasi}-${months[selectedMonth]}.pdf`)
+    doc.save(`jadwal-sholat-${selectedCity.lokasi}-${months[selectedMonth]}-${year}.pdf`)
   }
 
   const columns = [
@@ -243,10 +257,24 @@ const Schedule: React.FC = () => {
         )}
 
         <div className="flex items-center justify-between gap-3">
-          <h3 className="text-base md:text-lg font-semibold text-gray-900">
-            {months[selectedMonth]} {year}
-            <span className="ml-2 text-sm font-normal text-gray-500">{rows.length} hari</span>
-          </h3>
+          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <h3 className="text-base md:text-lg font-semibold text-gray-900">
+              {months[selectedMonth]} {year}
+              <span className="ml-2 text-sm font-normal text-gray-500">{rows.length} hari</span>
+            </h3>
+            {!isCurrentMonth && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedMonth(now.getMonth())
+                  setSelectedYear(now.getFullYear())
+                }}
+                className="text-sm font-medium text-green-700 underline underline-offset-4 hover:text-green-800"
+              >
+                Kembali ke bulan ini
+              </button>
+            )}
+          </div>
           <Button
             type="primary"
             icon={<Download className="w-4 h-4" />}
@@ -347,22 +375,34 @@ const Schedule: React.FC = () => {
             className="text-sm font-medium text-gray-700 flex items-center gap-2"
           >
             <Calendar className="w-4 h-4" />
-            Pilih Bulan
+            Pilih Bulan & Tahun
           </label>
-          <Select
-            id="month-selector"
-            value={selectedMonth}
-            onChange={setSelectedMonth}
-            className="w-full"
-            size="large"
-            suffixIcon={<Calendar className="w-4 h-4 text-gray-400" />}
-          >
-            {months.map((monthName, index) => (
-              <Option key={index} value={index}>
-                {monthName} {year}
-              </Option>
-            ))}
-          </Select>
+          <div className="flex gap-2">
+            <Select
+              id="month-selector"
+              aria-label="Bulan"
+              value={selectedMonth}
+              onChange={setSelectedMonth}
+              className="min-w-0 flex-1"
+              size="large"
+              suffixIcon={<Calendar className="w-4 h-4 text-gray-400" />}
+            >
+              {months.map((monthName, index) => (
+                <Option key={index} value={index}>
+                  {monthName}
+                </Option>
+              ))}
+            </Select>
+            <Select
+              id="year-selector"
+              aria-label="Tahun"
+              value={selectedYear}
+              onChange={setSelectedYear}
+              className="w-28 shrink-0"
+              size="large"
+              options={yearOptions.map((y) => ({ value: y, label: String(y) }))}
+            />
+          </div>
         </div>
       </div>
 
