@@ -22,9 +22,14 @@ export function getSavedCity(): SavedCity | null {
   }
 }
 
+export const CITY_CHANGED_EVENT = "quran-apps:city-changed"
+
 export function saveCity(city: SavedCity) {
   try {
+    const prev = getSavedCity()
     localStorage.setItem(KEY, JSON.stringify({ id: String(city.id), lokasi: city.lokasi }))
+    // Beri tahu komponen lain di tab yang sama (mis. penjadwal adzan)
+    if (prev?.id !== String(city.id)) window.dispatchEvent(new Event(CITY_CHANGED_EVENT))
   } catch {
     // storage diblokir: abaikan
   }

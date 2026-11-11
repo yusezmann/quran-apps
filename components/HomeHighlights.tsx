@@ -83,13 +83,17 @@ function NextHolidayCard({ holiday }: { holiday: NonNullable<ReturnType<typeof g
  */
 export default function HomeHighlights() {
   const [lastRead, setLastRead] = useState<LastRead | null>(null)
+  // Semua yang bergantung pada tanggal hari ini dihitung SETELAH mount: halaman ini di-prerender
+  // saat build (static export), jadi menghitungnya saat render menimbulkan hydration mismatch.
+  const [now, setNow] = useState<Date | null>(null)
   const hijriOffset = useHijriOffset()
-  const hijri = getHijriParts(new Date(), hijriOffset)
-  const isRamadan = hijri.month === 9
-  const nextHoliday = getNextHoliday(new Date(), hijriOffset)
+  const hijri = now ? getHijriParts(now, hijriOffset) : null
+  const isRamadan = hijri?.month === 9
+  const nextHoliday = now ? getNextHoliday(now, hijriOffset) : null
 
   useEffect(() => {
     setLastRead(readLastRead())
+    setNow(new Date())
   }, [])
 
   return (
@@ -101,7 +105,7 @@ export default function HomeHighlights() {
         >
           <Moon className="h-8 w-8 shrink-0" />
           <div className="flex-1 leading-snug">
-            <p className="font-semibold">Ramadhan {hijri.year} H</p>
+            <p className="font-semibold">Ramadhan {hijri?.year} H</p>
             <p className="text-sm text-white/85">Lihat jadwal imsakiyah lengkap bulan ini</p>
           </div>
           <ChevronRight className="h-5 w-5 shrink-0" />

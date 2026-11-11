@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ikon kecil notifikasi adzan: siluet kubah masjid + bulan sabit (putih, sesuai pedoman Android) -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="#FFFFFF">
+    <!-- bulan sabit -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M12,1.5a2.2,2.2 0,1 0,1.6 3.7a1.7,1.7 0,1 1,-1.6 -3.7z" />
+    <!-- kubah -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M12,6.5c-3.6,1.6 -6,4.2 -6,7.5h12c0,-3.3 -2.4,-5.9 -6,-7.5z" />
+    <!-- badan masjid dengan pintu -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M5,15h14v7h-5v-3.5a2,2 0,0 0,-4 0V22H5z" />
+</vector>

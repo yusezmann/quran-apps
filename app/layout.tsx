@@ -3,6 +3,10 @@ import type { Metadata } from "next"
 import { Poppins, Scheherazade_New, Reem_Kufi, Noto_Nastaliq_Urdu, Noto_Sans_Arabic, Amiri, Cairo } from "next/font/google"
 import "./globals.css"
 import { QueryProvider } from "@/components/providers/query-provider"
+import { AntdProvider } from "@/components/providers/antd-provider"
+import AdzanManager from "@/app/(features)/adzan/components/AdzanManager"
+import AdzanBanner from "@/app/(features)/adzan/components/AdzanBanner"
+import AdzanSettingsModal from "@/app/(features)/adzan/components/AdzanSettingsModal"
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -69,7 +73,15 @@ export default function RootLayout({
       <body
         className={`${poppins.variable} ${reemkufi.variable} ${amiriQuran.variable} ${notoNastaliq.variable} ${notoSansArabic.variable} ${amiri.variable} ${cairo.variable} bg-gray-100 dark:bg-[#1c1c22]`}
       >
-        <QueryProvider>{children}</QueryProvider>
+        <QueryProvider>
+          <AntdProvider>
+            {children}
+            {/* Adzan aktif di semua halaman: penjadwal, banner saat adzan, dan pengaturan */}
+            <AdzanManager />
+            <AdzanBanner />
+            <AdzanSettingsModal />
+          </AntdProvider>
+        </QueryProvider>
         <Toaster />
       </body>
     </html>

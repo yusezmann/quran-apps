@@ -3,86 +3,62 @@
 import { useCallback, useEffect, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
+import { Bell, BellOff, Loader2, MapPin } from "lucide-react"
+import { toast } from "sonner"
 import KaabaIcon from "@/components/KaabaIcon"
 import { getQiblaDirection } from "@/lib/qibla"
 import { DEFAULT_CITY, getSavedCity, saveCity } from "@/lib/saved-city"
+import { useAdzanSettings, useAdzanUi } from "@/lib/adzan/settings"
 import { useCityCoords } from "@/app/(features)/kiblat/hooks/useCityCoords"
-import { Button } from "antd"
-import { Info, Loader2, MapPin } from "lucide-react"
-import { toast } from "sonner"
-import type {
-  City,
-  PrayerTime,
-} from "@/app/(features)/prayer-times/interfaces/prayer-time.interface"
-import {
-  getPrayerTimes,
-  getCities,
-} from "@/app/(features)/prayer-times/services/prayer-time.service"
+import type { City, PrayerTime } from "@/app/(features)/prayer-times/interfaces/prayer-time.interface"
+import { getPrayerTimes } from "@/app/(features)/prayer-times/services/prayer-time.service"
 import HijriDateDisplay from "@/app/(features)/hijri-date/components/hijr-date"
 import LocationSelector from "./components/LocationSelector"
-import MethodSelector from "./components/MethodSelector"
 import PrayerTimesList from "./components/PrayerTimeList"
-import AdzanSettings from "../adzan/components/AdzanSetting"
-import CountdownTest from "./components/Countdown"
-import Marquee from "react-fast-marquee"
-import AdhanNotification from "../adzan/components/AdzanNotification"
-import { useDetectCity } from "@/app/(features)/prayer-times/hooks/useDetectCity"
-const PRAYER_METHODS = [
-  { id: "kemenag", name: "Kemenag", params: { subuh: 20, isya: 18 } },
-  { id: "mwl", name: "Muslim World League", params: { subuh: 18, isya: 17 } },
-  {
-    id: "egypt",
-    name: "Egyptian General Authority",
-    params: { subuh: 19.5, isya: 17.5 },
-  },
-]
 
-export const adzanList = [
-  { id: 1, name: "Adzan Makkah", src: "/assets/audio/adzan-makkah.mp3" },
-  { id: 2, name: "Adzan Mesir", src: "/assets/audio/adzan-mesir.mp3" },
-  { id: 3, name: "Adzan Shubuh", src: "/assets/audio/adzan-shubuh.mp3" },
-]
+const NEXT_PRAYERS = [
+  { name: "Subuh", key: "subuh" },
+  { name: "Dzuhur", key: "dzuhur" },
+  { name: "Ashar", key: "ashar" },
+  { name: "Maghrib", key: "maghrib" },
+  { name: "Isya", key: "isya" },
+] as const
+
+const pad = (n: number) => n.toString().padStart(2, "0")
 
 const PrayerTimeComponent = () => {
   const [prayerTimes, setPrayerTimes] = useState<PrayerTime | null>(null)
-  // Kota tersimpan (dipakai bersama halaman Kiblat); default Jakarta
+  // Kota tersimpan (dipakai bersama halaman Kiblat & penjadwal adzan); default Jakarta
   const [cityId, setCityId] = useState<string>(() => getSavedCity()?.id ?? DEFAULT_CITY.id)
   const [loading, setLoading] = useState(true)
   const [currentTime, setCurrentTime] = useState(new Date())
-  const [nextPrayer, setNextPrayer] = useState<{
-    name: string
-    time: string
-  } | null>(null)
+  const [nextPrayer, setNextPrayer] = useState<{ name: string; time: string } | null>(null)
   const [countdown, setCountdown] = useState<string>("")
   const [locationDialogOpen, setLocationDialogOpen] = useState(false)
-  const [selectedMethod, setSelectedMethod] = useState(PRAYER_METHODS[0])
-  const [methodDialogOpen, setMethodDialogOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [searchResults, setSearchResults] = useState<City[]>([])
-  const [searching, setSearching] = useState(false)
-  const { detectCity, isDetecting: isDetectingLocation } = useDetectCity()
+  const adzanEnabled = useAdzanSettings((s) => s.enabled)
+  const openAdzanSettings = useAdzanUi((s) => s.openSettings)
 
   useEffect(() => {
-    // (jadwal diambil oleh efek [cityId, selectedMethod] di bawah)
-    const timer = setInterval(() => {
-      setCurrentTime(new Date())
-    }, 1000)
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000)
     return () => clearInterval(timer)
   }, [])
 
   useEffect(() => {
-    if (prayerTimes) {
-      updateNextPrayer()
-      const timer = setInterval(updateNextPrayer, 1000)
-      return () => clearInterval(timer)
+    const fetchPrayerTimes = async () => {
+      setLoading(true)
+      try {
+        setPrayerTimes(await getPrayerTimes(cityId))
+      } catch (error) {
+        console.error("Failed to fetch prayer times:", error)
+        toast.error("Gagal mengambil jadwal sholat")
+      } finally {
+        setLoading(false)
+      }
     }
-  }, [prayerTimes])
-
-  useEffect(() => {
     fetchPrayerTimes()
-  }, [cityId, selectedMethod])
+  }, [cityId])
 
-  // Simpan kota yang sedang dipakai agar tetap sama saat aplikasi dibuka ulang & di halaman Kiblat
+  // Simpan kota yang sedang dipakai agar tetap sama saat aplikasi dibuka ulang, di Kiblat & untuk adzan
   useEffect(() => {
     if (prayerTimes?.id && prayerTimes.lokasi) {
       saveCity({ id: String(prayerTimes.id), lokasi: prayerTimes.lokasi })
@@ -92,176 +68,41 @@ const PrayerTimeComponent = () => {
   const { data: cityCoords } = useCityCoords(prayerTimes?.lokasi)
   const qiblaDegree = cityCoords ? Math.round(getQiblaDirection(cityCoords.lat, cityCoords.lon)) : null
 
-  useEffect(() => {
-    if ("Notification" in window) {
-      Notification.requestPermission().then((permission) => {
-        if (permission !== "granted") {
-          toast.error("Notifikasi tidak diizinkan oleh pengguna")
-        }
-      })
-    }
-  }, [])
-
-  const sendNotification = (title: string, body: string) => {
-    if ("Notification" in window && Notification.permission === "granted") {
-      new Notification(title, { body, icon: "/assets/icons/prayer.png" })
-    }
-  }
-
-  const fetchPrayerTimes = async () => {
-    setLoading(true)
-    try {
-      const data = await getPrayerTimes(cityId, selectedMethod.params)
-      setPrayerTimes(data)
-    } catch (error) {
-      console.error("Failed to fetch prayer times:", error)
-      toast.error("Gagal mengambil jadwal sholat")
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleLocationSearch = async () => {
-    if (searchQuery.length < 3) {
-      toast.error("Masukkan minimal 3 karakter")
-      return
-    }
-
-    setSearching(true)
-    try {
-      const results = await getCities(searchQuery)
-      setSearchResults(results || [])
-    } catch (error: any) {
-      console.error("Failed to search cities:", error)
-      toast.error("Gagal mencari kota")
-    } finally {
-      setSearching(false)
-    }
-  }
-
   const handleCitySelect = (city: City) => {
     setCityId(city.id)
     setLocationDialogOpen(false)
-    setSearchQuery("")
-    setSearchResults([])
   }
 
-  const detectLocation = async () => {
-    const city = await detectCity()
-    if (city) {
-      setSearchResults([city])
-      handleCitySelect(city)
-    }
-  }
-
-  // Fungsi untuk memainkan suara adzan
-  const playAdzan = (audioUrl: string) => {
-    const audio = new Audio(audioUrl)
-    audio.play()
-  }
-
-  // const updateNextPrayer = useCallback(() => {
-  //   if (!prayerTimes) return
-
-  //   const prayers = [
-  //     { name: "Subuh", time: prayerTimes.jadwal.subuh },
-  //     { name: "Dzuhur", time: prayerTimes.jadwal.dzuhur },
-  //     { name: "Ashar", time: prayerTimes.jadwal.ashar },
-  //     { name: "Maghrib", time: prayerTimes.jadwal.maghrib },
-  //     { name: "Isya", time: prayerTimes.jadwal.isya },
-  //   ]
-
-  //   const now = new Date()
-  //   const times = prayers.map((prayer) => {
-  //     const [hours, minutes] = prayer.time.split(":")
-  //     const prayerTime = new Date(now)
-  //     prayerTime.setHours(Number.parseInt(hours), Number.parseInt(minutes), 0)
-  //     return { ...prayer, datetime: prayerTime }
-  //   })
-
-  //   const next = times.find((prayer) => prayer.datetime > now) || times[0]
-  //   setNextPrayer({ name: next.name, time: next.time })
-
-  //   // Calculate countdown
-  //   const diff = next.datetime.getTime() - now.getTime()
-  //   if (diff < 0) {
-  //     // Add 24 hours if we're comparing with tomorrow's prayer
-  //     const newDiff = diff + 24 * 60 * 60 * 1000
-  //     const hours = Math.floor(newDiff / (1000 * 60 * 60))
-  //     const minutes = Math.floor((newDiff % (1000 * 60 * 60)) / (1000 * 60))
-  //     const seconds = Math.floor((newDiff % (1000 * 60)) / 1000)
-  //     setCountdown(
-  //       `${hours.toString().padStart(2, "0")}:${minutes
-  //         .toString()
-  //         .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`,
-  //     )
-  //   } else {
-  //     const hours = Math.floor(diff / (1000 * 60 * 60))
-  //     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
-  //     const seconds = Math.floor((diff % (1000 * 60)) / 1000)
-  //     setCountdown(
-  //       `${hours.toString().padStart(2, "0")}:${minutes
-  //         .toString()
-  //         .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`,
-  //     )
-
-  //     // Check if it's time for prayer and send notification
-  //     // if (hours === 0 && minutes === 0 && seconds === 0 && notificationsEnabled) {
-  //     //   sendNotification(`Waktu ${next.name}`, `Sekarang waktunya shalat ${next.name}`)
-  //     // }
-  //   }
-  // }, [prayerTimes])
-
+  /** Hitung mundur ke sholat berikutnya (tampilan saja; adzan dijadwalkan oleh AdzanManager). */
   const updateNextPrayer = useCallback(() => {
     if (!prayerTimes) return
-
-    const prayers = [
-      { name: "Subuh", time: prayerTimes.jadwal.subuh },
-      { name: "Dzuhur", time: prayerTimes.jadwal.dzuhur },
-      { name: "Ashar", time: prayerTimes.jadwal.ashar },
-      { name: "Maghrib", time: prayerTimes.jadwal.maghrib },
-      { name: "Isya", time: prayerTimes.jadwal.isya },
-    ]
-
     const now = new Date()
-    const times = prayers.map((prayer) => {
-      const [hours, minutes] = prayer.time.split(":")
-      const prayerTime = new Date(now)
-      prayerTime.setHours(Number.parseInt(hours), Number.parseInt(minutes), 0)
-      return { ...prayer, datetime: prayerTime }
+    const times = NEXT_PRAYERS.map((prayer) => {
+      const time = prayerTimes.jadwal[prayer.key]
+      const [hours, minutes] = time.split(":").map(Number)
+      const datetime = new Date(now)
+      datetime.setHours(hours, minutes, 0, 0) // detik & milidetik nol
+      return { ...prayer, time, datetime }
     })
 
-    const next = times.find((prayer) => prayer.datetime > now) || times[0]
+    // Setelah Isya: sholat berikutnya Subuh besok
+    const upcoming = times.find((prayer) => prayer.datetime > now)
+    const next = upcoming ?? { ...times[0], datetime: new Date(times[0].datetime.getTime() + 86_400_000) }
     setNextPrayer({ name: next.name, time: next.time })
 
-    // Hitung selisih waktu untuk countdown
-    let diff = next.datetime.getTime() - now.getTime()
-
-    if (diff < 0) {
-      // Tambahkan 24 jam jika waktu sholat berikutnya adalah besok
-      diff += 24 * 60 * 60 * 1000
-    }
-
-    const hours = Math.floor(diff / (1000 * 60 * 60))
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
-    const seconds = Math.floor((diff % (1000 * 60)) / 1000)
-
-    setCountdown(
-      `${hours.toString().padStart(2, "0")}:${minutes
-        .toString()
-        .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`,
-    )
-
-    // Kirim notifikasi saat waktu sholat tiba
-    if (hours === 0 && minutes === 0 && seconds === 0) {
-      // alert("Waktu sholat tiba")
-      // sendNotification(
-      //   `Waktu ${next.name}`,
-      //   `Sekarang waktunya shalat ${next.name}`,
-      // )
-      playAdzan(adzanList[0].src)
-    }
+    const diff = Math.max(0, next.datetime.getTime() - now.getTime())
+    const hours = Math.floor(diff / 3_600_000)
+    const minutes = Math.floor((diff % 3_600_000) / 60_000)
+    const seconds = Math.floor((diff % 60_000) / 1000)
+    setCountdown(`${pad(hours)}:${pad(minutes)}:${pad(seconds)}`)
   }, [prayerTimes])
+
+  useEffect(() => {
+    if (!prayerTimes) return
+    updateNextPrayer()
+    const timer = setInterval(updateNextPrayer, 1000)
+    return () => clearInterval(timer)
+  }, [prayerTimes, updateNextPrayer])
 
   if (loading) {
     return (
@@ -273,18 +114,6 @@ const PrayerTimeComponent = () => {
 
   return (
     <section className="relative mb-0">
-      {/* <Marquee
-        speed={50}
-        pauseOnHover={true}
-        gradient={false}
-        direction="left"
-        className="p-4 bg-transparent"
-      >
-        <p className="text-gray-500 text-center ">
-          🔥 Berita terbaru hari ini! 🚀 | 💰 Pasar saham melonjak tinggi! 📈 |
-          🏆 Tim favorit menang besar! 🎉
-        </p>
-      </Marquee> */}
       {prayerTimes && (
         <>
           {/* Mobile/tablet: tinggi hero mengikuti isi (tidak lagi dikunci 50vh/240px yang membuat
@@ -342,34 +171,21 @@ const PrayerTimeComponent = () => {
                 </div>
               </div>
 
-              <div className="flex justify-between items-center text-sm xl:px-6 xl:relative xl:-top-16">
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                  <span>{selectedMethod.name}</span>
-                  <button
-                    type="button"
-                    className="text-white/90 underline underline-offset-4 decoration-white/50 hover:text-white hover:decoration-white"
-                    onClick={() => setMethodDialogOpen(true)}
-                  >
-                    Ganti
-                  </button>
-                  <Button
-                    type="default"
-                    shape="circle"
-                    className="border-none bg-transparent "
-                    onClick={() =>
-                      toast.info(
-                        `Menggunakan parameter: Subuh ${selectedMethod.params.subuh}°, Isya ${selectedMethod.params.isya}°`,
-                      )
-                    }
-                  >
-                    <Info className="h-6 w-6 text-white" />
-                  </Button>
-                  <span className="text-white/80">
-                    Subuh {selectedMethod.params.subuh}°, Isya{" "}
-                    {selectedMethod.params.isya}°
-                  </span>
-                </div>
-                {/* <AdhanNotification /> */}
+              <div className="flex flex-wrap items-center justify-between gap-3 text-sm xl:px-6 xl:relative xl:-top-16">
+                {/* Sumber jadwal (API myquran mengikuti perhitungan Kemenag RI) */}
+                <span className="text-white/80">Jadwal: Kemenag RI</span>
+                <button
+                  type="button"
+                  onClick={openAdzanSettings}
+                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs xl:text-sm font-medium ring-1 backdrop-blur-sm transition-colors ${
+                    adzanEnabled
+                      ? "bg-green-500/90 text-white ring-green-300 hover:bg-green-500"
+                      : "bg-white/15 text-white ring-white/30 hover:bg-white/25"
+                  }`}
+                >
+                  {adzanEnabled ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
+                  {adzanEnabled ? "Adzan aktif" : "Aktifkan adzan"}
+                </button>
               </div>
             </div>
           </div>
@@ -389,12 +205,6 @@ const PrayerTimeComponent = () => {
         onSelectCity={handleCitySelect}
       />
 
-      <MethodSelector
-        isOpen={methodDialogOpen}
-        onClose={() => setMethodDialogOpen(false)}
-        methods={PRAYER_METHODS}
-        onSelectMethod={setSelectedMethod}
-      />
     </section>
   )
 }

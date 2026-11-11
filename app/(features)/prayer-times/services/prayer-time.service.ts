@@ -5,17 +5,14 @@ import {
 
 const PRAYER_API_BASE = process.env.NEXT_PUBLIC_PRAYER_API_URL
 
-export async function getPrayerTimes(
-  cityId: string,
-  params?: Record<number, number>,
-): Promise<PrayerTime> {
-  const today = new Date().toISOString().split("T")[0]
-  let url = `${PRAYER_API_BASE}/sholat/jadwal/${cityId}/${today}`
-
-  if (params && Object.keys(params).length > 0) {
-    const queryString = new URLSearchParams(String(params)).toString()
-    url += `?${queryString}`
-  }
+/**
+ * Jadwal sholat hari ini (API myquran, perhitungan Kemenag RI).
+ * Catatan: API tidak mendukung metode/sudut perhitungan lain, jadi tidak ada parameter metode.
+ */
+export async function getPrayerTimes(cityId: string): Promise<PrayerTime> {
+  const now = new Date()
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`
+  const url = `${PRAYER_API_BASE}/sholat/jadwal/${cityId}/${today}`
 
   const res = await fetch(url)
   if (!res.ok) {
