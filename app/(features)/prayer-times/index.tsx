@@ -172,9 +172,7 @@ const PrayerTimeComponent = () => {
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center justify-between gap-3 text-sm xl:px-6 xl:relative xl:-top-16">
-                {/* Sumber jadwal (API myquran mengikuti perhitungan Kemenag RI) */}
-                <span className="text-white/80">Jadwal: Kemenag RI</span>
+              <div className="flex items-center justify-center xl:justify-start text-sm xl:px-6 xl:relative xl:-top-16">
                 <button
                   type="button"
                   onClick={openAdzanSettings}
