@@ -249,8 +249,8 @@ export default function QuranReader() {
 
   return (
     <>
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="bg-green-600 text-white p-4 flex justify-between items-center">
+      <div className="bg-white rounded-lg shadow">
+        <div className="bg-green-600 text-white p-4 flex justify-between items-center rounded-t-lg">
           <Button
             type="default"
             shape="circle"
@@ -338,7 +338,7 @@ export default function QuranReader() {
             </div>
           </div>
         )}
-        <div className="p-4 space-y-6 max-h-[calc(100vh-300px)] overflow-y-auto">
+        <div className="p-4 space-y-6">
           <BismillahText />
           {surah?.ayat.map((ayat: any) => (
             <div
@@ -421,7 +421,9 @@ export default function QuranReader() {
             </div>
           ))}
         </div>
-        <div className="p-4 border-t flex justify-between items-center">
+        {/* Kontrol audio: hanya tampil saat ada ayat yang diputar, menempel di bawah layar */}
+        {currentAyah !== null && (
+        <div className="sticky bottom-20 xl:bottom-0 z-20 p-3 border-t bg-white/95 backdrop-blur flex justify-between items-center gap-3 shadow-[0_-4px_12px_rgba(0,0,0,0.06)]">
           <Button
             onClick={goToPreviousAyah}
             disabled={
@@ -430,6 +432,9 @@ export default function QuranReader() {
           >
             Ayat Sebelumnya
           </Button>
+          <span className="text-sm text-gray-600 tabular-nums">
+            {isPlaying ? "Memutar" : "Dijeda"} · Ayat {currentAyah}/{surah?.jumlahAyat}
+          </span>
           <Button
             onClick={goToNextAyah}
             disabled={
@@ -440,6 +445,7 @@ export default function QuranReader() {
             Ayat Selanjutnya
           </Button>
         </div>
+        )}
         <audio
           ref={audioRef}
           onEnded={() => {

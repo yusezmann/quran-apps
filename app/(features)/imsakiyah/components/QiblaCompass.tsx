@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Compass, Navigation, AlertCircle } from "lucide-react"
+import { Compass, AlertCircle } from "lucide-react"
 
 interface QiblaCompassProps {
   lat: number
@@ -39,9 +39,9 @@ const QiblaCompass = ({ lat, lon, lokasi }: QiblaCompassProps) => {
         try {
           // Clean up location name for better search results
           const cleanName = lokasi.replace(/KOTA|KAB\.|KABUPATEN/gi, "").trim()
-          const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${cleanName}&format=json&limit=1`, {
-            headers: { 'User-Agent': 'QuranApps/1.0' }
-          })
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(cleanName)}&format=json&limit=1`,
+          )
           const data = await res.json()
           if (data && data.length > 0) {
             setActualLat(parseFloat(data[0].lat))
@@ -71,49 +71,53 @@ const QiblaCompass = ({ lat, lon, lokasi }: QiblaCompassProps) => {
 
   const qiblaAngle = getQiblaDirection(actualLat, actualLon)
 
+  // Sensor orientasi: di Android langsung didengarkan; di iOS 13+ izin WAJIB diminta
+  // lewat gesture pengguna, jadi kita tampilkan tombol "Aktifkan kompas" alih-alih
+  // memanggil requestPermission otomatis (yang selalu ditolak & memunculkan error).
+  const [needsPermission, setNeedsPermission] = useState(false)
+  const [isTouchDevice, setIsTouchDevice] = useState(false)
+
+  const handleOrientation = (e: any) => {
+    let h
+    if (e.webkitCompassHeading) {
+      // iOS
+      h = e.webkitCompassHeading
+    } else if (e.absolute && e.alpha !== null) {
+      // Android with absolute orientation
+      h = 360 - e.alpha
+    }
+    if (h !== undefined && h !== null) setHeading(h)
+  }
+
   useEffect(() => {
-    const handleOrientation = (e: any) => {
-      let h
-      if (e.webkitCompassHeading) {
-        // iOS
-        h = e.webkitCompassHeading
-      } else if (e.absolute && e.alpha !== null) {
-        // Android with absolute orientation
-        h = 360 - e.alpha
-      }
-      
-      if (h !== undefined && h !== null) {
-        setHeading(h)
-      }
+    setIsTouchDevice(window.matchMedia?.("(pointer: coarse)").matches ?? false)
+
+    if (typeof (window as any).DeviceOrientationEvent?.requestPermission === "function") {
+      setNeedsPermission(true)
+      return
     }
-
-    // Function to request permission (required for iOS 13+)
-    const requestPermissionAndListen = async () => {
-      if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
-        try {
-          const permission = await (DeviceOrientationEvent as any).requestPermission()
-          if (permission === 'granted') {
-            window.addEventListener('deviceorientation', handleOrientation, true)
-          } else {
-            setError("Izin kompas ditolak")
-          }
-        } catch (err) {
-          setError("Gagal meminta izin kompas")
-        }
-      } else {
-        // Non-iOS 13+ devices
-        window.addEventListener('deviceorientationabsolute', handleOrientation, true)
-        window.addEventListener('deviceorientation', handleOrientation, true)
-      }
-    }
-
-    requestPermissionAndListen()
-
+    window.addEventListener("deviceorientationabsolute", handleOrientation, true)
+    window.addEventListener("deviceorientation", handleOrientation, true)
     return () => {
-      window.removeEventListener('deviceorientationabsolute', handleOrientation, true)
-      window.removeEventListener('deviceorientation', handleOrientation, true)
+      window.removeEventListener("deviceorientationabsolute", handleOrientation, true)
+      window.removeEventListener("deviceorientation", handleOrientation, true)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  const enableCompass = async () => {
+    try {
+      const permission = await (window as any).DeviceOrientationEvent.requestPermission()
+      if (permission === "granted") {
+        window.addEventListener("deviceorientation", handleOrientation, true)
+        setNeedsPermission(false)
+      } else {
+        setError("Izin kompas ditolak")
+      }
+    } catch {
+      setError("Gagal meminta izin kompas")
+    }
+  }
 
   // The rotation of the compass face (North pointing up if heading is available)
   const compassRotation = heading !== null ? -heading : 0
@@ -124,18 +128,12 @@ const QiblaCompass = ({ lat, lon, lokasi }: QiblaCompassProps) => {
   return (
     <div className="flex flex-col items-center justify-center w-full py-4 relative">
       {isLoadingCoords && (
-        <div className="absolute top-0 flex items-center justify-center w-full h-full bg-white/80 z-20 z-index-50">
+        <div className="absolute top-0 flex items-center justify-center w-full h-full bg-white/80 z-20">
           <span className="text-green-600 font-medium animate-pulse">Menghitung koordinat kota...</span>
         </div>
       )}
       
-      {error && (
-        <div className="absolute top-0 right-0 flex items-center gap-1 text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-full border border-amber-200">
-          <AlertCircle className="w-3 h-3" /> {error}
-        </div>
-      )}
-      
-      <div className="relative w-56 h-56 md:w-64 md:h-64 rounded-full border-8 border-green-100 shadow-inner flex items-center justify-center bg-white overflow-hidden mb-6">
+      <div className="relative w-52 h-52 md:w-56 md:h-56 rounded-full border-8 border-green-100 shadow-inner flex items-center justify-center bg-white overflow-hidden mb-6">
         {/* Compass markings (N, E, S, W) that rotate with the device */}
         <div 
           className="absolute w-full h-full transition-transform duration-500 ease-out"
@@ -188,9 +186,25 @@ const QiblaCompass = ({ lat, lon, lokasi }: QiblaCompassProps) => {
         <p className="text-gray-600 font-medium">
           Arah Kiblat dari Utara untuk {lokasi}
         </p>
-        {!heading && !error && (
-          <p className="text-xs text-gray-400 mt-2">
-            Kompas perangkat tidak aktif. Menampilkan arah statis.
+        {error && (
+          <p className="mt-3 inline-flex items-center gap-1 text-xs text-amber-700 bg-amber-50 px-2 py-1 rounded-full border border-amber-200">
+            <AlertCircle className="w-3 h-3" /> {error}
+          </p>
+        )}
+        {heading === null && needsPermission && isTouchDevice && !error && (
+          <button
+            type="button"
+            onClick={enableCompass}
+            className="mt-3 inline-flex items-center gap-2 rounded-full bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
+          >
+            <Compass className="w-4 h-4" /> Aktifkan kompas
+          </button>
+        )}
+        {heading === null && !(needsPermission && isTouchDevice) && !error && (
+          <p className="text-xs text-gray-500 mt-2">
+            {isTouchDevice
+              ? "Sensor kompas belum terbaca. Arah ditampilkan relatif terhadap utara."
+              : "Arah ditampilkan relatif terhadap utara. Buka di ponsel untuk kompas langsung."}
           </p>
         )}
       </div>

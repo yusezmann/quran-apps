@@ -51,7 +51,8 @@ const cairo = Cairo({
 
 export const metadata: Metadata = {
   title: "Quran Apps",
-  description: "Aplikasi Al-Quran Digital dan Jadwal Shalat",
+  description: "Aplikasi Al-Quran Digital dan Jadwal Sholat",
+  manifest: "/manifest.webmanifest",
   icons: {
     icon: "/assets/logo/logo.png",
     apple: "/assets/logo/logo.png",
@@ -64,7 +65,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="id">
       <body
         className={`${poppins.variable} ${reemkufi.variable} ${amiriQuran.variable} ${notoNastaliq.variable} ${notoSansArabic.variable} ${amiri.variable} ${cairo.variable} bg-gray-100 dark:bg-[#1c1c22]`}
       >

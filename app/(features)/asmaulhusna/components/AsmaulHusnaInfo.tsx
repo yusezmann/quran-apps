@@ -16,7 +16,7 @@ const AsmaulHusnaInfo = ({ currentSlide, totalSlides }: AsmaulHusnaInfoProps) =>
     },
     {
       title: "Waktu Terbaik",
-      content: "Pagi hari setelah shalat subuh dan sore hari sebelum maghrib adalah waktu yang utama."
+      content: "Pagi hari setelah sholat subuh dan sore hari sebelum maghrib adalah waktu yang utama."
     },
     {
       title: "Cara Membaca",

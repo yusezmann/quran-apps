@@ -12,7 +12,7 @@ export default function DuaDetails({ dua }: DuaDetailsProps) {
   if (!dua) {
     return (
       <div className="relative z-10">
-        <div className="w-full bg-white/90 backdrop-blur-sm rounded-2xl overflow-hidden shadow-lg">
+        <div className="w-full bg-white rounded-2xl overflow-hidden shadow-lg">
           <div className="flex flex-col items-center justify-center py-12 sm:py-20 px-6 sm:px-8 text-gray-500">
             <div className="bg-gradient-to-r from-green-100 to-emerald-100 p-4 sm:p-6 rounded-xl sm:rounded-2xl mb-4 sm:mb-6 border border-green-200">
               <BookOpen className="w-8 h-8 sm:w-12 sm:h-12 text-green-600" />
@@ -31,7 +31,7 @@ export default function DuaDetails({ dua }: DuaDetailsProps) {
 
   return (
     <div className="relative z-10">
-      <div className="w-full bg-white/90 backdrop-blur-sm rounded-2xl overflow-hidden shadow-lg">
+      <div className="w-full bg-white rounded-2xl overflow-hidden shadow-lg">
         {/* Header */}
         <div className="bg-gradient-to-r from-green-600 via-green-600 to-emerald-600 px-4 sm:px-6 py-3 sm:py-4 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-16 sm:w-24 h-16 sm:h-24 bg-white/10 rounded-full -translate-y-8 sm:-translate-y-12 translate-x-8 sm:translate-x-12"></div>
@@ -70,7 +70,7 @@ export default function DuaDetails({ dua }: DuaDetailsProps) {
                 <div className="w-1 h-5 sm:h-6 bg-amber-500 rounded-full mr-3"></div>
                 <span className="text-amber-700 font-semibold text-sm sm:text-base">Latin</span>
               </div>
-              <Paragraph className="!text-gray-600 !text-sm sm:!text-base !leading-[1.8] sm:!leading-[2.0] !mb-0 italic pl-2">
+              <Paragraph className="!text-gray-700 !text-sm sm:!text-base !leading-[1.8] !mb-0 italic pl-2">
                 {dua.latin}
               </Paragraph>
             </div>
@@ -88,11 +88,11 @@ export default function DuaDetails({ dua }: DuaDetailsProps) {
           {/* Terjemahan */}
           <div className="pt-2">
             <div className="flex items-center mb-4 sm:mb-5">
-              <div className="w-1 h-6 sm:h-7 bg-blue-500 rounded-full mr-3"></div>
-              <span className="text-blue-700 font-semibold text-sm sm:text-base">Terjemahan</span>
+              <div className="w-1 h-6 sm:h-7 bg-green-600 rounded-full mr-3"></div>
+              <span className="text-green-800 font-semibold text-sm sm:text-base">Terjemahan</span>
             </div>
-            <Paragraph className="!text-gray-600 !text-base sm:!text-lg !leading-[1.9] sm:!leading-[2.0] !mb-0 italic pl-2">
-              "{dua.artinya}"
+            <Paragraph className="!text-gray-800 !text-base sm:!text-lg !leading-[1.75] !mb-0 pl-2 max-w-prose">
+              {dua.artinya}
             </Paragraph>
           </div>
 
@@ -100,7 +100,7 @@ export default function DuaDetails({ dua }: DuaDetailsProps) {
           {(dua.ayat || dua.source) && (
             <div className="flex flex-wrap gap-2 pt-2">
               {dua.ayat && (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700 border border-emerald-200">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-800 border border-emerald-200">
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                   </svg>
@@ -108,7 +108,7 @@ export default function DuaDetails({ dua }: DuaDetailsProps) {
                 </span>
               )}
               {dua.source && (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 border border-blue-200">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200 capitalize">
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>

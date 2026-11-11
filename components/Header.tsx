@@ -75,11 +75,11 @@ export default function Header() {
                 href={path}
                 className={
                   pathname === path
-                    ? "text-green-300 font-bold border-b-2 border-green-300"
-                    : "hover:text-accent-hover"
+                    ? "text-white font-bold border-b-2 border-white"
+                    : "text-white/85 hover:text-white"
                 }
               >
-                {["Home", "Imsakiyah", "Doa", "Asmaul Husna", "Hadits"][idx]}
+                {["Beranda", "Imsakiyah", "Doa", "Asmaul Husna", "Hadits"][idx]}
               </Link>
             ),
           )}
@@ -105,8 +105,8 @@ export default function Header() {
         toggleMenu={() => setIsMenuOpen(!isMenuOpen)}
       /> */}
       
-      {/* Desktop Navigation Bar */}
-      <div className="sm:hidden">
+      {/* Navigasi bawah untuk mobile & tablet (desktop memakai menu di atas) */}
+      <div className="xl:hidden">
         <Nav />
       </div>
     </nav>

@@ -1,7 +1,7 @@
 "use client"
 
 import Header from "@/components/Header"
-import Image from "next/image"
+import PageBackground from "@/components/PageBackground"
 import Schedule from "./components/Schedule"
 import { Footer } from "@/components/footer"
 import { Calendar, Clock } from "lucide-react"
@@ -9,21 +9,11 @@ import { Calendar, Clock } from "lucide-react"
 const Imsakiyah = () => {
   return (
     <div className="relative min-h-screen">
-      {/* Background Image */}
-      <div className="absolute inset-0 -z-10">
-        <Image
-          src="/assets/images/kaabah.jpg"
-          alt="Kaabah"
-          fill
-          sizes="100vw"
-          className="object-cover brightness-50 w-full h-full"
-          priority
-        />
-      </div>
+      <PageBackground />
 
       <Header />
       <div className="container mx-auto px-4 py-12 relative z-10">
-        <div className="mt-6 xl:mt-20 bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl mb-20 overflow-hidden">
+        <div className="mt-6 xl:mt-20 bg-white rounded-2xl shadow-xl mb-24 xl:mb-20 overflow-hidden">
           {/* Header Section */}
           <div className="bg-gradient-to-r from-green-600 via-green-600 to-emerald-600 px-6 xl:px-8 py-6 xl:py-8 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16"></div>
@@ -36,11 +26,11 @@ const Imsakiyah = () => {
                 </div>
                 <div>
                   <h2 className="text-2xl xl:text-3xl font-bold text-white mb-1">
-                    Jadwal Imsakiyah dan Shalat
+                    Jadwal Imsakiyah dan Sholat
                   </h2>
                   <p className="text-white/80 text-sm xl:text-base flex items-center gap-2">
                     <Clock className="w-4 h-4" />
-                    Informasi jadwal shalat lengkap untuk seluruh Indonesia
+                    Informasi jadwal sholat lengkap untuk seluruh Indonesia
                   </p>
                 </div>
               </div>

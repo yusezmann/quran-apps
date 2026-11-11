@@ -34,7 +34,7 @@ export default function SurahList() {
           Daftar Surah
         </h2>
       </div>
-      <ul className="divide-y divide-gray-200 max-h-[calc(100vh-200px)] overflow-y-auto">
+      <ul className="divide-y divide-gray-200 max-h-[calc(100vh-220px)] overflow-y-auto overscroll-contain">
         {surahs?.map((surah: any) => (
           <li
             key={surah.nomor}

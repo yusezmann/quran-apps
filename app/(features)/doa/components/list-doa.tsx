@@ -22,12 +22,6 @@ const DuaList: React.FC<ExtendedDuaListProps> = ({
     dua.judul.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
-  // Auto-expand mobile list when nothing is selected yet (first load)
-  useEffect(() => {
-    if (isMobile && !selectedDuaId && duas.length === 0) {
-      setIsMobileExpanded(true)
-    }
-  }, [isMobile, selectedDuaId, duas.length])
 
   // Keyboard navigation
   useEffect(() => {
@@ -71,7 +65,7 @@ const DuaList: React.FC<ExtendedDuaListProps> = ({
     }
   }, [focusedIndex])
 
-  const selectedDua = duas.find(dua => dua.judul === selectedDuaId)
+  const selectedIndex = duas.findIndex((dua) => dua.judul === selectedDuaId)
 
   if (isMobile) {
     return (
@@ -87,11 +81,11 @@ const DuaList: React.FC<ExtendedDuaListProps> = ({
                 <BookOpen className="w-4 h-4" />
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-sm line-clamp-2 leading-snug">
-                  {selectedDua ? selectedDua.judul : "Pilih Doa"}
+                <h3 className="font-semibold text-sm leading-snug">
+                  {isMobileExpanded ? "Tutup daftar doa" : "Pilih doa lain"}
                 </h3>
                 <p className="text-white/80 text-xs">
-                  {duas.length} doa tersedia • Tap untuk ganti
+                  {selectedIndex >= 0 ? `Doa ${selectedIndex + 1} dari ${duas.length}` : `${duas.length} doa tersedia`}
                 </p>
               </div>
             </div>

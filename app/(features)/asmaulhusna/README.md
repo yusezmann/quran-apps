@@ -42,14 +42,6 @@ Navigasi cepat dengan:
 - Search functionality
 - Lompat ke nomor tertentu
 
-### ReadingStats
-Statistik membaca yang menampilkan:
-- Progress percentage
-- Posisi saat ini
-- Waktu yang telah dibaca
-- Estimasi waktu selesai
-- Teks motivasi
-
 ### AsmaulHusnaInfo
 Informasi tentang Asmaul Husna dengan:
 - Keutamaan membaca

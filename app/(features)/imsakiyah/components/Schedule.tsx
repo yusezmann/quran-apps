@@ -1,39 +1,23 @@
 "use client"
 
 import type React from "react"
-import { Table, Select, Button, Card, Spin, Alert, Empty } from "antd"
+import { Table, Select, Button, Spin, Alert, Empty } from "antd"
 import { useScheduleStore } from "../store/scheduleStore"
 import { useSchedule } from "../hooks/useSchedule"
-import { format, isValid, setMonth, parse, parseISO } from "date-fns"
+import { format, isValid, setMonth, parse, parseISO, isSameDay } from "date-fns"
 import { id } from "date-fns/locale"
-import { toHijri } from "hijri-converter"
 import { useState, useMemo } from "react"
-import { City } from "../interfaces/imsakiyah.interface"
+import type { City, PrayerSchedule } from "../interfaces/imsakiyah.interface"
 import CitySelector from "./CitySelector"
 import QiblaCompass from "./QiblaCompass"
 import { jsPDF } from "jspdf"
 import autoTable from "jspdf-autotable"
-import { Download, Calendar, Clock, MapPin, RefreshCw, Compass } from "lucide-react"
-import { getCurrentLocation } from "@/lib/geolocation"
-import { getPrayerTimesByCoords } from "@/app/(features)/prayer-times/services/prayer-time.service"
-import { toast } from "sonner"
+import { Download, Calendar, MapPin, RefreshCw, Compass, Navigation } from "lucide-react"
+import { useDetectCity } from "@/app/(features)/prayer-times/hooks/useDetectCity"
+import { useHijriOffset } from "@/app/(features)/hijri-date/hooks/useHijriOffset"
+import { formatHijri } from "@/lib/hijri"
 
 const { Option } = Select
-
-const hijriMonths = [
-  "Muharram",
-  "Safar",
-  "Rabi'ul Awwal",
-  "Rabi'ul Akhir",
-  "Jumadil Awwal",
-  "Jumadil Akhir",
-  "Rajab",
-  "Sya'ban",
-  "Ramadhan",
-  "Syawal",
-  "Dzulqa'dah",
-  "Dzulhijjah",
-]
 
 const months = [
   "Januari",
@@ -51,15 +35,79 @@ const months = [
 ]
 
 const prayerNames = [
-  { key: "imsak", label: "Imsak", icon: "🌙" },
-  { key: "subuh", label: "Subuh", icon: "🌅" },
-  { key: "terbit", label: "Terbit", icon: "☀️" },
-  { key: "dhuha", label: "Dhuha", icon: "🌤️" },
-  { key: "dzuhur", label: "Dzuhur", icon: "☀️" },
-  { key: "ashar", label: "Ashar", icon: "🌆" },
-  { key: "maghrib", label: "Maghrib", icon: "🌇" },
-  { key: "isya", label: "Isya", icon: "🌙" },
-]
+  { key: "imsak", label: "Imsak" },
+  { key: "subuh", label: "Subuh" },
+  { key: "terbit", label: "Terbit" },
+  { key: "dhuha", label: "Dhuha" },
+  { key: "dzuhur", label: "Dzuhur" },
+  { key: "ashar", label: "Ashar" },
+  { key: "maghrib", label: "Maghrib" },
+  { key: "isya", label: "Isya" },
+] as const
+
+type PrayerKey = (typeof prayerNames)[number]["key"]
+
+interface ScheduleRow extends PrayerSchedule {
+  key: string
+  date: Date
+  isToday: boolean
+  hijri: string
+}
+
+const parseDate = (dateString: string): Date => {
+  if (!dateString) return new Date(NaN)
+
+  // Hapus nama hari jika ada (format "Sabtu, 01/03/2025")
+  const cleanedDate = dateString.replace(/^[A-Za-z]+,\s*/, "")
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(cleanedDate)) return parseISO(cleanedDate)
+
+  for (const formatStr of ["d/M/yyyy", "dd/MM/yyyy", "yyyy-MM-dd"]) {
+    const date = parse(cleanedDate, formatStr, new Date())
+    if (isValid(date)) return date
+  }
+  return new Date(NaN)
+}
+
+/** Grid jam sholat untuk satu hari (dipakai kartu "Hari ini" & kartu harian mobile). */
+const PrayerTimesGrid = ({
+  row,
+  size = "sm",
+}: {
+  row: ScheduleRow
+  size?: "sm" | "lg"
+}) => (
+  <dl
+    className={`grid grid-cols-4 text-center ${
+      size === "lg" ? "md:grid-cols-8 gap-3" : "gap-x-2 gap-y-2"
+    }`}
+  >
+    {prayerNames.map(({ key, label }) => {
+      const highlight = key === "imsak" || key === "maghrib"
+      return (
+        <div
+          key={key}
+          className={size === "lg" ? "rounded-xl bg-white/70 py-2 px-1" : ""}
+        >
+          <dt
+            className={`text-[11px] md:text-xs leading-tight ${
+              highlight ? "text-green-700 font-semibold" : "text-gray-500"
+            }`}
+          >
+            {label}
+          </dt>
+          <dd
+            className={`tabular-nums font-semibold text-gray-900 leading-tight ${
+              size === "lg" ? "text-base md:text-lg" : "text-sm"
+            }`}
+          >
+            {row[key as PrayerKey]}
+          </dd>
+        </div>
+      )
+    })}
+  </dl>
+)
 
 const Schedule: React.FC = () => {
   const { currentDate } = useScheduleStore()
@@ -67,198 +115,96 @@ const Schedule: React.FC = () => {
     id: "1301",
     lokasi: "KOTA JAKARTA",
   })
-  const [selectedMonth, setSelectedMonth] = useState<number>(
-    new Date().getMonth(),
-  )
-  const [isDetectingLocation, setIsDetectingLocation] = useState(false)
+  const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth())
+  const { detectCity, isDetecting: isDetectingLocation } = useDetectCity()
+  const hijriOffset = useHijriOffset()
 
   const detectLocation = async () => {
-    setIsDetectingLocation(true)
-    try {
-      const position = await getCurrentLocation()
-      if (position.latitude && position.longitude) {
-        toast.success(`Lokasi didapatkan. Mencari kota terdekat...`)
-        const city = await getPrayerTimesByCoords(position.latitude, position.longitude)
-        if (city) {
-          setSelectedCity(city)
-          toast.success(`Berhasil! Lokasi diatur ke ${city.lokasi}`)
-        } else {
-          toast.error("Kota Anda tidak ditemukan di database.")
-        }
-      } else {
-        toast.error("Gagal mendeteksi lokasi.")
-      }
-    } catch (error: any) {
-      toast.error("Gagal mendapatkan lokasi: " + (error.message || "Error tidak diketahui"))
-    } finally {
-      setIsDetectingLocation(false)
-    }
+    const city = await detectCity()
+    // Simpan hanya field yang dipakai imsakiyah (id + nama kota)
+    if (city) setSelectedCity({ id: city.id, lokasi: city.lokasi })
   }
 
-  const years = new Date().getFullYear()
-
+  const year = new Date().getFullYear()
   const selectedDate = setMonth(new Date(currentDate), selectedMonth)
-  const {
-    data: schedule,
-    isLoading,
-    error,
-    refetch,
-  } = useSchedule(selectedCity.id, selectedDate)
+  const { data: schedule, isLoading, error, refetch } = useSchedule(
+    selectedCity.id,
+    selectedDate,
+  )
 
-  const today = new Date()
-
-  const parseDate = (dateString: string): Date => {
-    if (!dateString) return new Date(NaN)
-
-    // Hapus nama hari jika ada (format "Sabtu, 01/03/2025")
-    const cleanedDate = dateString.replace(/^[A-Za-z]+,\s*/, "")
-
-    // Jika formatnya YYYY-MM-DD, gunakan parseISO
-    if (cleanedDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
-      return parseISO(cleanedDate)
-    }
-
-    const formats = ["d/M/yyyy", "dd/MM/yyyy", "yyyy-MM-dd"]
-    for (const formatStr of formats) {
-      const date = parse(cleanedDate, formatStr, new Date())
-      if (isValid(date)) return date
-    }
-
-    return new Date(NaN)
-  }
-
-  // Find today's schedule
-  const todaySchedule = useMemo(() => {
-    if (!schedule?.jadwal) return null
-    return schedule.jadwal.find((day) => {
+  const rows: ScheduleRow[] = useMemo(() => {
+    const today = new Date()
+    return (schedule?.jadwal ?? []).map((day) => {
       const date = parseDate(day.tanggal)
-      return isValid(date) && date.toDateString() === today.toDateString()
+      const valid = isValid(date)
+      return {
+        ...day,
+        key: day.tanggal,
+        date,
+        isToday: valid && isSameDay(date, today),
+        hijri: valid ? formatHijri(date, hijriOffset) : "-",
+      }
     })
-  }, [schedule, today])
+  }, [schedule, hijriOffset])
+
+  const todayRow = rows.find((row) => row.isToday)
 
   const downloadPDF = () => {
-    if (!schedule?.jadwal) return
+    if (!rows.length) return
     const doc = new jsPDF()
-    doc.text(
-      `Jadwal Shalat - ${selectedCity.lokasi} - ${months[selectedMonth]} ${years}`,
-      10,
-      10,
-    )
+    doc.text(`Jadwal Sholat - ${selectedCity.lokasi} - ${months[selectedMonth]} ${year}`, 10, 10)
     autoTable(doc, {
-      head: [
-        [
-          "Tanggal",
-          "Imsak",
-          "Subuh",
-          "Terbit",
-          "Dhuha",
-          "Dzuhur",
-          "Ashar",
-          "Maghrib",
-          "Isya",
-        ],
-      ],
-      body: schedule.jadwal.map((day) => [
-        day.tanggal,
-        day.imsak,
-        day.subuh,
-        day.terbit,
-        day.dhuha,
-        day.dzuhur,
-        day.ashar,
-        day.maghrib,
-        day.isya,
+      head: [["Tanggal", "Hijriah", ...prayerNames.map((p) => p.label)]],
+      body: rows.map((row) => [
+        isValid(row.date) ? format(row.date, "EEE, d MMM yyyy", { locale: id }) : row.tanggal,
+        row.hijri,
+        ...prayerNames.map((p) => row[p.key as PrayerKey]),
       ]),
     })
-    doc.save(
-      `jadwal-shalat-${selectedCity.lokasi}-${months[selectedMonth]}.pdf`,
-    )
+    doc.save(`jadwal-sholat-${selectedCity.lokasi}-${months[selectedMonth]}.pdf`)
   }
 
   const columns = [
     {
-      title: "Hari",
-      dataIndex: "tanggal",
-      key: "hari",
-      width: 100,
-      fixed: "left" as const,
-      render: (text: string) => {
-        const date = parseDate(text)
-        return isValid(date)
-          ? format(date, "EEEE", { locale: id })
-          : "Invalid Date"
-      },
-    },
-    {
       title: "Tanggal",
-      dataIndex: "tanggal",
+      dataIndex: "date",
       key: "tanggal",
-      width: 150,
-      render: (text: string) => {
-        const date = parseDate(text)
-        return isValid(date)
-          ? format(date, "d MMMM yyyy", { locale: id })
-          : "Invalid Date"
-      },
+      width: 190,
+      render: (date: Date, row: ScheduleRow) =>
+        isValid(date) ? (
+          <div className="leading-tight">
+            <div className="font-medium text-gray-900">
+              {format(date, "EEEE, d MMMM", { locale: id })}
+            </div>
+            <div className="text-xs text-gray-500">{row.hijri}</div>
+          </div>
+        ) : (
+          row.tanggal
+        ),
     },
-    {
-      title: "Hijriah",
-      dataIndex: "tanggal",
-      key: "tanggal_hijriah",
-      width: 150,
-      render: (text: string) => {
-        const date = parseDate(text)
-        if (isValid(date)) {
-          const hijriDate = toHijri(
-            date.getFullYear(),
-            date.getMonth() + 1,
-            date.getDate(),
-          )
-          return `${hijriDate.hd} ${hijriMonths[hijriDate.hm - 1]} ${
-            hijriDate.hy
-          }H`
-        }
-        return "Invalid Date"
-      },
-    },
-    { title: "Imsak", dataIndex: "imsak", key: "imsak", width: 80 },
-    { title: "Subuh", dataIndex: "subuh", key: "subuh", width: 80 },
-    { title: "Terbit", dataIndex: "terbit", key: "terbit", width: 80 },
-    { title: "Dhuha", dataIndex: "dhuha", key: "dhuha", width: 80 },
-    { title: "Dzuhur", dataIndex: "dzuhur", key: "dzuhur", width: 80 },
-    { title: "Ashar", dataIndex: "ashar", key: "ashar", width: 80 },
-    { title: "Maghrib", dataIndex: "maghrib", key: "maghrib", width: 80 },
-    { title: "Isya", dataIndex: "isya", key: "isya", width: 80 },
+    ...prayerNames.map(({ key, label }) => ({
+      title: label,
+      dataIndex: key,
+      key,
+      align: "center" as const,
+      render: (value: string) => <span className="tabular-nums">{value}</span>,
+    })),
   ]
 
-  const dataSource =
-    schedule?.jadwal.map((day) => {
-      const date = parseDate(day.tanggal)
-      const isToday =
-        isValid(date) && date.toDateString() === today.toDateString()
-      return {
-        ...day,
-        key: day.tanggal,
-        isToday,
-      }
-    }) || []
-
-  if (isLoading)
-    return (
-      <div className="flex justify-center items-center py-12">
-        <div className="flex flex-col items-center gap-4">
+  const renderContent = () => {
+    if (isLoading)
+      return (
+        <div className="flex flex-col items-center gap-4 py-16">
           <Spin size="large" />
-          <p className="text-gray-500">Memuat jadwal shalat...</p>
+          <p className="text-gray-500">Memuat jadwal sholat...</p>
         </div>
-      </div>
-    )
+      )
 
-  if (error)
-    return (
-      <div className="py-4">
+    if (error)
+      return (
         <Alert
           message="Gagal Memuat Jadwal"
-          description="Tidak dapat memuat jadwal shalat. Silakan coba lagi."
+          description="Tidak dapat memuat jadwal sholat. Silakan coba lagi."
           type="error"
           showIcon
           action={
@@ -272,21 +218,107 @@ const Schedule: React.FC = () => {
             </Button>
           }
         />
-      </div>
-    )
+      )
 
-  if (!schedule?.jadwal || schedule.jadwal.length === 0)
+    if (!rows.length)
+      return <Empty description="Jadwal tidak tersedia" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+
     return (
-      <Empty
-        description="Jadwal tidak tersedia"
-        image={Empty.PRESENTED_IMAGE_SIMPLE}
-      />
+      <>
+        {/* Ringkasan hari ini — informasi yang paling sering dicari */}
+        {todayRow && (
+          <section
+            aria-label="Jadwal hari ini"
+            className="rounded-2xl border border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 p-4 md:p-5"
+          >
+            <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+              <h3 className="text-base md:text-lg font-bold text-gray-900">
+                Hari ini · {format(todayRow.date, "EEEE, d MMMM yyyy", { locale: id })}
+              </h3>
+              <p className="text-sm text-green-800">{todayRow.hijri}</p>
+            </div>
+            <PrayerTimesGrid row={todayRow} size="lg" />
+          </section>
+        )}
+
+        <div className="flex items-center justify-between gap-3">
+          <h3 className="text-base md:text-lg font-semibold text-gray-900">
+            {months[selectedMonth]} {year}
+            <span className="ml-2 text-sm font-normal text-gray-500">{rows.length} hari</span>
+          </h3>
+          <Button
+            type="primary"
+            icon={<Download className="w-4 h-4" />}
+            onClick={downloadPDF}
+            className="bg-green-600 hover:!bg-green-700 border-green-600"
+          >
+            Unduh PDF
+          </Button>
+        </div>
+
+        {/* Desktop/tablet: tabel lengkap */}
+        <div className="hidden md:block">
+          <Table
+            columns={columns}
+            dataSource={rows}
+            rowClassName={(record) => (record.isToday ? "imsakiyah-today" : "")}
+            bordered
+            pagination={false}
+            scroll={{ x: "max-content" }}
+            size="middle"
+          />
+        </div>
+
+        {/* Mobile: kartu per hari, semua jam sholat terlihat tanpa scroll ke samping */}
+        <ul className="md:hidden space-y-3">
+          {rows.map((row) => (
+            <li
+              key={row.key}
+              className={`rounded-xl border p-3 ${
+                row.isToday ? "border-green-500 bg-green-50" : "border-gray-200 bg-white"
+              }`}
+            >
+              <div className="mb-2 flex items-baseline justify-between gap-2">
+                <span className="font-semibold text-gray-900">
+                  {isValid(row.date) ? format(row.date, "EEEE, d MMM", { locale: id }) : row.tanggal}
+                  {row.isToday && (
+                    <span className="ml-2 rounded-full bg-green-600 px-2 py-0.5 text-[10px] font-semibold text-white align-middle">
+                      Hari ini
+                    </span>
+                  )}
+                </span>
+                <span className="text-xs text-gray-500 text-right">{row.hijri}</span>
+              </div>
+              <PrayerTimesGrid row={row} />
+            </li>
+          ))}
+        </ul>
+
+        {/* Arah kiblat — fitur pendukung, ditempatkan setelah jadwal */}
+        {schedule && (
+          <section
+            aria-label="Arah kiblat"
+            className="rounded-2xl border border-gray-200 bg-white p-4 md:p-6"
+          >
+            <h3 className="mb-2 flex items-center gap-2 text-base md:text-lg font-semibold text-gray-900">
+              <Navigation className="h-5 w-5 text-green-600" />
+              Arah Kiblat
+            </h3>
+            <QiblaCompass
+              lat={schedule.koordinat?.lat || 0}
+              lon={schedule.koordinat?.lon || 0}
+              lokasi={schedule.lokasi}
+            />
+          </section>
+        )}
+      </>
     )
+  }
 
   return (
     <div className="space-y-6">
-      {/* Filters Section */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+      {/* Filter — selalu tampil, juga saat jadwal sedang dimuat */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <label
@@ -296,10 +328,10 @@ const Schedule: React.FC = () => {
               <MapPin className="w-4 h-4" />
               Pilih Kota
             </label>
-            <Button 
-              type="text" 
-              size="small" 
-              className="text-green-600 flex items-center gap-1 hover:text-green-700 p-0"
+            <Button
+              type="text"
+              size="small"
+              className="text-green-700 flex items-center gap-1 hover:!text-green-800 p-0"
               onClick={detectLocation}
               loading={isDetectingLocation}
             >
@@ -307,7 +339,7 @@ const Schedule: React.FC = () => {
               Deteksi Lokasi
             </Button>
           </div>
-          <CitySelector value={selectedCity.id} onCityChange={setSelectedCity} />
+          <CitySelector value={selectedCity} onCityChange={setSelectedCity} />
         </div>
         <div className="flex flex-col gap-2">
           <label
@@ -327,57 +359,14 @@ const Schedule: React.FC = () => {
           >
             {months.map((monthName, index) => (
               <Option key={index} value={index}>
-                {monthName} {years}
+                {monthName} {year}
               </Option>
             ))}
           </Select>
         </div>
       </div>
 
-      {/* Qibla Direction Card */}
-      {schedule && (
-        <Card
-          className="bg-gradient-to-r from-green-50 via-emerald-50 to-green-50 border-2 border-green-200 shadow-lg"
-        >
-          <div className="flex flex-col items-center justify-center">
-            <QiblaCompass lat={schedule.koordinat?.lat || 0} lon={schedule.koordinat?.lon || 0} lokasi={schedule.lokasi} />
-          </div>
-        </Card>
-      )}
-
-      {/* Download Button */}
-      <div className="flex justify-end">
-        <Button
-          type="primary"
-          size="large"
-          icon={<Download className="w-4 h-4" />}
-          onClick={downloadPDF}
-          className="bg-green-600 hover:bg-green-700 border-green-600 hover:border-green-700"
-        >
-          Unduh PDF
-        </Button>
-      </div>
-
-      {/* Schedule Table */}
-      <div className="overflow-x-auto">
-        <Table
-          columns={columns}
-          dataSource={dataSource}
-          rowClassName={(record) =>
-            record.isToday
-              ? "bg-gradient-to-r from-green-100 to-emerald-100 font-semibold"
-              : ""
-          }
-          bordered
-          pagination={{
-            pageSize: 31,
-            showSizeChanger: false,
-            showTotal: (total) => `Total ${total} hari`,
-          }}
-          scroll={{ x: "max-content" }}
-          size="middle"
-        />
-      </div>
+      {renderContent()}
     </div>
   )
 }

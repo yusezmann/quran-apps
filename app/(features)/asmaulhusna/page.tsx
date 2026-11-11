@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { useHusna } from "../asmaulhusna/hooks/useHusna"
 import { useHusnaStore } from "../asmaulhusna/store/husnaStore"
 import Header from "@/components/Header"
-import Image from "next/image"
+import PageBackground from "@/components/PageBackground"
 import { Alert, Spin } from "antd"
 import { Swiper, SwiperSlide } from "swiper/react"
 import { Navigation, Pagination, Autoplay } from "swiper/modules"
@@ -17,7 +17,6 @@ import AsmaulHusnaCard from "./components/AsmaulHusnaCard"
 import AsmaulHusnaInfo from "./components/AsmaulHusnaInfo"
 import ProgressBar from "./components/ProgressBar"
 import QuickNavigation from "./components/QuickNavigation"
-import ReadingStats from "./components/ReadingStats"
 import MobileSliderControls from "./components/MobileSliderControls"
 import { Footer } from "@/components/footer"
 
@@ -36,7 +35,7 @@ export default function AsmaulHusnaPage() {
 
   if (isLoading)
     return (
-      <div className="flex justify-center items-center h-screen bg-gradient-to-br from-green-900 to-blue-900">
+      <div className="flex justify-center items-center h-screen bg-gradient-to-b from-emerald-950 to-slate-950">
         <div className="text-center">
           <Spin size="large" />
           <p className="text-white mt-4 text-lg">Memuat Asmaul Husna...</p>
@@ -46,7 +45,7 @@ export default function AsmaulHusnaPage() {
 
   if (error)
     return (
-      <div className="flex justify-center items-center h-screen bg-gradient-to-br from-green-900 to-blue-900">
+      <div className="flex justify-center items-center h-screen bg-gradient-to-b from-emerald-950 to-slate-950">
         <Alert 
           message="Terjadi kesalahan!" 
           description="Gagal memuat data Asmaul Husna. Silakan coba lagi."
@@ -85,19 +84,7 @@ export default function AsmaulHusnaPage() {
       <ProgressBar currentSlide={currentSlide} totalSlides={husna.length} />
       
       <div className="flex flex-col min-h-screen relative">
-        {/* Background Image dengan overlay */}
-        <div className="absolute top-0 left-0 w-full h-full -z-10">
-          <Image
-            src="/assets/images/kaabah.jpg"
-            alt="Kaabah"
-            layout="fill"
-            objectFit="cover"
-            className="brightness-40"
-            priority
-          />
-          {/* Overlay gradient */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70"></div>
-        </div>
+        <PageBackground variant="dark" />
 
         {/* Main Content */}
         <div className="relative z-10 flex-1">
@@ -112,7 +99,7 @@ export default function AsmaulHusnaPage() {
               </p>
               
               {/* Decorative line */}
-              <div className="w-24 h-1 bg-gradient-to-r from-green-400 to-blue-500 mx-auto mt-6 rounded-full"></div>
+              <div className="w-24 h-1 bg-green-400 mx-auto mt-6 rounded-full"></div>
             </div>
           </div>
 
@@ -178,9 +165,6 @@ export default function AsmaulHusnaPage() {
             <div className="space-y-8 md:space-y-12 pb-16 md:pb-24 mb-14">
               {/* Quick Navigation */}
               <QuickNavigation onNavigate={handleSlideTo} />
-
-              {/* Reading Stats */}
-              <ReadingStats currentSlide={currentSlide} totalSlides={husna.length} />
 
               {/* Info Section */}
               <AsmaulHusnaInfo currentSlide={currentSlide} totalSlides={husna.length} />

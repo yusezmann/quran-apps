@@ -1,69 +1,51 @@
 "use client"
 
-import Image from "next/image"
-// next link
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { BookOpenText, CalendarClock, HandHeart, House, Sparkles, type LucideIcon } from "lucide-react"
 
-// icons
-import {
-  HiHome,
-  HiViewColumns,
-  HiRectangleGroup,
-  HiArchiveBox,
-  HiEnvelope,
-} from "react-icons/hi2"
-
-const links = [
-  {
-    name: "imsakiyah",
-    path: "/imsakiyah",
-    icon: "/assets/icons/time-call.png",
-  },
-  { name: "doa", path: "/doa", icon: "/assets/icons/praying.png" },
-  { name: "home", path: "/", icon: "/assets/icons/home.png" },
-  { name: "asmaulhusna", path: "/asmaulhusna", icon: "/assets/icons/99.png" },
-  { name: "hadits", path: "/hadits", icon: "/assets/icons/islam.png" },
+const links: { label: string; path: string; icon: LucideIcon }[] = [
+  { label: "Imsakiyah", path: "/imsakiyah", icon: CalendarClock },
+  { label: "Doa", path: "/doa", icon: HandHeart },
+  { label: "Beranda", path: "/", icon: House },
+  { label: "Asmaul Husna", path: "/asmaulhusna", icon: Sparkles },
+  { label: "Hadits", path: "/hadits", icon: BookOpenText },
 ]
 
+/** Navigasi bawah untuk mobile & tablet: ikon garis seragam + label teks. */
 const Nav = () => {
   const pathname = usePathname()
 
   return (
-    <nav className="flex flex-col items-center xl:justify-center gap-y-4 fixed h-max bottom-0 mt-auto right-0 xl:right-[2%] z-40 top-0 w-full xl:w-16 xl:max-w-md xl:h-screen">
-      {/* inner */}
-      <div className="flex w-full xl:flex-col items-center justify-between xl:justify-center gap-y-10 px-4 md:px-40 xl:px-0 h-[80px] xl:h-max py-8 bg-green-500/95 backdrop-blur-sm text-3xl xl:text-xl xl:rounded-full z-40 shadow-lg">
-        {links.map((link, index) => (
-          <Link
-            className={`${
-              link.path === pathname && "bg-green-300/80 p-2 rounded-full shadow-lg"
-            } relative flex items-center group hover:text-accent transition-all duration-300 ease-in-out transform hover:scale-110 active:scale-95`}
-            href={link.path}
-            key={index}
-          >
-            {/* tooltip - Only show on desktop */}
-            <div className="absolute pr-14 right-0 hidden xl:group-hover:flex">
-              <div className="bg-green-300 relative flex text-white items-center p-[6px] rounded-[3px] shadow-lg">
-                <div className="text-[12px] leading-none font-semibold capitalize">
-                  {link.name}
-                </div>
-
-                {/* triangle */}
-                <div className="border-solid border-l-white border-l-8 border-y-transparent border-y-[6px] border-r-0 absolute -right-2"></div>
-              </div>
-            </div>
-
-            {/* icon */}
-            <Image
-              src={link.icon}
-              alt={link.name}
-              className="w-10 h-10 xl:w-8 xl:h-8"
-              width={24}
-              height={24}
-            />
-          </Link>
-        ))}
-      </div>
+    <nav
+      aria-label="Navigasi utama"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-gray-200 bg-white/95 backdrop-blur-sm shadow-[0_-4px_16px_rgba(0,0,0,0.08)] pb-[env(safe-area-inset-bottom)]"
+    >
+      <ul className="mx-auto flex h-16 max-w-lg items-stretch justify-between px-2">
+        {links.map(({ label, path, icon: Icon }) => {
+          const active = pathname === path
+          return (
+            <li key={path} className="flex-1">
+              <Link
+                href={path}
+                aria-current={active ? "page" : undefined}
+                className={`flex h-full flex-col items-center justify-center gap-1 text-[11px] font-medium transition-colors ${
+                  active ? "text-green-700" : "text-gray-500 hover:text-green-700"
+                }`}
+              >
+                <span
+                  className={`flex h-7 w-12 items-center justify-center rounded-full transition-colors ${
+                    active ? "bg-green-100" : ""
+                  }`}
+                >
+                  <Icon className="h-5 w-5" strokeWidth={active ? 2.4 : 2} />
+                </span>
+                <span className="leading-none whitespace-nowrap">{label}</span>
+              </Link>
+            </li>
+          )
+        })}
+      </ul>
     </nav>
   )
 }

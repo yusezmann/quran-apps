@@ -12,7 +12,6 @@ import type {
 import {
   getPrayerTimes,
   getCities,
-  getPrayerTimesByCoords,
 } from "@/app/(features)/prayer-times/services/prayer-time.service"
 import HijriDateDisplay from "@/app/(features)/hijri-date/components/hijr-date"
 import LocationSelector from "./components/LocationSelector"
@@ -22,7 +21,7 @@ import AdzanSettings from "../adzan/components/AdzanSetting"
 import CountdownTest from "./components/Countdown"
 import Marquee from "react-fast-marquee"
 import AdhanNotification from "../adzan/components/AdzanNotification"
-import { getCurrentLocation } from "@/lib/geolocation"
+import { useDetectCity } from "@/app/(features)/prayer-times/hooks/useDetectCity"
 const PRAYER_METHODS = [
   { id: "kemenag", name: "Kemenag", params: { subuh: 20, isya: 18 } },
   { id: "mwl", name: "Muslim World League", params: { subuh: 18, isya: 17 } },
@@ -55,7 +54,7 @@ const PrayerTimeComponent = () => {
   const [searchQuery, setSearchQuery] = useState("")
   const [searchResults, setSearchResults] = useState<City[]>([])
   const [searching, setSearching] = useState(false)
-  const [isDetectingLocation, setIsDetectingLocation] = useState(false)
+  const { detectCity, isDetecting: isDetectingLocation } = useDetectCity()
 
   useEffect(() => {
     fetchPrayerTimes()
@@ -132,32 +131,10 @@ const PrayerTimeComponent = () => {
   }
 
   const detectLocation = async () => {
-    setIsDetectingLocation(true)
-
-    try {
-      const position = await getCurrentLocation()
-      const { latitude, longitude } = position
-      
-      if (latitude && longitude) {
-        toast.success(
-          `Lokasi berhasil dideteksi: (${latitude}, ${longitude})`,
-        )
-
-        const city = await getPrayerTimesByCoords(latitude, longitude)
-        if (city) {
-          setSearchResults([city])
-          handleCitySelect(city)
-        } else {
-          toast.error("Kota tidak ditemukan pada API")
-        }
-      } else {
-        toast.error("Gagal mendeteksi lokasi: koordinat tidak valid")
-      }
-    } catch (error: any) {
-      console.error("Geolocation error:", error)
-      toast.error("Gagal mendapatkan lokasi: " + (error.message || "Error tidak diketahui"))
-    } finally {
-      setIsDetectingLocation(false)
+    const city = await detectCity()
+    if (city) {
+      setSearchResults([city])
+      handleCitySelect(city)
     }
   }
 
@@ -279,7 +256,7 @@ const PrayerTimeComponent = () => {
   }
 
   return (
-    <section className="mb-0">
+    <section className="relative mb-0">
       {/* <Marquee
         speed={50}
         pauseOnHover={true}
@@ -303,23 +280,22 @@ const PrayerTimeComponent = () => {
               className="object-cover brightness-50 rounded-b-2xl xl:rounded-b-none"
             />
 
-            <div className="absolute inset-0 flex flex-col justify-between p-4 xl:p-6 text-white z-10 mt-[45px] xl:mt-[85px]">
+            <div className="absolute inset-0 flex flex-col justify-between p-4 xl:p-6 text-white z-10 mt-[60px] xl:mt-[85px]">
               <div className="flex flex-wrap justify-between items-start xl:px-12 ">
                 <div className="flex flex-col min-w-0">
-                  <h2 className="text-2xl font-bold flex">
+                  <h2 className="text-2xl font-bold flex flex-wrap gap-x-2">
                     <span className="hidden xl:block">Jadwal Sholat di</span>
-                    <span className="ml-2 text-sm xl:text-2xl">
+                    <span className="text-sm xl:text-2xl">
                       {prayerTimes?.lokasi}
                     </span>
                   </h2>
-                  <Button
-                    variant="link"
-                    color="danger"
-                    className="text-primary self-start"
+                  <button
+                    type="button"
+                    className="mt-1 self-start inline-flex items-center gap-1 text-xs xl:text-sm text-white/90 underline underline-offset-4 decoration-white/50 hover:text-white hover:decoration-white"
                     onClick={() => setLocationDialogOpen(true)}
                   >
                     <MapPin className="h-4 w-4" /> Salah Lokasi?
-                  </Button>
+                  </button>
                 </div>
                 <div className="text-right text-[10px] xl:text-sm">
                   <HijriDateDisplay currentTime={currentTime} />
@@ -327,10 +303,11 @@ const PrayerTimeComponent = () => {
               </div>
 
               <div className="block xl:hidden text-center relative -top-[14px] md:-top-[120px]">
-                <h6 className="text-sm font-bold">Sholat Selanjutnya</h6>
+                <h6 className="text-sm font-bold">Sholat Berikutnya</h6>
                 <div className="font-bold text-lg">{nextPrayer?.name}</div>
                 <div className="text-3xl font-bold my-2">{countdown}</div>
-                <div className="text-sm">
+                <div className="text-sm text-white/80">
+                  Sekarang{" "}
                   {currentTime.toLocaleTimeString("id-ID", {
                     hour: "2-digit",
                     minute: "2-digit",
@@ -341,14 +318,13 @@ const PrayerTimeComponent = () => {
               <div className="flex justify-between items-center text-sm px-2 xl:px-6 relative -top-8 xl:-top-16">
                 <div className="flex items-center gap-2">
                   <span>{selectedMethod.name}</span>
-                  <Button
-                    variant="link"
-                    color="danger"
-                    className="text-primary p-0 h-auto"
+                  <button
+                    type="button"
+                    className="text-white/90 underline underline-offset-4 decoration-white/50 hover:text-white hover:decoration-white"
                     onClick={() => setMethodDialogOpen(true)}
                   >
                     Ganti
-                  </Button>
+                  </button>
                   <Button
                     type="default"
                     shape="circle"
@@ -361,7 +337,7 @@ const PrayerTimeComponent = () => {
                   >
                     <Info className="h-6 w-6 text-white" />
                   </Button>
-                  <span className="text-muted-foreground">
+                  <span className="text-white/80">
                     Subuh {selectedMethod.params.subuh}°, Isya{" "}
                     {selectedMethod.params.isya}°
                   </span>

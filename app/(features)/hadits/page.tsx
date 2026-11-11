@@ -2,7 +2,7 @@
 
 import { useEffect } from "react"
 import Header from "@/components/Header"
-import Image from "next/image"
+import PageBackground from "@/components/PageBackground"
 import { useHadithStore } from "./store/hadits-store"
 import { useQuery } from "@tanstack/react-query"
 import { fetchHadiths } from "./services/hadits.service"
@@ -50,16 +50,7 @@ const Hadits = () => {
     return (
       <div className="min-h-screen relative">
         <Header />
-        <div className="absolute inset-0 -z-10">
-          <Image
-            src="/assets/images/kaabah.jpg"
-            alt="Kaabah"
-            fill
-            sizes="100vw"
-            className="object-cover w-full h-full brightness-50"
-            priority
-          />
-        </div>
+        <PageBackground />
         <div className="flex justify-center items-center min-h-screen relative z-10 px-4">
           <div className="max-w-md w-full">
             <Alert
@@ -85,20 +76,7 @@ const Hadits = () => {
   return (
     <div className="min-h-screen relative">
       <Header />
-
-      {/* Background dengan overlay gradient */}
-      <div className="absolute inset-0 -z-10">
-        <Image
-          src="/assets/images/kaabah.jpg"
-          alt="Kaabah"
-          fill
-          sizes="100vw"
-          className="object-cover w-full h-full"
-          priority
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/40"></div>
-        <div className="absolute inset-0 bg-gradient-to-r from-green-900/10 to-emerald-900/10"></div>
-      </div>
+      <PageBackground />
 
       {/* Hero section */}
       <div className="relative z-10 pt-28 pb-8">
@@ -149,19 +127,6 @@ const Hadits = () => {
       {/* Footer hanya di desktop */}
       <div className="hidden xl:block relative z-10">
         <Footer />
-      </div>
-
-      {/* Floating stats */}
-      <div className="fixed bottom-6 right-6 z-50 hidden xl:block animate-in fade-in slide-in-from-bottom-4 duration-500">
-        <div className="bg-white/95 backdrop-blur-md rounded-full px-5 py-3 shadow-xl border border-white/30 hover:shadow-2xl transition-all duration-300 hover:scale-105">
-          <div className="flex items-center gap-3 text-sm">
-            <div className="relative">
-              <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-              <div className="absolute inset-0 w-3 h-3 bg-green-500 rounded-full animate-ping opacity-75"></div>
-            </div>
-            <span className="text-gray-700 font-semibold">{hadiths.length} Hadits Tersedia</span>
-          </div>
-        </div>
       </div>
     </div>
   )

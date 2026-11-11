@@ -3,7 +3,6 @@
 import {
   getCities,
   getPrayerTimes,
-  getPrayerTimesByCoords,
 } from "@/app/(features)/prayer-times/services/prayer-time.service"
 import {
   City,
@@ -15,7 +14,7 @@ import Image from "next/image"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import HijriDateDisplay from "../../hijri-date/components/hijr-date"
-import { getCurrentLocation } from "@/lib/geolocation"
+import { useDetectCity } from "@/app/(features)/prayer-times/hooks/useDetectCity"
 
 const PRAYER_METHODS = [
   { id: "kemenag", name: "Kemenag", params: { subuh: 20, isya: 18 } },
@@ -43,7 +42,7 @@ const PrayerTimeComponent = () => {
   const [searching, setSearching] = useState(false)
   const [selectedMethod, setSelectedMethod] = useState(PRAYER_METHODS[0])
   const [methodDialogOpen, setMethodDialogOpen] = useState(false)
-  const [isDetectingLocation, setIsDetectingLocation] = useState(false)
+  const { detectCity, isDetecting: isDetectingLocation } = useDetectCity()
 
   useEffect(() => {
     fetchPrayerTimes()
@@ -121,32 +120,8 @@ const PrayerTimeComponent = () => {
   }
 
   const detectLocation = async () => {
-    setIsDetectingLocation(true)
-
-    try {
-      const position = await getCurrentLocation()
-      const { latitude, longitude } = position
-      
-      if (latitude && longitude) {
-        toast.success(
-          `Lokasi berhasil dideteksi: (${latitude}, ${longitude})`,
-        )
-
-        const city = await getPrayerTimesByCoords(latitude, longitude)
-        if (city) {
-          setSearchResults([city])
-        } else {
-          toast.error("Kota tidak ditemukan pada API")
-        }
-      } else {
-        toast.error("Gagal mendeteksi lokasi: koordinat tidak valid")
-      }
-    } catch (error: any) {
-      console.error("Geolocation error:", error)
-      toast.error("Gagal mendapatkan lokasi: " + (error.message || "Error tidak diketahui"))
-    } finally {
-      setIsDetectingLocation(false)
-    }
+    const city = await detectCity()
+    if (city) setSearchResults([city])
   }
 
   const updateNextPrayer = () => {

@@ -32,7 +32,7 @@ export default function MobileMenu({
       path: "/imsakiyah", 
       label: "Imsakiyah", 
       icon: IoTime,
-      description: "Jadwal waktu shalat",
+      description: "Jadwal waktu sholat",
       category: "worship"
     },
     { 

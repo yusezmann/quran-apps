@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+import { useMemo } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { Select, Spin, Alert, Button } from "antd"
 import { fetchCities } from "../services/imsakiyah.service"
@@ -8,7 +9,8 @@ import type { City } from "../interfaces/imsakiyah.interface"
 import { MapPin, RefreshCw } from "lucide-react"
 
 type CityProps = {
-  value?: string
+  /** Kota yang sedang dipilih (bisa berasal dari deteksi lokasi, bukan dari daftar) */
+  value?: City
   onCityChange: (city: City) => void
 }
 
@@ -23,6 +25,20 @@ const CitySelector: React.FC<CityProps> = ({ value, onCityChange }) => {
     queryFn: fetchCities,
     retry: 2,
   })
+
+  // Pastikan kota terpilih selalu punya option, walaupun tidak ada di daftar
+  // `/sholat/kota/semua` (mis. hasil `/sholat/kota/cari` atau cache daftar yang basi).
+  // Tanpa ini antd Select menampilkan id mentah (mis. "1609") alih-alih nama kota.
+  const options = useMemo(() => {
+    const list = (cities ?? []).map((city) => ({
+      label: city.lokasi,
+      value: city.id,
+    }))
+    if (value && !list.some((option) => option.value === value.id)) {
+      list.unshift({ label: value.lokasi, value: value.id })
+    }
+    return list
+  }, [cities, value])
 
   if (isLoading)
     return (
@@ -59,15 +75,17 @@ const CitySelector: React.FC<CityProps> = ({ value, onCityChange }) => {
   return (
     <div className="w-full">
       <Select
-        value={value}
+        value={value?.id}
         showSearch
         className="w-full"
         placeholder="Cari atau pilih kota..."
         optionFilterProp="children"
         size="large"
         suffixIcon={<MapPin className="w-4 h-4 text-gray-400" />}
-        onChange={(value) => {
-          const selectedCity = cities?.find((city) => city.id === value)
+        onChange={(cityId) => {
+          const selectedCity =
+            cities?.find((city) => city.id === cityId) ??
+            (value?.id === cityId ? value : undefined)
           if (selectedCity) onCityChange(selectedCity)
         }}
         filterOption={(input, option) =>
@@ -75,10 +93,7 @@ const CitySelector: React.FC<CityProps> = ({ value, onCityChange }) => {
             ?.toLowerCase()
             .includes(input.toLowerCase()) || false
         }
-        options={cities?.map((city) => ({
-          label: city.lokasi,
-          value: city.id,
-        }))}
+        options={options}
         notFoundContent={
           isLoading ? (
             <div className="py-4 text-center">

@@ -9,12 +9,9 @@ import type {
   City,
   LocationSelectorProps,
 } from "@/app/(features)/prayer-times/interfaces/prayer-time.interface"
-import {
-  getCities,
-  getPrayerTimesByCoords,
-} from "@/app/(features)/prayer-times/services/prayer-time.service"
+import { getCities } from "@/app/(features)/prayer-times/services/prayer-time.service"
 import { toast } from "sonner"
-import { getCurrentLocation } from "@/lib/geolocation"
+import { useDetectCity } from "@/app/(features)/prayer-times/hooks/useDetectCity"
 
 const LocationSelector: React.FC<LocationSelectorProps> = ({
   isOpen,
@@ -24,7 +21,7 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
   const [searchQuery, setSearchQuery] = useState("")
   const [searchResults, setSearchResults] = useState<City[]>([])
   const [searching, setSearching] = useState(false)
-  const [isDetectingLocation, setIsDetectingLocation] = useState(false)
+  const { detectCity, isDetecting: isDetectingLocation } = useDetectCity()
 
   const handleLocationSearch = async () => {
     if (searchQuery.length < 3) {
@@ -45,33 +42,11 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
   }
 
   const detectLocation = async () => {
-    setIsDetectingLocation(true)
-
-    try {
-      const position = await getCurrentLocation()
-      const { latitude, longitude } = position
-      
-      if (latitude && longitude) {
-        toast.success(
-          `Lokasi berhasil dideteksi: (${latitude}, ${longitude})`,
-        )
-
-        const city = await getPrayerTimesByCoords(latitude, longitude)
-        if (city) {
-          setSearchResults([city])
-          onSelectCity(city)
-          onClose()
-        } else {
-          toast.error("Kota tidak ditemukan pada API")
-        }
-      } else {
-        toast.error("Gagal mendeteksi lokasi: koordinat tidak valid")
-      }
-    } catch (error: any) {
-      console.error("Geolocation error:", error)
-      toast.error("Gagal mendapatkan lokasi: " + (error.message || "Error tidak diketahui"))
-    } finally {
-      setIsDetectingLocation(false)
+    const city = await detectCity()
+    if (city) {
+      setSearchResults([city])
+      onSelectCity(city)
+      onClose()
     }
   }
 

@@ -20,12 +20,6 @@ const HadithList: React.FC<HadithListProps> = ({
     hadith.indo.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
-  // Auto-expand mobile list when nothing is selected yet (first load)
-  useEffect(() => {
-    if (isMobile && !selectedHadithId && hadiths.length === 0) {
-      setIsMobileExpanded(true)
-    }
-  }, [isMobile, selectedHadithId, hadiths.length])
 
   // Keyboard navigation (desktop only)
   useEffect(() => {
@@ -87,12 +81,10 @@ const HadithList: React.FC<HadithListProps> = ({
               </div>
               <div className="flex-1 min-w-0">
                 <h3 className="font-semibold text-sm line-clamp-2 leading-snug">
-                  {selectedHadith
-                    ? `Hadits ${selectedHadith.no}: ${selectedHadith.judul}`
-                    : "Pilih Hadits"}
+                  {isMobileExpanded ? "Tutup daftar hadits" : "Pilih hadits lain"}
                 </h3>
                 <p className="text-white/80 text-xs">
-                  {hadiths.length} hadits tersedia • Tap untuk ganti
+                  {selectedHadith ? `Hadits ${selectedHadith.no} dari ${hadiths.length}` : `${hadiths.length} hadits tersedia`}
                 </p>
               </div>
             </div>

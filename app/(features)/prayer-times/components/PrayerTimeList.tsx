@@ -4,6 +4,17 @@ import { Card } from "antd"
 import NextPrayerCard from "./NextPrayerCard"
 import { PrayerTimesListProps } from "../interfaces/prayer-time.interface"
 
+const PRAYER_KEYS = ["imsak", "subuh", "dzuhur", "ashar", "maghrib", "isya"] as const
+
+const CARD_IMAGES: Record<string, string> = {
+  imsak: "/assets/images/padang-moon.jpg",
+  subuh: "/assets/images/padang-moon.jpg",
+  dzuhur: "/assets/images/dzuhur.jpg",
+  ashar: "/assets/images/dzuhur.jpg",
+  maghrib: "/assets/images/sunset.jpg",
+  isya: "/assets/images/padang-moon.jpg",
+}
+
 const PrayerTimesList: React.FC<PrayerTimesListProps> = ({
   prayerTimes,
   nextPrayer,
@@ -14,28 +25,33 @@ const PrayerTimesList: React.FC<PrayerTimesListProps> = ({
     <>
       <Card
         size="small"
-        style={{ width: "91%" }}
-        className="relative left-[18px] md:left-[35px] -top-6 md:-top-8 lg:left-[45px] shadow-lg xl:shadow-none block xl:hidden"
+        className="relative z-10 mx-4 md:mx-8 -mt-6 md:-mt-8 shadow-lg block xl:hidden"
       >
-        <div className="flex flex-row flex-wrap gap-4 items-center justify-center">
-          {Object.entries(prayerTimes.jadwal).map(([key, value]) => {
-            if (["tanggal", "date", "terbit", "dhuha"].includes(key))
-              return null
+        <div className="grid grid-cols-6 gap-1 text-center">
+          {PRAYER_KEYS.map((key) => {
+            const isNext = nextPrayer?.name.toLowerCase() === key
             return (
-              <div key={`mobile-${key}`} className="flex flex-col items-center">
-                <div className="font-bold capitalize">{key}</div>
-                <div className="text-gray-700">{value}</div>
+              <div
+                key={`mobile-${key}`}
+                className={`rounded-lg py-1 ${isNext ? "bg-green-50 text-green-800" : ""}`}
+              >
+                <div className={`text-xs font-semibold capitalize ${isNext ? "text-green-700" : "text-gray-900"}`}>
+                  {key}
+                </div>
+                <div className="text-sm tabular-nums text-gray-700">
+                  {String(prayerTimes.jadwal[key as keyof typeof prayerTimes.jadwal])}
+                </div>
               </div>
             )
           })}
         </div>
       </Card>
 
-      <div className="relative hidden xl:block xl:-top-[410px]">
-        <div className="grid grid-cols-1 xl:grid-cols-5 gap-4 px-16">
-          {Object.entries(prayerTimes.jadwal).map(([key, value]) => {
-            if (["tanggal", "date", "terbit", "dhuha", "imsak"].includes(key))
-              return null
+      {/* Desktop: kartu di dalam hero (posisi absolut) sehingga tidak meninggalkan celah kosong */}
+      <div className="hidden xl:block absolute inset-x-0 bottom-[190px] z-10">
+        <div className="grid grid-cols-6 gap-4 px-16 items-end">
+          {PRAYER_KEYS.map((key) => {
+            const value = prayerTimes.jadwal[key as keyof typeof prayerTimes.jadwal]
             if (nextPrayer?.name.toLowerCase() === key) {
               return (
                 <NextPrayerCard
@@ -46,64 +62,26 @@ const PrayerTimesList: React.FC<PrayerTimesListProps> = ({
                 />
               )
             }
-            if (["subuh", "isya"].includes(key)) {
-              return (
-                <Card
-                  key={`desktop-${key}`}
-                  className="bg-gray-100 text-center h-32 w-50 relative top-8 hidden xl:block rounded-xl"
-                >
-                  <Image
-                    src="/assets/images/padang-moon.jpg"
-                    alt="Background"
-                    fill
-                    sizes="(max-width: 768px) 100vw"
-                    className="object-cover brightness-50 rounded-xl"
-                  />
-                  <h6 className="p-4 text-center text-white relative z-10">
-                    <div className="font-bold capitalize">{key}</div>
-                    <div className="text-xl">{value}</div>
-                  </h6>
-                </Card>
-              )
-            } else if (["dzuhur"].includes(key)) {
-              return (
-                <Card
-                  key={`desktop-${key}`}
-                  className="bg-gray-100 text-center h-32 w-50 relative top-8 hidden xl:block rounded-xl"
-                >
-                  <Image
-                    src="/assets/images/dzuhur.jpg"
-                    alt="Background"
-                    fill
-                    sizes="(max-width: 768px) 100vw"
-                    className="object-cover brightness-50 rounded-xl"
-                  />
-                  <h6 className="p-4 text-center text-white relative z-10">
-                    <div className="font-bold capitalize">{key}</div>
-                    <div className="text-xl">{value}</div>
-                  </h6>
-                </Card>
-              )
-            } else {
-              return (
-                <Card
-                  key={`desktop-${key}`}
-                  className="bg-gray-100 text-center h-32 w-50 relative top-8 hidden xl:block rounded-xl"
-                >
-                  <Image
-                    src="/assets/images/sunset.jpg"
-                    alt="Background"
-                    fill
-                    sizes="(max-width: 768px) 100vw"
-                    className="object-cover brightness-70 rounded-xl"
-                  />
-                  <h6 className="p-4 text-center text-white relative z-10">
-                    <div className="font-bold capitalize">{key}</div>
-                    <div className="text-xl">{value}</div>
-                  </h6>
-                </Card>
-              )
-            }
+            return (
+              <div
+                key={`desktop-${key}`}
+                className="relative h-32 overflow-hidden rounded-xl border border-white/40 text-center shadow-lg"
+              >
+                <Image
+                  src={CARD_IMAGES[key] ?? "/assets/images/sunset.jpg"}
+                  alt=""
+                  fill
+                  sizes="16vw"
+                  className="object-cover"
+                />
+                {/* Overlay agar teks tetap terbaca di atas ilustrasi terang */}
+                <div className="absolute inset-0 bg-gradient-to-b from-black/30 to-black/60" />
+                <div className="relative z-10 flex h-full flex-col items-center justify-center text-white drop-shadow">
+                  <div className="font-semibold capitalize">{key}</div>
+                  <div className="text-2xl font-bold tabular-nums">{String(value)}</div>
+                </div>
+              </div>
+            )
           })}
         </div>
       </div>
