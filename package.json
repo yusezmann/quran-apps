@@ -6,7 +6,8 @@
     "dev": "next dev -p 3001",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@capacitor/android": "^8.3.1",
@@ -38,6 +39,7 @@
   },
   "devDependencies": {
     "@capacitor/cli": "^7.6.2",
+    "@playwright/test": "^1.65.0",
     "@types/moment": "^2.11.29",
     "@types/node": "^20",
     "@types/react": "^18",
