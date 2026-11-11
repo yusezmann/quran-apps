@@ -42,3 +42,8 @@ next-env.d.ts
 /test-results/
 /playwright-report/
 /playwright/.cache/
+
+# android signing (jangan pernah di-commit)
+*.jks
+*.keystore
+keystore.base64.txt

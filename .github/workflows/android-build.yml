@@ -5,10 +5,20 @@ on:
     branches: [ "main", "master" ]
   workflow_dispatch:
 
+permissions:
+  contents: write # dibutuhkan untuk membuat GitHub Release
+
 jobs:
   build:
     name: Build APK
     runs-on: ubuntu-latest
+
+    env:
+      # versionCode selalu naik otomatis (nomor run GitHub Actions)
+      VERSION_CODE: ${{ github.run_number }}
+      VERSION_NAME: 1.1.${{ github.run_number }}
+      # true jika secret keystore sudah diisi di Settings -> Secrets and variables -> Actions
+      HAS_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
 
     steps:
       - name: Checkout repository
@@ -42,11 +52,46 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./android/gradlew
 
-      - name: Build Android Release APK
-        run: cd android && ./gradlew assembleDebug
+      # ---- Build bertanda tangan tetap (jika keystore tersedia) ----
+      - name: Decode keystore
+        if: env.HAS_KEYSTORE == 'true'
+        run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > "$RUNNER_TEMP/release.keystore"
 
-      - name: Upload APK
+      - name: Build signed release APK
+        if: env.HAS_KEYSTORE == 'true'
+        env:
+          ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/release.keystore
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          cd android && ./gradlew assembleRelease
+          mkdir -p ../dist
+          cp app/build/outputs/apk/release/app-release.apk "../dist/quran-apps-v${VERSION_NAME}.apk"
+
+      # ---- Cadangan: APK debug jika keystore belum di-set (perilaku lama) ----
+      - name: Build debug APK (keystore belum di-set)
+        if: env.HAS_KEYSTORE != 'true'
+        run: |
+          echo "::warning::Secret ANDROID_KEYSTORE_BASE64 belum diisi. APK debug dibuat dengan kunci acak; update mungkin harus uninstall dulu."
+          cd android && ./gradlew assembleDebug
+          mkdir -p ../dist
+          cp app/build/outputs/apk/debug/app-debug.apk "../dist/quran-apps-v${VERSION_NAME}-debug.apk"
+
+      - name: Upload APK (artifact)
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug.apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: quran-apps-v${{ env.VERSION_NAME }}
+          path: dist/*.apk
+
+      # Release permanen (tidak kedaluwarsa), hanya untuk APK yang ditandatangani kunci tetap
+      - name: Publish GitHub Release
+        if: env.HAS_KEYSTORE == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ env.VERSION_NAME }}
+          name: Quran Apps v${{ env.VERSION_NAME }}
+          target_commitish: ${{ github.sha }}
+          generate_release_notes: true
+          make_latest: true
+          files: dist/*.apk
