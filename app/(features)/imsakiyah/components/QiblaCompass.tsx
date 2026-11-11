@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { Compass, AlertCircle } from "lucide-react"
 
 interface QiblaCompassProps {
@@ -71,46 +71,72 @@ const QiblaCompass = ({ lat, lon, lokasi }: QiblaCompassProps) => {
 
   const qiblaAngle = getQiblaDirection(actualLat, actualLon)
 
-  // Sensor orientasi: di Android langsung didengarkan; di iOS 13+ izin WAJIB diminta
-  // lewat gesture pengguna, jadi kita tampilkan tombol "Aktifkan kompas" alih-alih
-  // memanggil requestPermission otomatis (yang selalu ditolak & memunculkan error).
-  const [needsPermission, setNeedsPermission] = useState(false)
+  // ---- Sensor kompas ----
+  // Catatan penting: Chrome/WebView Android versi baru JUGA punya
+  // DeviceOrientationEvent.requestPermission (dulu hanya iOS). Jadi kita:
+  // 1. Selalu mendengarkan sensor sejak awal (Android langsung mengirim data).
+  // 2. Hanya menampilkan tombol "Aktifkan kompas" bila fungsi izin ada DAN belum ada
+  //    data heading yang masuk (kasus iOS, yang wajib izin lewat ketukan pengguna).
+  const [canRequestPermission, setCanRequestPermission] = useState(false)
+  const [waitedForSensor, setWaitedForSensor] = useState(false)
   const [isTouchDevice, setIsTouchDevice] = useState(false)
+  // Rotasi "tanpa lompatan": 359° -> 1° diputar +2°, bukan -358° (jarum tidak berputar penuh)
+  const [continuousHeading, setContinuousHeading] = useState<number | null>(null)
+  const lastHeadingRef = useRef<number | null>(null)
+  const hasAbsoluteRef = useRef(false)
 
-  const handleOrientation = (e: any) => {
-    let h
-    if (e.webkitCompassHeading) {
-      // iOS
+  const handleOrientation = useCallback((e: DeviceOrientationEvent & { webkitCompassHeading?: number }) => {
+    let h: number | null = null
+    if (typeof e.webkitCompassHeading === "number") {
+      // iOS: sudah berupa arah kompas (searah jarum jam dari utara)
       h = e.webkitCompassHeading
-    } else if (e.absolute && e.alpha !== null) {
-      // Android with absolute orientation
-      h = 360 - e.alpha
+    } else if (e.alpha !== null && (e.type === "deviceorientationabsolute" || e.absolute)) {
+      // Android: alpha absolut berlawanan arah jarum jam dari utara
+      if (e.type === "deviceorientationabsolute") hasAbsoluteRef.current = true
+      // Abaikan event relatif jika sumber absolut sudah tersedia
+      if (e.type === "deviceorientation" && hasAbsoluteRef.current) return
+      const screenAngle = window.screen?.orientation?.angle ?? 0
+      h = (360 - e.alpha + screenAngle) % 360
     }
-    if (h !== undefined && h !== null) setHeading(h)
-  }
+    if (h === null || Number.isNaN(h)) return
+
+    const prev = lastHeadingRef.current
+    lastHeadingRef.current = h
+    setHeading(h)
+    setContinuousHeading((current) => {
+      if (current === null || prev === null) return h
+      let delta = h - prev
+      if (delta > 180) delta -= 360
+      if (delta < -180) delta += 360
+      return current + delta
+    })
+  }, [])
+
+  const listen = useCallback(() => {
+    window.addEventListener("deviceorientationabsolute" as any, handleOrientation, true)
+    window.addEventListener("deviceorientation", handleOrientation, true)
+  }, [handleOrientation])
 
   useEffect(() => {
     setIsTouchDevice(window.matchMedia?.("(pointer: coarse)").matches ?? false)
-
-    if (typeof (window as any).DeviceOrientationEvent?.requestPermission === "function") {
-      setNeedsPermission(true)
-      return
-    }
-    window.addEventListener("deviceorientationabsolute", handleOrientation, true)
-    window.addEventListener("deviceorientation", handleOrientation, true)
+    setCanRequestPermission(
+      typeof (window as any).DeviceOrientationEvent?.requestPermission === "function",
+    )
+    listen()
+    const timer = window.setTimeout(() => setWaitedForSensor(true), 1500)
     return () => {
-      window.removeEventListener("deviceorientationabsolute", handleOrientation, true)
+      window.clearTimeout(timer)
+      window.removeEventListener("deviceorientationabsolute" as any, handleOrientation, true)
       window.removeEventListener("deviceorientation", handleOrientation, true)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [listen, handleOrientation])
 
   const enableCompass = async () => {
     try {
       const permission = await (window as any).DeviceOrientationEvent.requestPermission()
       if (permission === "granted") {
-        window.addEventListener("deviceorientation", handleOrientation, true)
-        setNeedsPermission(false)
+        listen()
+        setCanRequestPermission(false)
       } else {
         setError("Izin kompas ditolak")
       }
@@ -119,11 +145,17 @@ const QiblaCompass = ({ lat, lon, lokasi }: QiblaCompassProps) => {
     }
   }
 
-  // The rotation of the compass face (North pointing up if heading is available)
-  const compassRotation = heading !== null ? -heading : 0
-  
-  // The pointer rotation (points to Qibla relative to North)
-  const pointerRotation = heading !== null ? qiblaAngle - heading : qiblaAngle
+  const needsPermission = canRequestPermission && heading === null && waitedForSensor
+
+  // Selisih arah perangkat terhadap kiblat (-180..180)
+  const qiblaOffset = heading !== null ? ((qiblaAngle - heading + 540) % 360) - 180 : null
+  const isFacingQibla = qiblaOffset !== null && Math.abs(qiblaOffset) <= 5
+
+  // Muka kompas berputar berlawanan arah perangkat agar "U" selalu menunjuk utara
+  const compassRotation = continuousHeading !== null ? -continuousHeading : 0
+
+  // Jarum menunjuk kiblat relatif terhadap arah perangkat
+  const pointerRotation = continuousHeading !== null ? qiblaAngle - continuousHeading : qiblaAngle
 
   return (
     <div className="flex flex-col items-center justify-center w-full py-4 relative">
@@ -189,6 +221,18 @@ const QiblaCompass = ({ lat, lon, lokasi }: QiblaCompassProps) => {
         {error && (
           <p className="mt-3 inline-flex items-center gap-1 text-xs text-amber-700 bg-amber-50 px-2 py-1 rounded-full border border-amber-200">
             <AlertCircle className="w-3 h-3" /> {error}
+          </p>
+        )}
+        {heading !== null && (
+          <p
+            className={`mt-3 text-sm font-medium ${
+              isFacingQibla ? "text-green-700" : "text-gray-600"
+            }`}
+            role="status"
+          >
+            {isFacingQibla
+              ? "✓ Anda sudah menghadap kiblat"
+              : "Putar ponsel hingga panah hijau menunjuk lurus ke atas"}
           </p>
         )}
         {heading === null && needsPermission && isTouchDevice && !error && (
