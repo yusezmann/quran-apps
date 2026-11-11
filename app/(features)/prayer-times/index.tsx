@@ -123,7 +123,8 @@ const PrayerTimeComponent = () => {
               src="/assets/images/kaabah.jpg"
               alt="Kaabah"
               fill
-              sizes="(max-width: 768px) 100vw"
+              priority
+              sizes="100vw"
               className="object-cover brightness-50 rounded-b-2xl xl:rounded-b-none"
             />
 
