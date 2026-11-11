@@ -33,3 +33,20 @@ test.describe("navigasi mobile", () => {
     await expect(page).toHaveURL(/\/imsakiyah/)
   })
 })
+
+test.describe("Al-Qur'an desktop", () => {
+  test.use({ viewport: { width: 1366, height: 900 }, isMobile: false, hasTouch: false })
+
+  test("daftar surah bisa dicari dengan nama tanpa tanda baca dan membuka surahnya", async ({ page }) => {
+    await page.goto("/quran")
+    const search = page.getByRole("searchbox", { name: "Cari surah" })
+    await search.fill("al baqarah")
+    const results = page.locator("aside").getByRole("button", { name: /Al-Baqarah/ })
+    await expect(results).toHaveCount(1)
+    await results.click()
+    await expect(page.getByRole("heading", { level: 2, name: "Al-Baqarah" })).toBeVisible()
+
+    await search.fill("zzz")
+    await expect(page.getByText("Surah tidak ditemukan")).toBeVisible()
+  })
+})
