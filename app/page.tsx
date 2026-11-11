@@ -14,7 +14,7 @@ export default function Home() {
     <div className="min-h-screen bg-gray-100">
       <Header />
       <PrayerTimeComponent />
-      <main className="container mx-auto max-w-4xl px-4 pt-2 pb-10 xl:pt-10 xl:pb-16">
+      <main className="container mx-auto max-w-6xl px-4 pt-2 pb-10 xl:pt-10 xl:pb-16">
         <HomeHighlights />
       </main>
       <div className="relative z-10">

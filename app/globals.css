@@ -53,3 +53,8 @@ body {
   background-color: #dcfce7 !important;
   font-weight: 600;
 }
+
+/* Baris libur nasional di tabel Imsakiyah */
+.imsakiyah-holiday > td {
+  background-color: #fef2f2 !important;
+}

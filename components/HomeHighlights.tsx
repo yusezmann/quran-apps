@@ -2,7 +2,10 @@
 
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { BookOpen, CalendarDays, ChevronRight, Moon } from "lucide-react"
+import { BookOpen, CalendarDays, CalendarHeart, ChevronRight, Moon } from "lucide-react"
+import { differenceInCalendarDays, format, parseISO } from "date-fns"
+import { id as idLocale } from "date-fns/locale"
+import { getNextHoliday } from "@/lib/holidays"
 import { getHijriParts } from "@/lib/hijri"
 import { useHijriOffset } from "@/app/(features)/hijri-date/hooks/useHijriOffset"
 
@@ -47,11 +50,28 @@ function HighlightCard({
       </div>
       <div className="min-w-0 flex-1 leading-snug">
         <p className="text-xs font-medium uppercase tracking-wide text-green-700">{eyebrow}</p>
-        <p className="truncate font-semibold text-gray-900">{title}</p>
+        <p className="line-clamp-2 font-semibold text-gray-900">{title}</p>
         {subtitle && <p className="truncate text-sm text-gray-500">{subtitle}</p>}
       </div>
       <ChevronRight className="h-5 w-5 shrink-0 text-gray-400 transition-transform group-hover:translate-x-0.5 group-hover:text-green-600" />
     </Link>
+  )
+}
+
+function NextHolidayCard({ holiday }: { holiday: NonNullable<ReturnType<typeof getNextHoliday>> }) {
+  const date = parseISO(holiday.date)
+  const days = differenceInCalendarDays(date, new Date())
+  const when = days === 0 ? "Hari ini" : days === 1 ? "Besok" : `${days} hari lagi`
+  return (
+    <HighlightCard
+      href={`/imsakiyah?bulan=${date.getMonth() + 1}&tahun=${date.getFullYear()}`}
+      icon={<CalendarHeart className="h-6 w-6" />}
+      eyebrow="Libur berikutnya"
+      title={holiday.name}
+      subtitle={`${format(date, "EEE, d MMM yyyy", { locale: idLocale })} · ${when}${
+        holiday.estimated ? " · perkiraan" : ""
+      }`}
+    />
   )
 }
 
@@ -66,6 +86,7 @@ export default function HomeHighlights() {
   const hijriOffset = useHijriOffset()
   const hijri = getHijriParts(new Date(), hijriOffset)
   const isRamadan = hijri.month === 9
+  const nextHoliday = getNextHoliday(new Date(), hijriOffset)
 
   useEffect(() => {
     setLastRead(readLastRead())
@@ -87,7 +108,7 @@ export default function HomeHighlights() {
         </Link>
       )}
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {lastRead ? (
           <HighlightCard
             href={`/quran?surah=${lastRead.surah}&ayat=${lastRead.ayah}`}
@@ -101,7 +122,7 @@ export default function HomeHighlights() {
             href="/quran"
             icon={<BookOpen className="h-6 w-6" />}
             eyebrow="Al-Qur'an"
-            title="Mulai membaca Al-Qur'an"
+            title="Mulai membaca Al‑Qur'an" // tanda hubung tak-terputus agar "Al-Qur'an" tidak terpotong
             subtitle="114 surah, audio qari & tafsir"
           />
         )}
@@ -112,6 +133,7 @@ export default function HomeHighlights() {
           title="Lihat jadwal sebulan"
           subtitle="Imsakiyah lengkap & unduh PDF"
         />
+        {nextHoliday && <NextHolidayCard holiday={nextHoliday} />}
       </div>
     </section>
   )

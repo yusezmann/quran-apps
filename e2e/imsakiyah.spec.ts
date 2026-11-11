@@ -40,3 +40,32 @@ test("Imsakiyah: pilihan tahun dibatasi rentang data API (2024–2040)", async (
   expect(Math.max(...nums)).toBeLessThanOrEqual(2040)
   expect(nums).toContain(new Date().getFullYear())
 })
+
+test("Imsakiyah: libur nasional & cuti bersama resmi tampil (Desember 2026)", async ({ page }) => {
+  await page.goto("/imsakiyah?bulan=12&tahun=2026")
+  await expect(page.getByRole("heading", { name: /Desember 2026\s*31 hari · 1 libur nasional/ })).toBeVisible()
+  const natal = page.locator("tbody tr.ant-table-row", { hasText: "25 Desember" })
+  await expect(natal).toContainText("Kelahiran Yesus Kristus (Natal)")
+  await expect(natal).toHaveClass(/imsakiyah-holiday/)
+  await expect(page.locator("tbody tr.ant-table-row", { hasText: "24 Desember" })).toContainText("Cuti bersama Natal")
+  // Tahun dengan SKB resmi tidak menampilkan catatan perkiraan
+  await expect(page.getByRole("note")).toHaveCount(0)
+})
+
+test("Imsakiyah: tahun tanpa SKB menampilkan libur perkiraan + catatan", async ({ page }) => {
+  await page.goto("/imsakiyah?bulan=8&tahun=2030")
+  await expect(page.getByRole("note")).toContainText("SKB libur nasional 2030 belum terbit")
+  await expect(page.locator("tbody tr.ant-table-row", { hasText: "17 Agustus" })).toContainText("Proklamasi Kemerdekaan (perkiraan)")
+})
+
+test("Beranda: kartu libur berikutnya membuka bulan yang benar di Imsakiyah", async ({ page }) => {
+  await page.goto("/")
+  const card = page.getByRole("link", { name: /Libur berikutnya/ })
+  await expect(card).toBeVisible()
+  const href = await card.getAttribute("href")
+  expect(href).toMatch(/\/imsakiyah\?bulan=\d+&tahun=\d{4}/)
+  await card.click()
+  const m = /bulan=(\d+)&tahun=(\d+)/.exec(href!)!
+  const bulan = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"][Number(m[1]) - 1]
+  await expect(page.getByRole("heading", { name: new RegExp(`${bulan} ${m[2]}`) })).toBeVisible()
+})

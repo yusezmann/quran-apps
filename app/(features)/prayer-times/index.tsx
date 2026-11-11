@@ -287,7 +287,9 @@ const PrayerTimeComponent = () => {
       </Marquee> */}
       {prayerTimes && (
         <>
-          <div className="relative h-[50vh] md:h-60 xl:h-[100vh] border-none rounded-b-2xl xl:rounded-b-none overflow-hidden">
+          {/* Mobile/tablet: tinggi hero mengikuti isi (tidak lagi dikunci 50vh/240px yang membuat
+              teks bertumpuk). Desktop: tetap layar penuh dengan kartu waktu sholat di dalamnya. */}
+          <div className="relative xl:h-[100vh] border-none rounded-b-2xl xl:rounded-b-none overflow-hidden">
             <Image
               src="/assets/images/kaabah.jpg"
               alt="Kaabah"
@@ -296,7 +298,7 @@ const PrayerTimeComponent = () => {
               className="object-cover brightness-50 rounded-b-2xl xl:rounded-b-none"
             />
 
-            <div className="absolute inset-0 flex flex-col justify-between p-4 xl:p-6 text-white z-10 mt-[60px] xl:mt-[85px]">
+            <div className="relative xl:absolute xl:inset-0 z-10 flex flex-col gap-5 xl:gap-0 xl:justify-between px-4 pt-[88px] pb-12 md:px-8 xl:p-6 xl:pt-[110px] text-white">
               <div className="flex flex-wrap justify-between items-start xl:px-12 ">
                 <div className="flex flex-col min-w-0">
                   <h2 className="text-2xl font-bold flex flex-wrap gap-x-2">
@@ -327,7 +329,7 @@ const PrayerTimeComponent = () => {
                 </div>
               </div>
 
-              <div className="block xl:hidden text-center relative -top-[14px] md:-top-[120px]">
+              <div className="block xl:hidden text-center">
                 <h6 className="text-sm font-bold">Sholat Berikutnya</h6>
                 <div className="font-bold text-lg">{nextPrayer?.name}</div>
                 <div className="text-3xl font-bold my-2">{countdown}</div>
@@ -340,8 +342,8 @@ const PrayerTimeComponent = () => {
                 </div>
               </div>
 
-              <div className="flex justify-between items-center text-sm px-2 xl:px-6 relative -top-8 xl:-top-16">
-                <div className="flex items-center gap-2">
+              <div className="flex justify-between items-center text-sm xl:px-6 xl:relative xl:-top-16">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                   <span>{selectedMethod.name}</span>
                   <button
                     type="button"

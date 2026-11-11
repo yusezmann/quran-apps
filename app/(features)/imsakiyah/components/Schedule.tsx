@@ -5,7 +5,7 @@ import { Table, Select, Button, Spin, Alert, Empty } from "antd"
 import { useSchedule } from "../hooks/useSchedule"
 import { format, isValid, parse, parseISO, isSameDay } from "date-fns"
 import { id } from "date-fns/locale"
-import { useState, useMemo } from "react"
+import { useEffect, useState, useMemo } from "react"
 import type { City, PrayerSchedule } from "../interfaces/imsakiyah.interface"
 import CitySelector from "./CitySelector"
 import Link from "next/link"
@@ -15,7 +15,8 @@ import { Download, Calendar, MapPin, RefreshCw, Compass, ChevronRight } from "lu
 import KaabaIcon from "@/components/KaabaIcon"
 import { useDetectCity } from "@/app/(features)/prayer-times/hooks/useDetectCity"
 import { useHijriOffset } from "@/app/(features)/hijri-date/hooks/useHijriOffset"
-import { formatHijri } from "@/lib/hijri"
+import { formatHijri, toLocalISODate } from "@/lib/hijri"
+import { getHolidays, hasOfficialHolidays, holidaysByDate, type Holiday } from "@/lib/holidays"
 
 const { Option } = Select
 
@@ -64,7 +65,34 @@ interface ScheduleRow extends PrayerSchedule {
   date: Date
   isToday: boolean
   hijri: string
+  holidays: Holiday[]
 }
+
+/** Label libur: merah = libur nasional, kuning = cuti bersama. */
+const HolidayTags = ({ holidays }: { holidays: Holiday[] }) =>
+  holidays.length ? (
+    <ul className="mt-1 space-y-0.5">
+      {holidays.map((h) => (
+        <li
+          key={h.name}
+          className={`flex items-start gap-1.5 text-xs font-medium leading-snug ${
+            h.kind === "cuti" ? "text-amber-700" : "text-red-600"
+          }`}
+        >
+          <span
+            className={`mt-1 h-1.5 w-1.5 shrink-0 rounded-full ${h.kind === "cuti" ? "bg-amber-500" : "bg-red-500"}`}
+            aria-hidden="true"
+          />
+          <span>
+            {h.name}
+            {h.estimated && <span className="font-normal text-gray-500"> (perkiraan)</span>}
+          </span>
+        </li>
+      ))}
+    </ul>
+  ) : null
+
+const isLibur = (row: ScheduleRow) => row.holidays.some((h) => h.kind === "libur")
 
 const parseDate = (dateString: string): Date => {
   if (!dateString) return new Date(NaN)
@@ -139,6 +167,15 @@ const Schedule: React.FC = () => {
     if (city) setSelectedCity({ id: city.id, lokasi: city.lokasi })
   }
 
+  // Tautan langsung ke bulan tertentu, mis. /imsakiyah?bulan=12&tahun=2026 (dari kartu "Libur berikutnya")
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const bulan = Number(params.get("bulan"))
+    const tahun = Number(params.get("tahun"))
+    if (Number.isInteger(bulan) && bulan >= 1 && bulan <= 12) setSelectedMonth(bulan - 1)
+    if (getYearOptions(new Date().getFullYear()).includes(tahun)) setSelectedYear(tahun)
+  }, [])
+
   const year = selectedYear
   const selectedDate = new Date(selectedYear, selectedMonth, 1)
   const yearOptions = getYearOptions(now.getFullYear())
@@ -146,6 +183,10 @@ const Schedule: React.FC = () => {
     selectedCity.id,
     selectedDate,
   )
+
+  const holidays = useMemo(() => getHolidays(selectedYear, hijriOffset), [selectedYear, hijriOffset])
+  const holidayMap = useMemo(() => holidaysByDate(holidays), [holidays])
+  const isEstimatedYear = !hasOfficialHolidays(selectedYear)
 
   const rows: ScheduleRow[] = useMemo(() => {
     const today = new Date()
@@ -158,9 +199,12 @@ const Schedule: React.FC = () => {
         date,
         isToday: valid && isSameDay(date, today),
         hijri: valid ? formatHijri(date, hijriOffset) : "-",
+        holidays: valid ? (holidayMap.get(toLocalISODate(date)) ?? []) : [],
       }
     })
-  }, [schedule, hijriOffset])
+  }, [schedule, hijriOffset, holidayMap])
+
+  const holidayCount = rows.filter(isLibur).length
 
   const todayRow = rows.find((row) => row.isToday)
 
@@ -169,12 +213,19 @@ const Schedule: React.FC = () => {
     const doc = new jsPDF()
     doc.text(`Jadwal Sholat - ${selectedCity.lokasi} - ${months[selectedMonth]} ${year}`, 10, 10)
     autoTable(doc, {
-      head: [["Tanggal", "Hijriah", ...prayerNames.map((p) => p.label)]],
+      head: [["Tanggal", "Hijriah", ...prayerNames.map((p) => p.label), "Keterangan"]],
       body: rows.map((row) => [
         isValid(row.date) ? format(row.date, "EEE, d MMM yyyy", { locale: id }) : row.tanggal,
         row.hijri,
         ...prayerNames.map((p) => row[p.key as PrayerKey]),
+        row.holidays.map((h) => h.name + (h.estimated ? " (perkiraan)" : "")).join("; "),
       ]),
+      styles: { fontSize: 7 },
+      // Baris libur nasional diberi warna merah muda
+      didParseCell: (data) => {
+        const row = rows[data.row.index]
+        if (data.section === "body" && row && isLibur(row)) data.cell.styles.fillColor = [254, 226, 226]
+      },
     })
     doc.save(`jadwal-sholat-${selectedCity.lokasi}-${months[selectedMonth]}-${year}.pdf`)
   }
@@ -184,14 +235,15 @@ const Schedule: React.FC = () => {
       title: "Tanggal",
       dataIndex: "date",
       key: "tanggal",
-      width: 190,
+      width: 230,
       render: (date: Date, row: ScheduleRow) =>
         isValid(date) ? (
           <div className="leading-tight">
-            <div className="font-medium text-gray-900">
+            <div className={`font-medium ${isLibur(row) ? "text-red-600" : "text-gray-900"}`}>
               {format(date, "EEEE, d MMMM", { locale: id })}
             </div>
             <div className="text-xs text-gray-500">{row.hijri}</div>
+            <HolidayTags holidays={row.holidays} />
           </div>
         ) : (
           row.tanggal
@@ -252,6 +304,11 @@ const Schedule: React.FC = () => {
               </h3>
               <p className="text-sm text-green-800">{todayRow.hijri}</p>
             </div>
+            {todayRow.holidays.length > 0 && (
+              <div className="-mt-2 mb-3">
+                <HolidayTags holidays={todayRow.holidays} />
+              </div>
+            )}
             <PrayerTimesGrid row={todayRow} size="lg" />
           </section>
         )}
@@ -260,7 +317,9 @@ const Schedule: React.FC = () => {
           <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
             <h3 className="text-base md:text-lg font-semibold text-gray-900">
               {months[selectedMonth]} {year}
-              <span className="ml-2 text-sm font-normal text-gray-500">{rows.length} hari</span>
+              <span className="ml-2 text-sm font-normal text-gray-500">
+                {rows.length} hari{holidayCount > 0 && ` · ${holidayCount} libur nasional`}
+              </span>
             </h3>
             {!isCurrentMonth && (
               <button
@@ -285,12 +344,33 @@ const Schedule: React.FC = () => {
           </Button>
         </div>
 
+        {/* Keterangan warna + status data libur */}
+        <div className="-mt-2 space-y-2">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-600">
+            <span className="inline-flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-red-500" aria-hidden="true" /> Libur nasional
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-amber-500" aria-hidden="true" /> Cuti bersama
+            </span>
+          </div>
+          {isEstimatedYear && (
+            <p role="note" className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-snug text-amber-900">
+              SKB libur nasional {year} belum terbit. Tanggal libur di bawah adalah <strong>perkiraan</strong>{" "}
+              (libur Islam bisa bergeser ±1 hari). Imlek, Nyepi, Waisak dan cuti bersama akan tampil setelah SKB resmi
+              terbit.
+            </p>
+          )}
+        </div>
+
         {/* Desktop/tablet: tabel lengkap */}
         <div className="hidden md:block">
           <Table
             columns={columns}
             dataSource={rows}
-            rowClassName={(record) => (record.isToday ? "imsakiyah-today" : "")}
+            rowClassName={(record) =>
+              record.isToday ? "imsakiyah-today" : isLibur(record) ? "imsakiyah-holiday" : ""
+            }
             bordered
             pagination={false}
             scroll={{ x: "max-content" }}
@@ -304,13 +384,21 @@ const Schedule: React.FC = () => {
             <li
               key={row.key}
               className={`rounded-xl border p-3 ${
-                row.isToday ? "border-green-500 bg-green-50" : "border-gray-200 bg-white"
+                row.isToday
+                  ? "border-green-500 bg-green-50"
+                  : isLibur(row)
+                    ? "border-red-200 bg-red-50/50"
+                    : "border-gray-200 bg-white"
               }`}
             >
               {/* flex-wrap + nowrap per elemen: di layar sempit tanggal Hijriah turun ke baris
                   berikutnya secara utuh, badge "Hari ini" tidak pernah terpotong */}
               <div className="mb-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5 leading-snug">
-                <span className="flex items-center gap-2 whitespace-nowrap font-semibold text-gray-900">
+                <span
+                  className={`flex items-center gap-2 whitespace-nowrap font-semibold ${
+                    isLibur(row) ? "text-red-600" : "text-gray-900"
+                  }`}
+                >
                   {isValid(row.date) ? format(row.date, "EEEE, d MMM", { locale: id }) : row.tanggal}
                   {row.isToday && (
                     <span className="shrink-0 rounded-full bg-green-600 px-2 py-0.5 text-[10px] font-semibold leading-none text-white">
@@ -320,6 +408,11 @@ const Schedule: React.FC = () => {
                 </span>
                 <span className="whitespace-nowrap text-xs text-gray-500">{row.hijri}</span>
               </div>
+              {row.holidays.length > 0 && (
+                <div className="-mt-1 mb-2">
+                  <HolidayTags holidays={row.holidays} />
+                </div>
+              )}
               <PrayerTimesGrid row={row} />
             </li>
           ))}
