@@ -73,9 +73,12 @@ export default function AdzanManager() {
     const handle = LocalNotifications.addListener("localNotificationReceived", (n) => {
       const extra = n.extra as { prayer?: Prayer; kind?: string } | undefined
       if (extra?.kind === "adzan" && extra.prayer) setActive({ prayer: extra.prayer, blocked: false })
+    }).catch((e) => {
+      console.error("Listener notifikasi adzan gagal dipasang:", e)
+      return null
     })
     return () => {
-      handle.then((h) => h.remove())
+      handle.then((h) => h?.remove())
     }
   }, [native, setActive])
 

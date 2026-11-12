@@ -10,6 +10,8 @@ import { Download, Github, Globe } from "lucide-react"
 const AUTHOR = "yusezmann"
 const PORTFOLIO_URL = "https://usman-nine.vercel.app/"
 const REPO_URL = "https://github.com/yusezmann/quran-apps"
+// Diisi saat build APK di GitHub Actions (android-build.yml); kosong di build lokal
+const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION
 // Link tetap GitHub yang selalu mengarah ke APK di Release terbaru
 // (file "quran-apps.apk" dilampirkan di setiap Release oleh android-build.yml)
 const APK_URL = `${REPO_URL}/releases/latest/download/quran-apps.apk`
@@ -20,6 +22,15 @@ export function Footer() {
   useEffect(() => {
     setIsNativeApp(Capacitor.isNativePlatform())
   }, [])
+
+  // Di aplikasi Android: tanpa footer ala situs web, cukup satu baris kredit + versi
+  if (isNativeApp) {
+    return (
+      <p className="px-4 pt-2 pb-24 text-center text-xs text-gray-400">
+        Al Quran{APP_VERSION && ` v${APP_VERSION}`} · dibuat oleh {AUTHOR}
+      </p>
+    )
+  }
 
   return (
     // pb ekstra di mobile/tablet agar tidak tertutup navigasi bawah

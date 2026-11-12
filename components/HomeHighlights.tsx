@@ -135,7 +135,7 @@ export default function HomeHighlights() {
           icon={<CalendarDays className="h-6 w-6" />}
           eyebrow="Jadwal sholat"
           title="Lihat jadwal sebulan"
-          subtitle="Imsakiyah lengkap & unduh PDF"
+          subtitle="Imsakiyah & unduh PDF"
         />
         {nextHoliday && <NextHolidayCard holiday={nextHoliday} />}
       </div>
