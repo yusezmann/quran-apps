@@ -105,3 +105,9 @@ test("Al-Qur'an: judul surah menempel saat scroll, tombol › dari tengah surah 
   await expect(page.getByRole("heading", { level: 2, name: "Ali 'Imran" })).toBeVisible()
   await expect.poll(() => page.evaluate(() => window.scrollY), { timeout: 5000 }).toBeLessThan(50)
 })
+
+test("Al-Qur'an: keterangan akhir surah tampil tanpa tombol navigasi tambahan", async ({ page }) => {
+  await page.goto("/quran")
+  await expect(page.getByText("Akhir surah Al-Fatihah · 7 ayat")).toBeAttached({ timeout: 15000 })
+  await expect(page.getByRole("button", { name: /Surah berikutnya|Surah sebelumnya/ })).toHaveCount(0)
+})
