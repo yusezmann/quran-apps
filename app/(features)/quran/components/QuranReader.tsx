@@ -264,10 +264,11 @@ export default function QuranReader() {
 
   return (
     <>
-      <div className="bg-white rounded-lg shadow">
+      <div className="bg-white rounded-2xl shadow">
         {/* Judul surah menempel di bawah header aplikasi (88px; 98px di desktop) saat di-scroll,
             sehingga tombol pindah surah selalu terjangkau dari tengah surah */}
-        <div className="sticky top-[88px] xl:top-[98px] z-20 bg-green-600 text-white px-3 py-2.5 md:p-4 flex justify-between items-center rounded-t-lg shadow-md">
+        {/* Kartu membulat yang melayang 8px di bawah header (tidak menyatu dengan header) */}
+        <div className="sticky top-[96px] xl:top-[106px] z-20 bg-green-600 text-white px-3 py-2.5 md:p-4 flex justify-between items-center rounded-2xl shadow-lg ring-1 ring-green-700/20">
           <Button
             type="default"
             shape="circle"
@@ -362,7 +363,7 @@ export default function QuranReader() {
               key={ayat.nomorAyat}
               id={`ayah-${ayat.nomorAyat}`} // Tambahkan id untuk scroll
               // scroll-mt: ayat yang dituju tampil di bawah header + judul surah yang menempel
-              className={`scroll-mt-[180px] xl:scroll-mt-[200px] border-b p-4 ${
+              className={`scroll-mt-[190px] xl:scroll-mt-[210px] border-b p-4 ${
                 lastRead?.surah === currentSurah &&
                 lastRead?.ayah === ayat.nomorAyat
                   ? " border-l-4 border-red-500 bg-yellow-100"
