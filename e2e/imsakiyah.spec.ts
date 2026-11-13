@@ -8,6 +8,8 @@ const selectBox = (page: Page, selectId: string) =>
 
 async function pick(page: Page, selectId: string, optionTitle: string) {
   await selectBox(page, selectId).click()
+  // antd memakai virtual list: gulir daftar ke atas agar pilihan awal (mis. "Maret") ikut dirender
+  await page.locator(".ant-select-dropdown:visible .rc-virtual-list-holder").evaluate((el) => (el.scrollTop = 0)).catch(() => {})
   await page.locator(`.ant-select-dropdown:visible .ant-select-item-option[title="${optionTitle}"]`).click()
 }
 
@@ -85,4 +87,22 @@ test("Imsakiyah: ringkasan 'Libur bulan ini' (Maret 2027) & ketuk chip menyorot 
   }
   await expect(page.locator('tr[data-date="2027-03-13"]')).not.toHaveClass(/imsakiyah-target/)
   await expect(page.locator('tr[data-date="2027-03-10"]')).toBeInViewport()
+})
+
+test("Imsakiyah: alamat mengikuti bulan & tahun yang dipilih (refresh membuka bulan yang sama)", async ({ page }) => {
+  await page.goto("/imsakiyah?bulan=12&tahun=2026&tanggal=25")
+  await expect(page.getByRole("heading", { name: /Desember 2026/ })).toBeVisible()
+  await expect(page).toHaveURL(/\/imsakiyah\?bulan=12&tahun=2026$/) // "tanggal" hanya untuk lompatan awal
+
+  await page.evaluate(() => window.scrollTo(0, 0))
+  await pick(page, "year-selector", "2027")
+  await pick(page, "month-selector", "Maret")
+  await expect(page.getByRole("heading", { name: /Maret 2027/ })).toBeVisible()
+  await expect(page).toHaveURL(/\/imsakiyah\?bulan=3&tahun=2027$/)
+
+  await page.reload()
+  await expect(page.getByRole("heading", { name: /Maret 2027/ })).toBeVisible()
+
+  await page.getByRole("button", { name: "Kembali ke bulan ini" }).click()
+  await expect(page).toHaveURL(/\/imsakiyah$/)
 })

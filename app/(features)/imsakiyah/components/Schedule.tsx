@@ -199,7 +199,21 @@ const Schedule: React.FC = () => {
     if (validMonth && validYear && Number.isInteger(tanggal) && tanggal >= 1 && tanggal <= 31) {
       setTargetDate(toLocalISODate(new Date(tahun, bulan - 1, tanggal)))
     }
+    setUrlReady(true)
   }, [])
+
+  // Alamat selalu mengikuti bulan & tahun yang dipilih, agar refresh / berbagi tautan membuka
+  // bulan yang sama. Bulan berjalan = alamat bersih (/imsakiyah); "tanggal" hanya untuk lompatan awal.
+  const [urlReady, setUrlReady] = useState(false)
+  useEffect(() => {
+    if (!urlReady) return
+    const today = new Date()
+    const isNow = selectedMonth === today.getMonth() && selectedYear === today.getFullYear()
+    const search = isNow ? "" : `?bulan=${selectedMonth + 1}&tahun=${selectedYear}`
+    if (window.location.search !== search) {
+      window.history.replaceState(window.history.state, "", window.location.pathname + search)
+    }
+  }, [urlReady, selectedMonth, selectedYear])
 
   const year = selectedYear
   const selectedDate = new Date(selectedYear, selectedMonth, 1)
@@ -415,13 +429,13 @@ const Schedule: React.FC = () => {
           </div>
           {/* Ringkasan libur bulan ini: ketuk untuk langsung ke tanggalnya */}
           {monthRanges.length > 0 && (
-            <nav aria-label="Libur bulan ini" className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
+            <nav aria-label="Libur bulan ini" className="flex flex-wrap gap-2">
               {monthRanges.map((r) => (
                 <button
                   key={r.start}
                   type="button"
                   onClick={() => jumpToDate(r.start)}
-                  className={`shrink-0 rounded-full border px-3 py-1.5 text-left text-xs leading-tight transition-colors ${
+                  className={`rounded-full border px-3 py-1.5 text-left text-xs leading-tight transition-colors ${
                     r.liburDays > 0
                       ? "border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
                       : "border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100"
