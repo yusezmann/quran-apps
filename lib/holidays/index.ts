@@ -94,3 +94,87 @@ export function getNextHoliday(today: Date, hijriOffset = DEFAULT_HIJRI_OFFSET):
     .sort((a, b) => a.date.localeCompare(b.date))
   return upcoming[0] ?? null
 }
+
+/* ------------------------------------------------------------------------------------------
+ * Rangkaian libur: libur nasional + cuti bersama dari acara yang sama yang berdekatan
+ * (mis. Idulfitri 10–11 Mar + cuti 9, 12, 15 Mar 2027 → satu rangkaian 9–15 Mar).
+ * ---------------------------------------------------------------------------------------- */
+
+export interface HolidayRange {
+  key: string
+  /** Nama libur nasional utama (mis. "Idulfitri 1448 H") */
+  title: string
+  /** YYYY-MM-DD */
+  start: string
+  end: string
+  /** Semua tanggal merah dalam rangkaian (libur + cuti), terurut */
+  dates: string[]
+  liburDays: number
+  cutiDays: number
+  estimated: boolean
+}
+
+/** Kata kunci acara; urutan penting ("tahun baru" umum dicek paling akhir). */
+const EVENT_KEYWORDS = [
+  "idulfitri", "iduladha", "imlek", "nyepi", "waisak", "natal", "kenaikan", "wafat", "paskah",
+  "isra", "muharam", "maulid", "buruh", "pancasila", "proklamasi", "tahun baru",
+]
+
+export function holidayEventKey(name: string): string {
+  const n = name.toLowerCase()
+  return EVENT_KEYWORDS.find((k) => n.includes(k)) ?? n
+}
+
+/** Selisih hari antara dua tanggal ISO. */
+const daysBetween = (a: string, b: string) => Math.round((Date.parse(b) - Date.parse(a)) / 86_400_000)
+
+/**
+ * Gabungkan libur & cuti dari acara yang sama bila jaraknya ≤ 4 hari (menjembatani akhir pekan,
+ * mis. cuti Jumat 12 → Senin 15). Acara berbeda yang bersebelahan tetap terpisah.
+ */
+export function groupHolidayRanges(holidays: Holiday[]): HolidayRange[] {
+  const sorted = [...holidays].sort((a, b) => a.date.localeCompare(b.date))
+  const ranges: HolidayRange[] = []
+  for (const h of sorted) {
+    const key = holidayEventKey(h.name)
+    const last = [...ranges].reverse().find((r) => r.key === key)
+    if (last && daysBetween(last.end, h.date) <= 4) {
+      if (!last.dates.includes(h.date)) last.dates.push(h.date)
+      last.end = h.date > last.end ? h.date : last.end
+      if (h.kind === "libur") {
+        last.liburDays += 1
+        if (last.title.startsWith("Cuti bersama")) last.title = h.name
+      } else last.cutiDays += 1
+      last.estimated ||= h.estimated
+      continue
+    }
+    ranges.push({
+      key,
+      title: h.name,
+      start: h.date,
+      end: h.date,
+      dates: [h.date],
+      liburDays: h.kind === "libur" ? 1 : 0,
+      cutiDays: h.kind === "cuti" ? 1 : 0,
+      estimated: h.estimated,
+    })
+  }
+  return ranges.sort((a, b) => a.start.localeCompare(b.start))
+}
+
+/** Rangkaian yang memuat tanggal tertentu. */
+export function findHolidayRange(ranges: HolidayRange[], date: string): HolidayRange | undefined {
+  return ranges.find((r) => r.dates.includes(date))
+}
+
+const SHORT_NAMES: Record<string, string> = {
+  idulfitri: "Idulfitri", iduladha: "Iduladha", imlek: "Imlek", nyepi: "Nyepi", waisak: "Waisak",
+  natal: "Natal", kenaikan: "Kenaikan Yesus Kristus", wafat: "Wafat Yesus Kristus", paskah: "Paskah",
+  isra: "Isra Mikraj", muharam: "Tahun Baru Islam", maulid: "Maulid Nabi", buruh: "Hari Buruh",
+  pancasila: "Hari Lahir Pancasila", proklamasi: "HUT RI", "tahun baru": "Tahun Baru Masehi",
+}
+
+/** Nama pendek untuk chip/kartu, mis. "Kelahiran Yesus Kristus (Natal)" → "Natal". */
+export function shortHolidayName(name: string): string {
+  return SHORT_NAMES[holidayEventKey(name)] ?? name
+}

@@ -72,3 +72,17 @@ test("Beranda: kartu libur berikutnya membuka & menggulir ke tanggal libur di Im
   const iso = `${m[2]}-${m[1].padStart(2, "0")}-${m[3].padStart(2, "0")}`
   await expect(page.locator(`tr[data-date="${iso}"]`)).toBeInViewport({ timeout: 10_000 })
 })
+
+test("Imsakiyah: ringkasan 'Libur bulan ini' (Maret 2027) & ketuk chip menyorot seluruh rangkaian", async ({ page }) => {
+  await page.goto("/imsakiyah?bulan=3&tahun=2027")
+  const chips = page.getByRole("navigation", { name: "Libur bulan ini" }).getByRole("button")
+  await expect(chips).toHaveText([/^8 Nyepi/, /^9–15 Idulfitri · \+3 cuti/, /^25–26 Wafat Yesus Kristus · \+1 cuti/, /^28 Paskah/])
+
+  await chips.nth(1).click()
+  // Idulfitri: 9, 10, 11, 12, 15 Maret disorot; 13 & 14 (akhir pekan biasa) tidak
+  for (const d of ["09", "10", "11", "12", "15"]) {
+    await expect(page.locator(`tr[data-date="2027-03-${d}"]`)).toHaveClass(/imsakiyah-target/)
+  }
+  await expect(page.locator('tr[data-date="2027-03-13"]')).not.toHaveClass(/imsakiyah-target/)
+  await expect(page.locator('tr[data-date="2027-03-10"]')).toBeInViewport()
+})

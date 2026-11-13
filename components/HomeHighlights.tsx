@@ -7,7 +7,7 @@ import { useAutoLocation } from "@/lib/auto-location"
 import { enableAutoLocation } from "@/lib/auto-location-run"
 import { differenceInCalendarDays, format, parseISO } from "date-fns"
 import { id as idLocale } from "date-fns/locale"
-import { getNextHoliday } from "@/lib/holidays"
+import { findHolidayRange, getHolidays, getNextHoliday, groupHolidayRanges, type Holiday } from "@/lib/holidays"
 import { getHijriParts } from "@/lib/hijri"
 import { useHijriOffset } from "@/app/(features)/hijri-date/hooks/useHijriOffset"
 
@@ -53,26 +53,39 @@ function HighlightCard({
       <div className="min-w-0 flex-1 leading-snug">
         <p className="text-xs font-medium uppercase tracking-wide text-green-700">{eyebrow}</p>
         <p className="line-clamp-2 font-semibold text-gray-900">{title}</p>
-        {subtitle && <p className="truncate text-sm text-gray-500">{subtitle}</p>}
+        {subtitle && <p className="line-clamp-2 text-sm text-gray-500">{subtitle}</p>}
       </div>
       <ChevronRight className="h-5 w-5 shrink-0 text-gray-400 transition-transform group-hover:translate-x-0.5 group-hover:text-green-600" />
     </Link>
   )
 }
 
-function NextHolidayCard({ holiday }: { holiday: NonNullable<ReturnType<typeof getNextHoliday>> }) {
+function NextHolidayCard({ holiday, hijriOffset }: { holiday: Holiday; hijriOffset: number }) {
   const date = parseISO(holiday.date)
   const days = differenceInCalendarDays(date, new Date())
   const when = days === 0 ? "Hari ini" : days === 1 ? "Besok" : `${days} hari lagi`
+
+  // Rangkaian libur (mis. Idulfitri 2 hari + cuti bersama) agar kartu menyebut seluruh liburnya
+  const yearHolidays = getHolidays(date.getFullYear(), hijriOffset)
+  const range = findHolidayRange(groupHolidayRanges(yearHolidays), holiday.date)
+  const liburDates = (range?.dates ?? [holiday.date]).filter((d) =>
+    yearHolidays.some((h) => h.date === d && h.kind === "libur"),
+  )
+  const first = parseISO(liburDates[0] ?? holiday.date)
+  const last = parseISO(liburDates[liburDates.length - 1] ?? holiday.date)
+  const dateLabel =
+    liburDates.length > 1
+      ? `${format(first, "d", { locale: idLocale })}–${format(last, "d MMM yyyy", { locale: idLocale })}`
+      : format(date, "EEE, d MMM yyyy", { locale: idLocale })
+  const cuti = range?.cutiDays ? ` (+${range.cutiDays} hari cuti bersama)` : ""
+
   return (
     <HighlightCard
       href={`/imsakiyah?bulan=${date.getMonth() + 1}&tahun=${date.getFullYear()}&tanggal=${date.getDate()}`}
       icon={<CalendarHeart className="h-6 w-6" />}
       eyebrow="Libur berikutnya"
       title={holiday.name}
-      subtitle={`${format(date, "EEE, d MMM yyyy", { locale: idLocale })} · ${when}${
-        holiday.estimated ? " · perkiraan" : ""
-      }`}
+      subtitle={`${dateLabel}${cuti} · ${when}${holiday.estimated ? " · perkiraan" : ""}`}
     />
   )
 }
@@ -192,7 +205,7 @@ export default function HomeHighlights() {
           title="Lihat jadwal sebulan"
           subtitle="Imsakiyah & unduh PDF"
         />
-        {nextHoliday && <NextHolidayCard holiday={nextHoliday} />}
+        {nextHoliday && <NextHolidayCard holiday={nextHoliday} hijriOffset={hijriOffset} />}
       </div>
     </section>
   )

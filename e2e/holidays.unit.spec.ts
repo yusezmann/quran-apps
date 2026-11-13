@@ -40,3 +40,17 @@ test("libur berikutnya", () => {
   expect(getNextHoliday(new Date(2026, 10, 11))?.date).toBe("2026-12-25")
   expect(getNextHoliday(new Date(2026, 11, 26))?.date).toBe("2027-01-01")
 })
+
+test("rangkaian libur: libur + cuti dari acara yang sama digabung, acara berbeda terpisah", () => {
+  const { groupHolidayRanges } = require("../lib/holidays") as typeof import("../lib/holidays")
+  const mar2027 = getHolidays(2027).filter((h) => h.date.startsWith("2027-03"))
+  const ranges = groupHolidayRanges(mar2027).map((r) => `${r.start.slice(8)}-${r.end.slice(8)} ${r.title} L${r.liburDays} C${r.cutiDays}`)
+  expect(ranges).toEqual([
+    "08-08 Hari Suci Nyepi (Tahun Baru Saka 1949) L1 C0",
+    "09-15 Idulfitri 1448 H L2 C3",
+    "25-26 Wafat Yesus Kristus L1 C1",
+    "28-28 Kebangkitan Yesus Kristus (Paskah) L1 C0",
+  ])
+  const dec2026 = groupHolidayRanges(getHolidays(2026).filter((h) => h.date.startsWith("2026-12")))
+  expect(dec2026.map((r) => [r.start, r.end, r.title])).toEqual([["2026-12-24", "2026-12-25", "Kelahiran Yesus Kristus (Natal)"]])
+})

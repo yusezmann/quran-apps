@@ -5,7 +5,7 @@ import { Table, Select, Button, Spin, Alert, Empty } from "antd"
 import { useSchedule } from "../hooks/useSchedule"
 import { format, isValid, parse, parseISO, isSameDay } from "date-fns"
 import { id } from "date-fns/locale"
-import { useEffect, useState, useMemo } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import type { City, PrayerSchedule } from "../interfaces/imsakiyah.interface"
 import CitySelector from "./CitySelector"
 import Link from "next/link"
@@ -16,7 +16,16 @@ import KaabaIcon from "@/components/KaabaIcon"
 import { useDetectCity } from "@/app/(features)/prayer-times/hooks/useDetectCity"
 import { useHijriOffset } from "@/app/(features)/hijri-date/hooks/useHijriOffset"
 import { formatHijri, toLocalISODate } from "@/lib/hijri"
-import { getHolidays, hasOfficialHolidays, holidaysByDate, type Holiday } from "@/lib/holidays"
+import {
+  findHolidayRange,
+  shortHolidayName,
+  getHolidays,
+  groupHolidayRanges,
+  hasOfficialHolidays,
+  holidaysByDate,
+  type Holiday,
+  type HolidayRange,
+} from "@/lib/holidays"
 
 const { Option } = Select
 
@@ -91,6 +100,13 @@ const HolidayTags = ({ holidays }: { holidays: Holiday[] }) =>
       ))}
     </ul>
   ) : null
+
+/** "9–15" atau "25" (tanggal dalam bulan) */
+const formatRangeDays = (r: HolidayRange) => {
+  const a = Number(r.start.slice(8)), b = Number(r.end.slice(8))
+  return a === b ? String(a) : `${a}–${b}`
+}
+
 
 const isLibur = (row: ScheduleRow) => row.holidays.some((h) => h.kind === "libur")
 
@@ -169,7 +185,8 @@ const Schedule: React.FC = () => {
 
   // Tautan langsung, mis. /imsakiyah?bulan=12&tahun=2026&tanggal=25 (dari kartu "Libur berikutnya")
   const [targetDate, setTargetDate] = useState<string | null>(null)
-  const [highlightDate, setHighlightDate] = useState<string | null>(null)
+  // Tanggal yang disorot: seluruh rangkaian libur (mis. Idulfitri + cuti bersama), bukan hanya satu hari
+  const [highlightDates, setHighlightDates] = useState<string[]>([])
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const bulan = Number(params.get("bulan"))
@@ -214,22 +231,39 @@ const Schedule: React.FC = () => {
 
   const holidayCount = rows.filter(isLibur).length
 
-  // Setelah jadwal bulan tujuan termuat: gulir ke tanggal tujuan & sorot sebentar.
-  // Tabel (desktop) dan kartu (HP) sama-sama punya data-date; pilih yang sedang terlihat.
+  // Rangkaian libur di bulan yang ditampilkan (ringkasan "Libur bulan ini")
+  const monthPrefix = `${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}`
+  const monthRanges = useMemo(
+    () => groupHolidayRanges(holidays).filter((r) => r.dates.some((d) => d.startsWith(monthPrefix))),
+    [holidays, monthPrefix],
+  )
+
+  const highlightTimer = useRef<number>()
+  /** Gulir ke tanggal (tampilan yang sedang terlihat: kartu HP / baris tabel) & sorot rangkaiannya. */
+  const jumpToDate = useCallback(
+    (date: string) => {
+      const el = Array.from(document.querySelectorAll<HTMLElement>(`[data-date="${date}"]`)).find(
+        (e) => e.offsetParent !== null,
+      )
+      if (!el) return false
+      el.scrollIntoView({ behavior: "smooth", block: "center" })
+      const range = findHolidayRange(monthRanges, date)
+      setHighlightDates(range ? range.dates : [date])
+      window.clearTimeout(highlightTimer.current)
+      highlightTimer.current = window.setTimeout(() => setHighlightDates([]), 3500)
+      return true
+    },
+    [monthRanges],
+  )
+
+  // Tautan dari kartu "Libur berikutnya": setelah jadwal bulan tujuan termuat, langsung ke tanggalnya
   useEffect(() => {
     if (!targetDate || !rows.some((r) => isValid(r.date) && toLocalISODate(r.date) === targetDate)) return
     const timer = window.setTimeout(() => {
-      const el = Array.from(document.querySelectorAll<HTMLElement>(`[data-date="${targetDate}"]`)).find(
-        (e) => e.offsetParent !== null,
-      )
-      if (!el) return
-      el.scrollIntoView({ behavior: "smooth", block: "center" })
-      setHighlightDate(targetDate)
-      setTargetDate(null)
-      window.setTimeout(() => setHighlightDate(null), 3000)
+      if (jumpToDate(targetDate)) setTargetDate(null)
     }, 300)
     return () => window.clearTimeout(timer)
-  }, [targetDate, rows])
+  }, [targetDate, rows, jumpToDate])
 
   const todayRow = rows.find((row) => row.isToday)
 
@@ -379,6 +413,29 @@ const Schedule: React.FC = () => {
               <span className="h-2 w-2 rounded-full bg-amber-500" aria-hidden="true" /> Cuti bersama
             </span>
           </div>
+          {/* Ringkasan libur bulan ini: ketuk untuk langsung ke tanggalnya */}
+          {monthRanges.length > 0 && (
+            <nav aria-label="Libur bulan ini" className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
+              {monthRanges.map((r) => (
+                <button
+                  key={r.start}
+                  type="button"
+                  onClick={() => jumpToDate(r.start)}
+                  className={`shrink-0 rounded-full border px-3 py-1.5 text-left text-xs leading-tight transition-colors ${
+                    r.liburDays > 0
+                      ? "border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
+                      : "border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100"
+                  }`}
+                >
+                  <span className="font-bold tabular-nums">{formatRangeDays(r)}</span>{" "}
+                  <span className="font-medium">{shortHolidayName(r.title)}</span>
+                  {r.cutiDays > 0 && r.liburDays > 0 && (
+                    <span className="text-red-600/80"> · +{r.cutiDays} cuti</span>
+                  )}
+                </button>
+              ))}
+            </nav>
+          )}
           {isEstimatedYear && (
             <p role="note" className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-snug text-amber-900">
               SKB libur nasional {year} belum terbit. Tanggal libur di bawah adalah <strong>perkiraan</strong>{" "}
@@ -396,7 +453,7 @@ const Schedule: React.FC = () => {
             rowClassName={(record) =>
               [
                 record.isToday ? "imsakiyah-today" : isLibur(record) ? "imsakiyah-holiday" : "",
-                isValid(record.date) && toLocalISODate(record.date) === highlightDate ? "imsakiyah-target" : "",
+                isValid(record.date) && highlightDates.includes(toLocalISODate(record.date)) ? "imsakiyah-target" : "",
               ].join(" ")
             }
             onRow={(record) => ({ "data-date": isValid(record.date) ? toLocalISODate(record.date) : undefined }) as any}
@@ -414,7 +471,7 @@ const Schedule: React.FC = () => {
               key={row.key}
               data-date={isValid(row.date) ? toLocalISODate(row.date) : undefined}
               className={`rounded-xl border p-3 scroll-mt-28 transition-shadow duration-500 ${
-                isValid(row.date) && toLocalISODate(row.date) === highlightDate ? "ring-4 ring-red-300 " : ""
+                isValid(row.date) && highlightDates.includes(toLocalISODate(row.date)) ? "ring-4 ring-red-300 " : ""
               }${
                 row.isToday
                   ? "border-green-500 bg-green-50"
