@@ -171,7 +171,7 @@ Silakan fork repository ini dan ajukan pull request dengan fitur atau perbaikan 
 
 ## Lisensi
 
-Aplikasi ini dirilis di bawah lisensi MIT.
+Aplikasi ini dirilis di bawah [lisensi MIT](LICENSE) © 2025–2026 Usman.
 
 ---
 
