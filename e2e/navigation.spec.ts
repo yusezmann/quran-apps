@@ -97,17 +97,6 @@ test("Doa & Hadits: tombol panah menggulir halaman (tidak diblokir daftar deskto
   }
 })
 
-test("Al-Qur'an: di akhir surah ada tombol ke surah berikutnya yang membuka dari ayat pertama", async ({ page }) => {
-  await page.goto("/quran")
-  await expect(page.getByRole("heading", { level: 2, name: "Al-Fatihah" })).toBeVisible()
-  const next = page.getByRole("navigation", { name: "Navigasi surah" }).getByRole("button", { name: /Surah berikutnya.*Al-Baqarah/ })
-  await next.scrollIntoViewIfNeeded()
-  await next.click()
-  await expect(page.getByRole("heading", { level: 2, name: "Al-Baqarah" })).toBeVisible()
-  await expect.poll(() => page.evaluate(() => window.scrollY), { timeout: 5000 }).toBeLessThan(50)
-  await expect(page.locator("#ayah-1")).toBeVisible()
-})
-
 test("Al-Qur'an: judul surah menempel saat scroll, tombol › dari tengah surah membuka surah berikutnya dari atas", async ({ page }) => {
   await page.goto("/quran?surah=2&ayat=49")
   await expect(page.getByRole("heading", { level: 2, name: "Al-Baqarah" })).toBeInViewport({ timeout: 15000 })

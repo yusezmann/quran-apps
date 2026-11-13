@@ -214,17 +214,17 @@ export default function QuranReader() {
     }
   }
 
-  // Pindah surah (dari judul yang menempel atau akhir surah) selalu kembali ke awal bacaan
+  // Pindah surah (tombol ‹ › di judul yang menempel) selalu kembali ke awal bacaan
   const goToPreviousSurah = () => {
-    if (surah?.suratSebelumnya) openSurahFromEnd(surah.suratSebelumnya.nomor)
+    if (surah?.suratSebelumnya) openSurah(surah.suratSebelumnya.nomor)
   }
 
   const goToNextSurah = () => {
-    if (surah?.suratSelanjutnya) openSurahFromEnd(surah.suratSelanjutnya.nomor)
+    if (surah?.suratSelanjutnya) openSurah(surah.suratSelanjutnya.nomor)
   }
 
-  /** Pindah surah dari bagian bawah: kembali ke awal bacaan agar ayat 1 surah baru langsung terlihat. */
-  const openSurahFromEnd = (nomor: number) => {
+  /** Pindah surah: kembali ke awal bacaan agar ayat 1 surah baru langsung terlihat. */
+  const openSurah = (nomor: number) => {
     setCurrentSurah(nomor) // audio berhenti otomatis saat surah berganti
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
@@ -440,32 +440,6 @@ export default function QuranReader() {
           ))}
         </div>
 
-        {/* Akhir surah: lanjut ke surah berikutnya tanpa harus scroll kembali ke atas */}
-        {/* Satu ajakan saja; kembali ke surah sebelumnya cukup lewat tombol ‹ di judul yang menempel */}
-        {surah?.suratSelanjutnya && (
-          <nav aria-label="Navigasi surah" className="border-t px-4 pb-6 pt-5">
-            <p className="mb-3 text-center text-sm text-gray-500">
-              Akhir surah {surah.namaLatin} · {surah.jumlahAyat} ayat
-            </p>
-            {surah.suratSelanjutnya && (
-              <button
-                type="button"
-                onClick={() => openSurahFromEnd(surah.suratSelanjutnya!.nomor)}
-                className="group flex w-full items-center justify-between gap-3 rounded-2xl bg-green-600 px-5 py-4 text-left text-white shadow-md transition-colors hover:bg-green-700"
-              >
-                <span className="leading-snug">
-                  <span className="block text-xs font-medium uppercase tracking-wide text-green-100">
-                    Surah berikutnya
-                  </span>
-                  <span className="text-lg font-bold">
-                    {surah.suratSelanjutnya.nomor}. {surah.suratSelanjutnya.namaLatin}
-                  </span>
-                </span>
-                <RightOutlined className="text-lg transition-transform group-hover:translate-x-1" />
-              </button>
-            )}
-          </nav>
-        )}
         {/* Kontrol audio: hanya tampil saat ada ayat yang diputar, menempel di bawah layar */}
         {currentAyah !== null && (
         <div className="sticky bottom-[calc(env(safe-area-inset-bottom)+92px)] xl:bottom-0 z-20 p-3 border-t bg-white/95 backdrop-blur flex justify-between items-center gap-3 shadow-[0_-4px_12px_rgba(0,0,0,0.06)]">
