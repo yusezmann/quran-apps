@@ -120,7 +120,7 @@ export default function QuranReader() {
     const ayahElement = document.getElementById(`ayah-${ayahNumber}`)
 
     if (ayahElement) {
-      ayahElement.scrollIntoView({ behavior: "smooth", block: "center" })
+      ayahElement.scrollIntoView({ behavior: "smooth", block: "start" }) // jarak atas: scroll-mt pada elemen ayat
     } else {
       console.log("Ayat tidak ditemukan!")
     }
@@ -214,16 +214,13 @@ export default function QuranReader() {
     }
   }
 
+  // Pindah surah (dari judul yang menempel atau akhir surah) selalu kembali ke awal bacaan
   const goToPreviousSurah = () => {
-    if (surah?.suratSebelumnya) {
-      setCurrentSurah(surah.suratSebelumnya.nomor)
-    }
+    if (surah?.suratSebelumnya) openSurahFromEnd(surah.suratSebelumnya.nomor)
   }
 
   const goToNextSurah = () => {
-    if (surah?.suratSelanjutnya) {
-      setCurrentSurah(surah.suratSelanjutnya.nomor)
-    }
+    if (surah?.suratSelanjutnya) openSurahFromEnd(surah.suratSelanjutnya.nomor)
   }
 
   /** Pindah surah dari bagian bawah: kembali ke awal bacaan agar ayat 1 surah baru langsung terlihat. */
@@ -268,7 +265,9 @@ export default function QuranReader() {
   return (
     <>
       <div className="bg-white rounded-lg shadow">
-        <div className="bg-green-600 text-white p-4 flex justify-between items-center rounded-t-lg">
+        {/* Judul surah menempel di bawah header aplikasi (88px; 98px di desktop) saat di-scroll,
+            sehingga tombol pindah surah selalu terjangkau dari tengah surah */}
+        <div className="sticky top-[88px] xl:top-[98px] z-20 bg-green-600 text-white px-3 py-2.5 md:p-4 flex justify-between items-center rounded-t-lg shadow-md">
           <Button
             type="default"
             shape="circle"
@@ -277,7 +276,7 @@ export default function QuranReader() {
             disabled={!surah?.suratSebelumnya}
           />
           <div className="flex flex-col items-center">
-            <h2 className="text-2xl font-semibold">{surah?.namaLatin}</h2>
+            <h2 className="text-xl md:text-2xl font-semibold leading-tight">{surah?.namaLatin}</h2>
             <p className="text-xs xl:text-sm text-center">
               {surah?.arti} • {surah?.jumlahAyat} Ayat • {surah?.tempatTurun}
             </p>
@@ -362,7 +361,8 @@ export default function QuranReader() {
             <div
               key={ayat.nomorAyat}
               id={`ayah-${ayat.nomorAyat}`} // Tambahkan id untuk scroll
-              className={`border-b p-4 ${
+              // scroll-mt: ayat yang dituju tampil di bawah header + judul surah yang menempel
+              className={`scroll-mt-[180px] xl:scroll-mt-[200px] border-b p-4 ${
                 lastRead?.surah === currentSurah &&
                 lastRead?.ayah === ayat.nomorAyat
                   ? " border-l-4 border-red-500 bg-yellow-100"

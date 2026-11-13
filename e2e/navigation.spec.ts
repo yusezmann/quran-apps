@@ -107,3 +107,12 @@ test("Al-Qur'an: di akhir surah ada tombol ke surah berikutnya yang membuka dari
   await expect.poll(() => page.evaluate(() => window.scrollY), { timeout: 5000 }).toBeLessThan(50)
   await expect(page.locator("#ayah-1")).toBeVisible()
 })
+
+test("Al-Qur'an: judul surah menempel saat scroll, tombol › dari tengah surah membuka surah berikutnya dari atas", async ({ page }) => {
+  await page.goto("/quran?surah=2&ayat=49")
+  await expect(page.getByRole("heading", { level: 2, name: "Al-Baqarah" })).toBeInViewport({ timeout: 15000 })
+  await expect.poll(() => page.evaluate(() => window.scrollY), { timeout: 15000 }).toBeGreaterThan(2000)
+  await page.getByRole("button").filter({ has: page.locator(".anticon-right") }).first().click()
+  await expect(page.getByRole("heading", { level: 2, name: "Ali 'Imran" })).toBeVisible()
+  await expect.poll(() => page.evaluate(() => window.scrollY), { timeout: 5000 }).toBeLessThan(50)
+})
