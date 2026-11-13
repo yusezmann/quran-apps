@@ -65,7 +65,7 @@ const MobileSliderControls = ({ isAutoplayActive = true, onToggleAutoplay }: Mob
       />
 
       {/* Mobile Controls */}
-      <div className={`fixed bottom-24 md:bottom-20 left-1/2 transform -translate-x-1/2 z-50 transition-all duration-300 ease-out ${
+      <div className={`fixed bottom-24 left-1/2 transform -translate-x-1/2 z-50 transition-all duration-300 ease-out ${
         isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
       }`}>
         <div className="flex items-center gap-3 bg-black/60 backdrop-blur-md rounded-full px-4 py-3 border border-white/20 shadow-2xl">

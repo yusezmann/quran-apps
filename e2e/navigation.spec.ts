@@ -6,7 +6,7 @@ test.describe("navigasi mobile", () => {
   test("navigasi bawah berisi 5 menu baru dan Doa & Hadits aktif di /hadits", async ({ page }) => {
     await page.goto("/hadits")
     const nav = page.getByRole("navigation", { name: "Navigasi utama" })
-    await expect(nav.getByRole("link")).toHaveText(["Beranda", "Al-Qur'an", "Kiblat", "Doa & Hadits", "Asmaul Husna"])
+    await expect(nav.getByRole("link")).toHaveText(["Beranda", /Al.Qur'an/, "Kiblat", "Doa & Hadits", "Asmaul Husna"])
     await expect(nav.getByRole("link", { name: "Doa & Hadits" })).toHaveAttribute("aria-current", "page")
     // Tab berpindah ke Doa
     await page.getByRole("navigation", { name: "Doa dan Hadits" }).getByRole("link", { name: "Doa Harian" }).click()

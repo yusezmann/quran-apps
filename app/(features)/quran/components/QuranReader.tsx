@@ -435,7 +435,7 @@ export default function QuranReader() {
         </div>
         {/* Kontrol audio: hanya tampil saat ada ayat yang diputar, menempel di bawah layar */}
         {currentAyah !== null && (
-        <div className="sticky bottom-20 xl:bottom-0 z-20 p-3 border-t bg-white/95 backdrop-blur flex justify-between items-center gap-3 shadow-[0_-4px_12px_rgba(0,0,0,0.06)]">
+        <div className="sticky bottom-[calc(env(safe-area-inset-bottom)+92px)] xl:bottom-0 z-20 p-3 border-t bg-white/95 backdrop-blur flex justify-between items-center gap-3 shadow-[0_-4px_12px_rgba(0,0,0,0.06)]">
           <Button
             onClick={goToPreviousAyah}
             disabled={

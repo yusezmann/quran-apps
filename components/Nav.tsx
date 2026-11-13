@@ -13,16 +13,20 @@ const ICONS: Record<string, LucideIcon> = {
   "/asmaulhusna": Sparkles,
 }
 
-/** Navigasi bawah untuk mobile & tablet: ikon garis seragam + label teks. */
+/**
+ * Navigasi bawah (mobile & tablet): kapsul melayang dengan ikon + label.
+ * Menu aktif ditandai kapsul hijau solid; label tetap tampil agar ikon tidak perlu ditebak.
+ */
 const Nav = () => {
   const pathname = usePathname()
 
   return (
     <nav
       aria-label="Navigasi utama"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-gray-200 bg-white/95 backdrop-blur-sm shadow-[0_-4px_16px_rgba(0,0,0,0.08)] pb-[env(safe-area-inset-bottom)]"
+      // Melayang 12px dari tepi; ikut naik di atas gesture bar Android/iOS
+      className="fixed inset-x-2 min-[360px]:inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+12px)] z-40 mx-auto max-w-md rounded-[28px] border border-gray-200/80 bg-white/95 shadow-[0_8px_30px_rgba(0,0,0,0.12)] backdrop-blur-md"
     >
-      <ul className="mx-auto flex h-16 max-w-lg items-stretch justify-between px-1">
+      <ul className="flex h-16 items-stretch justify-between gap-0.5 p-1.5">
         {NAV_ITEMS.filter((item) => item.mobile).map(({ label, path }) => {
           const Icon = ICONS[path]
           const active = isNavActive(path, pathname)
@@ -31,18 +35,17 @@ const Nav = () => {
               <Link
                 href={path}
                 aria-current={active ? "page" : undefined}
-                className={`flex h-full flex-col items-center justify-center gap-1 text-[10px] min-[400px]:text-[11px] font-medium tracking-tight transition-colors ${
-                  active ? "text-green-700" : "text-gray-500 hover:text-green-700"
+                className={`flex h-full flex-col items-center justify-center gap-0.5 rounded-[22px] px-1 text-[10px] min-[400px]:text-[11px] font-medium tracking-tight transition-colors ${
+                  active
+                    ? "bg-green-600 text-white shadow-sm"
+                    : "text-gray-500 hover:bg-green-50 hover:text-green-700"
                 }`}
               >
-                <span
-                  className={`flex h-7 w-12 items-center justify-center rounded-full transition-colors ${
-                    active ? "bg-green-100" : ""
-                  }`}
-                >
-                  <Icon className="h-5 w-5" strokeWidth={active ? 2.4 : 2} />
+                <Icon className="h-5 w-5" strokeWidth={active ? 2.4 : 2} />
+                {/* Layar sangat sempit (<360px): label panjang boleh 2 baris agar tidak keluar dari kapsul */}
+                <span className="text-center leading-[1.1] whitespace-normal min-[360px]:whitespace-nowrap min-[360px]:leading-none">
+                  {label.replace("-", "‑") /* tanda hubung tak-terputus: "Al-Qur'an" tetap utuh */}
                 </span>
-                <span className="px-0.5 text-center leading-none whitespace-nowrap">{label}</span>
               </Link>
             </li>
           )
