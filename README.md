@@ -175,4 +175,4 @@ Aplikasi ini dirilis di bawah [lisensi MIT](LICENSE) © 2025–2026 Usman.
 
 ---
 
-Dibuat oleh [yusezmann](https://usman-nine.vercel.app/) · [Kunjungi aplikasi](https://quran-apps-brown.vercel.app/)
+Dibuat oleh [Usman](https://usman-nine.vercel.app/) · [Kunjungi aplikasi](https://quran-apps-brown.vercel.app/)

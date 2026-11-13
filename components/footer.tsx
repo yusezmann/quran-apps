@@ -6,8 +6,7 @@ import { useEffect, useState } from "react"
 import { Capacitor } from "@capacitor/core"
 import { Download, Github, Globe } from "lucide-react"
 
-// TODO: ganti dengan nama lengkap Anda jika ingin ditampilkan
-const AUTHOR = "yusezmann"
+const AUTHOR = "Usman"
 const PORTFOLIO_URL = "https://usman-nine.vercel.app/"
 const REPO_URL = "https://github.com/yusezmann/quran-apps"
 // Diisi saat build APK di GitHub Actions (android-build.yml); kosong di build lokal
