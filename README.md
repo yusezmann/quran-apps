@@ -13,13 +13,38 @@ Quran App adalah aplikasi web yang menyediakan akses mudah untuk membaca Al-Qur'
 
 ## Teknologi yang Digunakan
 
-- **Next.js 14** - Framework React untuk rendering sisi server dan sisi klien
-- **Tailwind CSS** - Untuk styling yang cepat dan fleksibel
-- **API Quran** - Untuk mendapatkan data Al-Qur'an secara dinamis
-- **Vercel** - Untuk deployment yang cepat dan efisien
-- **Ant Design** - Untuk component UI yang bersih dan responsive
-- **Zustand** - Untuk state management yang cepat dan efisien
-- **TanStack Query** - Untuk mengolah data dari API secara dinamis
+### Web (frontend)
+
+| Teknologi | Kegunaan |
+|---|---|
+| **Next.js 14** (App Router, static export) | Framework React; seluruh halaman di-*export* statis sehingga bisa dibundel ke aplikasi Android |
+| **React 18** + **TypeScript 5** | UI berbasis komponen dengan pengetikan statis |
+| **Tailwind CSS 3** + `tailwindcss-animate` | Styling utility-first dan animasi |
+| **Ant Design 5** | Komponen UI (select, tabel, modal, switch) dengan tema hijau brand |
+| **TanStack Query 5** | Pengambilan, cache, dan sinkronisasi data dari API |
+| **Zustand 5** | State global (surah aktif, pengaturan adzan tersimpan di `localStorage`) |
+| **date-fns** + **hijri-converter** | Format tanggal Indonesia dan kalender Hijriah |
+| **jsPDF** + **jspdf-autotable** | Unduh jadwal imsakiyah sebagai PDF |
+| **Swiper** | Slider Asmaul Husna |
+| **Sonner** | Notifikasi toast |
+| **Lucide React** + **React Icons** | Ikon |
+| **SVG kustom** | Ilustrasi waktu sholat, ikon Ka'bah, dan kompas kiblat (ringan, tajam di semua layar) |
+
+### Aplikasi Android
+
+| Teknologi | Kegunaan |
+|---|---|
+| **Capacitor 8** | Membungkus aplikasi web menjadi APK Android |
+| `@capacitor/geolocation` | Deteksi lokasi (GPS) untuk jadwal sholat & arah kiblat |
+| `@capacitor/local-notifications` | Notifikasi adzan terjadwal dengan suara adzan, tetap berbunyi saat aplikasi ditutup |
+
+### Pengujian & CI/CD
+
+| Teknologi | Kegunaan |
+|---|---|
+| **Playwright** | Tes end-to-end & unit (`npm run test:e2e`), termasuk simulasi jam untuk adzan dan sensor kompas |
+| **GitHub Actions** | Build APK bertanda tangan otomatis di setiap push ke `main`, versi naik otomatis, dan dipublikasikan ke GitHub Releases |
+| **Vercel** | Hosting versi web |
 
 ## Sumber API
 
