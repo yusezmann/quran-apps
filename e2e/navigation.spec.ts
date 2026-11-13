@@ -70,7 +70,7 @@ test.describe("navigasi melayang saat scroll", () => {
       { steps, dy },
     )
 
-  test("sembunyi saat scroll ke bawah, muncul lagi saat berhenti & saat scroll ke atas", async ({ page }) => {
+  test("sembunyi selama scroll (bawah & atas), muncul lagi saat berhenti", async ({ page }) => {
     await page.goto("/hadits") // halaman panjang
     const nav = page.getByRole("navigation", { name: "Navigasi utama" })
     await expect(nav).toHaveAttribute("data-hidden", "false")
@@ -82,7 +82,17 @@ test.describe("navigasi melayang saat scroll", () => {
     expect(await scrollAndRead(page, 6, 120)).toBe("true") // sedang scroll ke bawah
     await expect(nav).toHaveAttribute("data-hidden", "false", { timeout: 2000 }) // berhenti -> muncul
 
-    expect(await scrollAndRead(page, 4, 120)).toBe("true")
-    expect(await scrollAndRead(page, 1, -120)).toBe("false") // naik -> langsung muncul
+    expect(await scrollAndRead(page, 3, -120)).toBe("true") // scroll ke atas juga menyembunyikan
+    await expect(nav).toHaveAttribute("data-hidden", "false", { timeout: 2000 }) // berhenti -> muncul
   })
+})
+
+test("Doa & Hadits: tombol panah menggulir halaman (tidak diblokir daftar desktop yang tersembunyi)", async ({ page }) => {
+  for (const path of ["/doa", "/hadits"]) {
+    await page.goto(path)
+    await page.waitForLoadState("networkidle")
+    await page.mouse.click(5, 400)
+    for (let i = 0; i < 6; i++) await page.keyboard.press("ArrowDown")
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(100)
+  }
 })

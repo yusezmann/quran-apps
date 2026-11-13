@@ -24,8 +24,8 @@ const SHOW_AFTER_IDLE_MS = 350
 const SCROLL_THRESHOLD = 8
 
 /**
- * Sembunyikan navigasi saat pengguna scroll ke bawah (sedang membaca), tampilkan lagi
- * saat scroll ke atas, saat scroll berhenti, atau saat berada di paling atas halaman.
+ * Sembunyikan navigasi selama pengguna scroll (ke bawah maupun ke atas), tampilkan lagi
+ * saat scroll berhenti, atau saat berada di dekat bagian paling atas halaman.
  */
 function useHideOnScroll() {
   const [hidden, setHidden] = useState(false)
@@ -38,7 +38,7 @@ function useHideOnScroll() {
       const y = window.scrollY
       const delta = y - lastY.current
       if (Math.abs(delta) >= SCROLL_THRESHOLD) {
-        setHidden(delta > 0 && y > 80) // turun = sembunyi; naik / dekat atas = tampil
+        setHidden(y > 80) // sedang scroll = sembunyi; dekat bagian atas = tetap tampil
         lastY.current = y
       }
       window.clearTimeout(idleTimer.current)

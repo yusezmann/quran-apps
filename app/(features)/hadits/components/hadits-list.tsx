@@ -24,7 +24,18 @@ const HadithList: React.FC<HadithListProps> = ({
   // Keyboard navigation (desktop only)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (!isMobile && filteredHadiths.length > 0) {
+      // Hanya untuk daftar desktop yang TERLIHAT (komponen ini juga terpasang tersembunyi di HP),
+      // dan tombol panah/Enter hanya saat kolom cari aktif — selain itu panah harus menggulir halaman.
+      const input = searchInputRef.current
+      const visible = !!input && input.offsetParent !== null
+      if (isMobile || !visible || filteredHadiths.length === 0) return
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault()
+        input.focus()
+        return
+      }
+      if (document.activeElement !== input) return
+      {
         if (e.key === "ArrowDown") {
           e.preventDefault()
           setFocusedIndex((prev) =>
