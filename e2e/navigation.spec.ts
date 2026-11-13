@@ -52,3 +52,37 @@ test.describe("Al-Qur'an desktop", () => {
     await expect(page.getByText("Surah tidak ditemukan")).toBeVisible()
   })
 })
+
+test.describe("navigasi melayang saat scroll", () => {
+  /** Scroll di dalam halaman (timing tidak dipengaruhi lambatnya proses tes), lalu baca status nav. */
+  const scrollAndRead = (page: import("@playwright/test").Page, steps: number, dy: number) =>
+    page.evaluate(
+      async ({ steps, dy }) => {
+        for (let i = 0; i < steps; i++) {
+          window.scrollBy(0, dy)
+          // Headless Chrome tidak selalu mengirim event scroll untuk scroll terprogram
+          window.dispatchEvent(new Event("scroll"))
+          await new Promise((r) => setTimeout(r, 40))
+        }
+        await new Promise((r) => requestAnimationFrame(() => r(null)))
+        return document.querySelector('nav[aria-label="Navigasi utama"]')?.getAttribute("data-hidden")
+      },
+      { steps, dy },
+    )
+
+  test("sembunyi saat scroll ke bawah, muncul lagi saat berhenti & saat scroll ke atas", async ({ page }) => {
+    await page.goto("/hadits") // halaman panjang
+    const nav = page.getByRole("navigation", { name: "Navigasi utama" })
+    await expect(nav).toHaveAttribute("data-hidden", "false")
+    // Tunggu hidrasi React selesai (listener scroll terpasang)
+    await page.waitForLoadState("networkidle")
+    await expect.poll(() => scrollAndRead(page, 2, 60), { timeout: 15_000 }).toBe("true")
+    await expect(nav).toHaveAttribute("data-hidden", "false", { timeout: 2000 })
+
+    expect(await scrollAndRead(page, 6, 120)).toBe("true") // sedang scroll ke bawah
+    await expect(nav).toHaveAttribute("data-hidden", "false", { timeout: 2000 }) // berhenti -> muncul
+
+    expect(await scrollAndRead(page, 4, 120)).toBe("true")
+    expect(await scrollAndRead(page, 1, -120)).toBe("false") // naik -> langsung muncul
+  })
+})
