@@ -15,6 +15,47 @@ const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION
 // Link tetap GitHub yang selalu mengarah ke APK di Release terbaru
 // (file "quran-apps.apk" dilampirkan di setiap Release oleh android-build.yml)
 const APK_URL = `${REPO_URL}/releases/latest/download/quran-apps.apk`
+const LATEST_RELEASE_API = "https://api.github.com/repos/yusezmann/quran-apps/releases/latest"
+const RELEASE_CACHE_KEY = "quran-apps:latest-apk"
+const RELEASE_CACHE_MS = 6 * 60 * 60 * 1000 // 6 jam (API GitHub dibatasi 60 permintaan/jam per IP)
+
+/**
+ * Versi APK terbaru dari GitHub Releases (mis. "1.1.19"), agar tombol unduh di web
+ * menampilkan versi yang benar-benar akan terunduh. Di-cache di localStorage.
+ */
+function useLatestApkVersion(enabled: boolean): string | null {
+  const [version, setVersion] = useState<string | null>(null)
+  useEffect(() => {
+    if (!enabled) return
+    try {
+      const cached = JSON.parse(localStorage.getItem(RELEASE_CACHE_KEY) ?? "null")
+      if (cached && Date.now() - cached.at < RELEASE_CACHE_MS) {
+        setVersion(cached.version)
+        return
+      }
+    } catch {
+      // abaikan cache rusak
+    }
+    let cancelled = false
+    fetch(LATEST_RELEASE_API, { headers: { Accept: "application/vnd.github+json" } })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        const tag = typeof data?.tag_name === "string" ? data.tag_name.replace(/^v/, "") : null
+        if (!tag || cancelled) return
+        setVersion(tag)
+        try {
+          localStorage.setItem(RELEASE_CACHE_KEY, JSON.stringify({ version: tag, at: Date.now() }))
+        } catch {
+          // storage diblokir: abaikan
+        }
+      })
+      .catch(() => {}) // tanpa versi pun tombol tetap berfungsi
+    return () => {
+      cancelled = true
+    }
+  }, [enabled])
+  return version
+}
 
 export function Footer() {
   // Tombol unduh tidak relevan jika halaman dibuka dari dalam aplikasi Android itu sendiri
@@ -22,12 +63,15 @@ export function Footer() {
   useEffect(() => {
     setIsNativeApp(Capacitor.isNativePlatform())
   }, [])
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
+  const apkVersion = useLatestApkVersion(mounted && !isNativeApp)
 
-  // Di aplikasi Android: tanpa footer ala situs web, cukup satu baris kredit + versi
+  // Di aplikasi Android: tanpa footer ala situs web, cukup nama aplikasi + versi
   if (isNativeApp) {
     return (
       <p className="px-4 pt-2 pb-24 text-center text-xs text-gray-400">
-        Al Quran{APP_VERSION && ` v${APP_VERSION}`} · dibuat oleh {AUTHOR}
+        Al Quran{APP_VERSION && ` v${APP_VERSION}`}
       </p>
     )
   }
@@ -58,7 +102,7 @@ export function Footer() {
           >
             <Download className="h-4 w-4" />
             Unduh Aplikasi Android
-            <span className="font-normal text-green-100">(APK)</span>
+            <span className="font-normal text-green-100">(APK{apkVersion && ` v${apkVersion}`})</span>
           </a>
         )}
 
