@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState } from "react"
-import { Button, Input, List, Modal } from "antd"
+import { Button, Input, List, Modal, Switch } from "antd"
 import { Loader2, MapPin } from "lucide-react"
 import type {
   City,
@@ -12,6 +12,8 @@ import type {
 import { getCities } from "@/app/(features)/prayer-times/services/prayer-time.service"
 import { toast } from "sonner"
 import { useDetectCity } from "@/app/(features)/prayer-times/hooks/useDetectCity"
+import { useAutoLocation } from "@/lib/auto-location"
+import { enableAutoLocation, turnOffAutoLocationForManualChoice } from "@/lib/auto-location-run"
 
 const LocationSelector: React.FC<LocationSelectorProps> = ({
   isOpen,
@@ -22,6 +24,20 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
   const [searchResults, setSearchResults] = useState<City[]>([])
   const [searching, setSearching] = useState(false)
   const { detectCity, isDetecting: isDetectingLocation } = useDetectCity()
+  const autoMode = useAutoLocation((s) => s.mode)
+  const setAutoMode = useAutoLocation((s) => s.setMode)
+  const [enablingAuto, setEnablingAuto] = useState(false)
+
+  const toggleAuto = async (on: boolean) => {
+    if (!on) {
+      setAutoMode("off")
+      return
+    }
+    setEnablingAuto(true)
+    const ok = await enableAutoLocation() // meminta izin lokasi di saat ini (aksi pengguna)
+    setEnablingAuto(false)
+    if (ok) onClose()
+  }
 
   const handleLocationSearch = async () => {
     if (searchQuery.length < 3) {
@@ -55,6 +71,22 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
       <div>
         <h2 className="text-lg font-semibold">Pilih Lokasi</h2>
         <div className="space-y-4">
+          {/* Lokasi otomatis: kota mengikuti GPS setiap aplikasi dibuka */}
+          <label className="flex items-center justify-between gap-4 rounded-xl bg-green-50 p-3">
+            <span className="leading-snug">
+              <span className="block font-semibold text-gray-900">Lokasi otomatis</span>
+              <span className="text-sm text-gray-600">
+                Jadwal sholat, kiblat & adzan mengikuti lokasi Anda setiap aplikasi dibuka
+              </span>
+            </span>
+            <Switch
+              checked={autoMode === "on"}
+              loading={enablingAuto}
+              onChange={toggleAuto}
+              aria-label="Lokasi otomatis"
+            />
+          </label>
+
           <div className="flex gap-2">
             <Input
               placeholder="Cari kota..."
@@ -97,7 +129,10 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
                     <Button
                       type="text"
                       className="w-full justify-start"
-                      onClick={() => onSelectCity(city)}
+                      onClick={() => {
+                        turnOffAutoLocationForManualChoice()
+                        onSelectCity(city)
+                      }}
                     >
                       {city.lokasi}, {city.daerah}
                     </Button>

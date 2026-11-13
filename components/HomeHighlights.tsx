@@ -2,7 +2,9 @@
 
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { BookOpen, CalendarDays, CalendarHeart, ChevronRight, Moon } from "lucide-react"
+import { BookOpen, CalendarDays, CalendarHeart, ChevronRight, LocateFixed, Moon } from "lucide-react"
+import { useAutoLocation } from "@/lib/auto-location"
+import { enableAutoLocation } from "@/lib/auto-location-run"
 import { differenceInCalendarDays, format, parseISO } from "date-fns"
 import { id as idLocale } from "date-fns/locale"
 import { getNextHoliday } from "@/lib/holidays"
@@ -76,6 +78,58 @@ function NextHolidayCard({ holiday }: { holiday: NonNullable<ReturnType<typeof g
 }
 
 /**
+ * Tawaran sekali (mode "ask"): gunakan lokasi otomatis? Izin baru diminta saat tombol ditekan.
+ * Ditampilkan setelah mount agar tidak bentrok dengan HTML statis hasil build.
+ */
+function AutoLocationOffer() {
+  const mode = useAutoLocation((s) => s.mode)
+  const setMode = useAutoLocation((s) => s.setMode)
+  const [busy, setBusy] = useState(false)
+  if (mode !== "ask") return null
+
+  const accept = async () => {
+    setBusy(true)
+    await enableAutoLocation()
+    setBusy(false)
+  }
+
+  return (
+    <div role="region" aria-label="Tawaran lokasi otomatis" className="rounded-2xl border border-green-200 bg-green-50 p-4 shadow-sm">
+      <div className="flex items-start gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-green-700">
+          <LocateFixed className="h-5 w-5" />
+        </div>
+        <div className="flex-1 leading-snug">
+          <p className="font-semibold text-gray-900">Gunakan lokasi otomatis?</p>
+          <p className="mt-0.5 text-sm text-gray-600">
+            Jadwal sholat, arah kiblat & adzan menyesuaikan saat Anda bepergian. Bisa diubah kapan saja lewat
+            &quot;Salah Lokasi?&quot;.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={accept}
+              disabled={busy}
+              className="rounded-full bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-60"
+            >
+              {busy ? "Mendeteksi lokasi..." : "Aktifkan"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode("off")}
+              disabled={busy}
+              className="rounded-full px-4 py-2 text-sm font-medium text-gray-600 hover:bg-white"
+            >
+              Nanti saja
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/**
  * Dasbor ringkas di bawah jadwal sholat:
  * - "Lanjutkan membaca" (menggantikan pembaca Al-Qur'an yang dulu ada di Beranda)
  * - "Jadwal sholat sebulan" (Imsakiyah, progressive disclosure dari jadwal hari ini)
@@ -98,6 +152,7 @@ export default function HomeHighlights() {
 
   return (
     <section aria-label="Pintasan" className="space-y-4">
+      {now && <AutoLocationOffer />}
       {isRamadan && (
         <Link
           href="/imsakiyah"

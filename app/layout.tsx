@@ -7,6 +7,7 @@ import { AntdProvider } from "@/components/providers/antd-provider"
 import AdzanManager from "@/app/(features)/adzan/components/AdzanManager"
 import AdzanBanner from "@/app/(features)/adzan/components/AdzanBanner"
 import AdzanSettingsModal from "@/app/(features)/adzan/components/AdzanSettingsModal"
+import AutoLocationManager from "@/components/AutoLocationManager"
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -80,6 +81,7 @@ export default function RootLayout({
             <AdzanManager />
             <AdzanBanner />
             <AdzanSettingsModal />
+            <AutoLocationManager />
           </AntdProvider>
         </QueryProvider>
         <Toaster />

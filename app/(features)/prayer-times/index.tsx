@@ -7,7 +7,7 @@ import { Bell, BellOff, Loader2, MapPin } from "lucide-react"
 import { toast } from "sonner"
 import KaabaIcon from "@/components/KaabaIcon"
 import { getQiblaDirection } from "@/lib/qibla"
-import { DEFAULT_CITY, getSavedCity, saveCity } from "@/lib/saved-city"
+import { CITY_CHANGED_EVENT, DEFAULT_CITY, getSavedCity, saveCity } from "@/lib/saved-city"
 import { useAdzanSettings, useAdzanUi } from "@/lib/adzan/settings"
 import { useCityCoords } from "@/app/(features)/kiblat/hooks/useCityCoords"
 import type { City, PrayerTime } from "@/app/(features)/prayer-times/interfaces/prayer-time.interface"
@@ -44,18 +44,26 @@ const PrayerTimeComponent = () => {
   }, [])
 
   useEffect(() => {
+    // Abaikan respons usang: bila kota berganti saat permintaan sebelumnya belum selesai
+    // (mis. lokasi otomatis aktif tepat saat halaman dibuka), respons lama tidak boleh menimpa.
+    let stale = false
     const fetchPrayerTimes = async () => {
       setLoading(true)
       try {
-        setPrayerTimes(await getPrayerTimes(cityId))
+        const data = await getPrayerTimes(cityId)
+        if (!stale) setPrayerTimes(data)
       } catch (error) {
+        if (stale) return
         console.error("Failed to fetch prayer times:", error)
         toast.error("Gagal mengambil jadwal sholat")
       } finally {
-        setLoading(false)
+        if (!stale) setLoading(false)
       }
     }
     fetchPrayerTimes()
+    return () => {
+      stale = true
+    }
   }, [cityId])
 
   // Simpan kota yang sedang dipakai agar tetap sama saat aplikasi dibuka ulang, di Kiblat & untuk adzan
@@ -64,6 +72,16 @@ const PrayerTimeComponent = () => {
       saveCity({ id: String(prayerTimes.id), lokasi: prayerTimes.lokasi })
     }
   }, [prayerTimes?.id, prayerTimes?.lokasi])
+
+  // Kota diganti dari tempat lain (lokasi otomatis, halaman Kiblat) → ikut berganti
+  useEffect(() => {
+    const sync = () => {
+      const saved = getSavedCity()
+      if (saved) setCityId(saved.id)
+    }
+    window.addEventListener(CITY_CHANGED_EVENT, sync)
+    return () => window.removeEventListener(CITY_CHANGED_EVENT, sync)
+  }, [])
 
   const { data: cityCoords } = useCityCoords(prayerTimes?.lokasi)
   const qiblaDegree = cityCoords ? Math.round(getQiblaDirection(cityCoords.lat, cityCoords.lon)) : null

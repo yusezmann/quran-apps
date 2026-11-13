@@ -11,7 +11,8 @@ import { Footer } from "@/components/footer"
 import CitySelector from "@/app/(features)/imsakiyah/components/CitySelector"
 import { getCurrentLocation } from "@/lib/geolocation"
 import { getDistanceToKaaba, type Coords } from "@/lib/qibla"
-import { DEFAULT_CITY, getSavedCity, saveCity, type SavedCity } from "@/lib/saved-city"
+import { CITY_CHANGED_EVENT, DEFAULT_CITY, getSavedCity, saveCity, type SavedCity } from "@/lib/saved-city"
+import { turnOffAutoLocationForManualChoice } from "@/lib/auto-location-run"
 import QiblaCompass from "./components/QiblaCompass"
 import { useCityCoords } from "./hooks/useCityCoords"
 
@@ -30,8 +31,14 @@ export default function KiblatPage() {
   const [isLocating, setIsLocating] = useState(false)
 
   useEffect(() => {
-    const saved = getSavedCity()
-    if (saved) setCity(saved)
+    const sync = () => {
+      const saved = getSavedCity()
+      if (saved) setCity(saved)
+    }
+    sync()
+    // Ikut berganti bila kota diperbarui oleh lokasi otomatis
+    window.addEventListener(CITY_CHANGED_EVENT, sync)
+    return () => window.removeEventListener(CITY_CHANGED_EVENT, sync)
   }, [])
 
   const cityCoords = useCityCoords(gpsCoords ? undefined : city.lokasi)
@@ -56,6 +63,7 @@ export default function KiblatPage() {
     const saved = { id: String(next.id), lokasi: next.lokasi }
     setCity(saved)
     saveCity(saved) // Beranda ikut memakai kota ini
+    turnOffAutoLocationForManualChoice()
     setGpsCoords(null)
   }
 
