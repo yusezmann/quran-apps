@@ -441,7 +441,8 @@ export default function QuranReader() {
         </div>
 
         {/* Akhir surah: lanjut ke surah berikutnya tanpa harus scroll kembali ke atas */}
-        {surah && (surah.suratSelanjutnya || surah.suratSebelumnya) && (
+        {/* Satu ajakan saja; kembali ke surah sebelumnya cukup lewat tombol ‹ di judul yang menempel */}
+        {surah?.suratSelanjutnya && (
           <nav aria-label="Navigasi surah" className="border-t px-4 pb-6 pt-5">
             <p className="mb-3 text-center text-sm text-gray-500">
               Akhir surah {surah.namaLatin} · {surah.jumlahAyat} ayat
@@ -461,15 +462,6 @@ export default function QuranReader() {
                   </span>
                 </span>
                 <RightOutlined className="text-lg transition-transform group-hover:translate-x-1" />
-              </button>
-            )}
-            {surah.suratSebelumnya && (
-              <button
-                type="button"
-                onClick={() => openSurahFromEnd(surah.suratSebelumnya!.nomor)}
-                className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-600 hover:border-green-500 hover:text-green-700"
-              >
-                <LeftOutlined /> Surah sebelumnya: {surah.suratSebelumnya.namaLatin}
               </button>
             )}
           </nav>
