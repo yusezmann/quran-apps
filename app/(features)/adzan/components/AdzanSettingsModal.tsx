@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Modal, Switch } from "antd"
-import { AlertTriangle, Download, Play, Square } from "lucide-react"
+import { AlertTriangle, BellRing, CheckCircle2, Download, Play, Square } from "lucide-react"
 import { toast } from "sonner"
 import {
   ADZAN_SOUNDS,
@@ -16,7 +16,16 @@ import {
   type AdzanSoundId,
 } from "@/lib/adzan/settings"
 import { onAdzanEnded, playAdzanSound, stopAdzanSound } from "@/lib/adzan/player"
-import { exactAlarmStatus, isNativeApp, openExactAlarmSetting, requestNativePermission } from "@/lib/adzan/native"
+import {
+  exactAlarmStatus,
+  getNativeStatus,
+  isNativeApp,
+  onNativeStatus,
+  openExactAlarmSetting,
+  requestNativePermission,
+  scheduleTestNotification,
+  type NativeScheduleStatus,
+} from "@/lib/adzan/native"
 
 const APK_URL = "https://github.com/yusezmann/quran-apps/releases/latest/download/quran-apps.apk"
 
@@ -28,6 +37,29 @@ export default function AdzanSettingsModal() {
   const [native] = useState(isNativeApp)
   const [previewing, setPreviewing] = useState<AdzanSoundId | null>(null)
   const [exactAlarm, setExactAlarm] = useState<"granted" | "denied" | "unknown">("unknown")
+  const [nativeStatus, setNativeStatus] = useState<NativeScheduleStatus>(getNativeStatus)
+  const [testing, setTesting] = useState(false)
+
+  useEffect(() => onNativeStatus(setNativeStatus), [])
+  // Perbarui status izin alarm saat kembali dari Pengaturan Android
+  useEffect(() => {
+    if (!open || !native) return
+    const refresh = () => document.visibilityState === "visible" && exactAlarmStatus().then(setExactAlarm)
+    document.addEventListener("visibilitychange", refresh)
+    return () => document.removeEventListener("visibilitychange", refresh)
+  }, [open, native])
+
+  const runTest = async () => {
+    setTesting(true)
+    try {
+      await scheduleTestNotification(settings.sound)
+      toast.success("Notifikasi uji akan berbunyi dalam 10 detik. Coba kunci layar sekarang.")
+    } catch (e: any) {
+      toast.error("Tes gagal: " + (e?.message ?? "error tidak diketahui"))
+    } finally {
+      setTimeout(() => setTesting(false), 10_000)
+    }
+  }
 
   useEffect(() => onAdzanEnded(() => setPreviewing(null)), [])
   useEffect(() => {
@@ -179,6 +211,25 @@ export default function AdzanSettingsModal() {
             </div>
           </div>
         )}
+        {native && settings.enabled && (
+          <div className="space-y-3 rounded-xl border border-gray-200 p-3 text-sm">
+            <NativeStatusLine status={nativeStatus} />
+            <button
+              type="button"
+              onClick={runTest}
+              disabled={testing}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-green-600 px-3 py-2 font-medium text-green-700 hover:bg-green-50 disabled:opacity-60"
+            >
+              <BellRing className="h-4 w-4" />
+              {testing ? "Menunggu notifikasi uji..." : "Tes notifikasi adzan (10 detik)"}
+            </button>
+            <p className="leading-snug text-xs text-gray-500">
+              Jika tes tidak berbunyi: pastikan notifikasi aplikasi diizinkan, mode senyap/Jangan Ganggu mati,
+              dan nonaktifkan <b>penghemat baterai</b> untuk aplikasi ini (Pengaturan → Aplikasi → Quran Apps →
+              Baterai → Tidak dibatasi).
+            </p>
+          </div>
+        )}
         {!native && (
           <div className="rounded-xl bg-gray-50 p-3 text-sm leading-snug text-gray-600">
             Di browser, adzan hanya berbunyi <b>selama aplikasi terbuka</b>. Agar adzan tetap berbunyi saat layar mati,
@@ -191,4 +242,41 @@ export default function AdzanSettingsModal() {
       </div>
     </Modal>
   )
+}
+
+function NativeStatusLine({ status }: { status: NativeScheduleStatus }) {
+  if (status.state === "scheduled") {
+    const at = status.next ? new Date(status.next.at) : null
+    return (
+      <p className="flex items-start gap-2 leading-snug text-gray-700">
+        <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-600" />
+        <span>
+          {status.count} adzan terjadwal di HP ini
+          {status.next && at && (
+            <>
+              {" "}
+              · berikutnya <b>{status.next.title.replace("Waktu ", "")}</b>{" "}
+              {at.toLocaleString("id-ID", { weekday: "short", hour: "2-digit", minute: "2-digit" })}
+            </>
+          )}
+          {!status.exact && <span className="block text-xs text-amber-700">Mode alarm biasa (bisa terlambat beberapa menit)</span>}
+        </span>
+      </p>
+    )
+  }
+  if (status.state === "no-permission")
+    return (
+      <p className="flex items-start gap-2 leading-snug text-red-700">
+        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+        Izin notifikasi belum diberikan. Matikan lalu nyalakan lagi &quot;Aktifkan adzan&quot;, atau izinkan di Pengaturan Android.
+      </p>
+    )
+  if (status.state === "error")
+    return (
+      <p className="flex items-start gap-2 leading-snug text-red-700">
+        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+        Gagal menjadwalkan adzan: {status.message}
+      </p>
+    )
+  return <p className="leading-snug text-gray-500">Menyiapkan jadwal adzan...</p>
 }

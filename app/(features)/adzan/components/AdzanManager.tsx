@@ -60,12 +60,28 @@ export default function AdzanManager() {
   })
 
   // ---- APK: jadwalkan notifikasi native setiap jadwal/pengaturan berubah ----
+  // Dijadwal ulang juga saat aplikasi kembali ke depan (mis. setelah memberi izin di Pengaturan
+  // Android, atau setelah update aplikasi yang menghapus alarm lama).
+  const [resumeTick, setResumeTick] = useState(0)
   useEffect(() => {
     if (!native) return
-    const events = buildAdzanEvents(days, settings, new Date())
-    scheduleNativeAdzan(events).catch((e) => console.error("Gagal menjadwalkan adzan:", e))
+    const onVisible = () => document.visibilityState === "visible" && setResumeTick((t) => t + 1)
+    document.addEventListener("visibilitychange", onVisible)
+    return () => document.removeEventListener("visibilitychange", onVisible)
+  }, [native])
+
+  useEffect(() => {
+    if (!native) return
+    // Jeda singkat: jadwal bulan ini & bulan depan tiba bergantian — cukup satu penjadwalan.
+    // Saat adzan aktif tapi data belum ada (masih memuat / offline), jangan hapus jadwal lama.
+    if (settings.enabled && days.length === 0) return
+    const timer = window.setTimeout(() => {
+      const events = buildAdzanEvents(days, settings, new Date())
+      scheduleNativeAdzan(events).catch(() => {})
+    }, 800)
+    return () => window.clearTimeout(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [native, days, settingsKey, city.id])
+  }, [native, days, settingsKey, city.id, resumeTick])
 
   // APK di latar depan: tampilkan banner saat notifikasi adzan masuk (suara dari notifikasi)
   useEffect(() => {
@@ -102,7 +118,7 @@ export default function AdzanManager() {
       showBrowserNotification(event)
 
       if (event.kind === "reminder") {
-        toast.info(event.title, { description: event.body, duration: 15_000 })
+        toast.info(event.title, { description: event.body, duration: 60_000, closeButton: true })
         return
       }
       const result = await playAdzanSound(event.sound!)

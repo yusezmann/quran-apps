@@ -19,6 +19,8 @@ test.describe("navigasi mobile", () => {
       localStorage.setItem("lastRead", JSON.stringify({ surah: 2, ayah: 12, name: "Al-Baqarah" })),
     )
     await page.reload()
+    // Tunggu jadwal sholat (hero) termuat: sebelum itu kartu di bawahnya masih bergeser posisi
+    await expect(page.getByText("Sholat Berikutnya").first()).toBeVisible()
     const card = page.getByRole("link", { name: /Lanjutkan membaca.*Al-Baqarah.*Ayat 12/ })
     await expect(card).toBeVisible()
     await card.click()
