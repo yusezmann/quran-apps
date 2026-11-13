@@ -58,14 +58,17 @@ test("Imsakiyah: tahun tanpa SKB menampilkan libur perkiraan + catatan", async (
   await expect(page.locator("tbody tr.ant-table-row", { hasText: "17 Agustus" })).toContainText("Proklamasi Kemerdekaan (perkiraan)")
 })
 
-test("Beranda: kartu libur berikutnya membuka bulan yang benar di Imsakiyah", async ({ page }) => {
+test("Beranda: kartu libur berikutnya membuka & menggulir ke tanggal libur di Imsakiyah", async ({ page }) => {
   await page.goto("/")
   const card = page.getByRole("link", { name: /Libur berikutnya/ })
   await expect(card).toBeVisible()
   const href = await card.getAttribute("href")
-  expect(href).toMatch(/\/imsakiyah\?bulan=\d+&tahun=\d{4}/)
+  expect(href).toMatch(/\/imsakiyah\?bulan=\d+&tahun=\d{4}&tanggal=\d+/)
   await card.click()
-  const m = /bulan=(\d+)&tahun=(\d+)/.exec(href!)!
+  const m = /bulan=(\d+)&tahun=(\d+)&tanggal=(\d+)/.exec(href!)!
   const bulan = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"][Number(m[1]) - 1]
   await expect(page.getByRole("heading", { name: new RegExp(`${bulan} ${m[2]}`) })).toBeVisible()
+  // Baris tanggal libur langsung terlihat di layar (bukan hanya bulannya)
+  const iso = `${m[2]}-${m[1].padStart(2, "0")}-${m[3].padStart(2, "0")}`
+  await expect(page.locator(`tr[data-date="${iso}"]`)).toBeInViewport({ timeout: 10_000 })
 })

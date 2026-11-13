@@ -167,13 +167,21 @@ const Schedule: React.FC = () => {
     if (city) setSelectedCity({ id: city.id, lokasi: city.lokasi })
   }
 
-  // Tautan langsung ke bulan tertentu, mis. /imsakiyah?bulan=12&tahun=2026 (dari kartu "Libur berikutnya")
+  // Tautan langsung, mis. /imsakiyah?bulan=12&tahun=2026&tanggal=25 (dari kartu "Libur berikutnya")
+  const [targetDate, setTargetDate] = useState<string | null>(null)
+  const [highlightDate, setHighlightDate] = useState<string | null>(null)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const bulan = Number(params.get("bulan"))
     const tahun = Number(params.get("tahun"))
-    if (Number.isInteger(bulan) && bulan >= 1 && bulan <= 12) setSelectedMonth(bulan - 1)
-    if (getYearOptions(new Date().getFullYear()).includes(tahun)) setSelectedYear(tahun)
+    const tanggal = Number(params.get("tanggal"))
+    const validMonth = Number.isInteger(bulan) && bulan >= 1 && bulan <= 12
+    const validYear = getYearOptions(new Date().getFullYear()).includes(tahun)
+    if (validMonth) setSelectedMonth(bulan - 1)
+    if (validYear) setSelectedYear(tahun)
+    if (validMonth && validYear && Number.isInteger(tanggal) && tanggal >= 1 && tanggal <= 31) {
+      setTargetDate(toLocalISODate(new Date(tahun, bulan - 1, tanggal)))
+    }
   }, [])
 
   const year = selectedYear
@@ -205,6 +213,23 @@ const Schedule: React.FC = () => {
   }, [schedule, hijriOffset, holidayMap])
 
   const holidayCount = rows.filter(isLibur).length
+
+  // Setelah jadwal bulan tujuan termuat: gulir ke tanggal tujuan & sorot sebentar.
+  // Tabel (desktop) dan kartu (HP) sama-sama punya data-date; pilih yang sedang terlihat.
+  useEffect(() => {
+    if (!targetDate || !rows.some((r) => isValid(r.date) && toLocalISODate(r.date) === targetDate)) return
+    const timer = window.setTimeout(() => {
+      const el = Array.from(document.querySelectorAll<HTMLElement>(`[data-date="${targetDate}"]`)).find(
+        (e) => e.offsetParent !== null,
+      )
+      if (!el) return
+      el.scrollIntoView({ behavior: "smooth", block: "center" })
+      setHighlightDate(targetDate)
+      setTargetDate(null)
+      window.setTimeout(() => setHighlightDate(null), 3000)
+    }, 300)
+    return () => window.clearTimeout(timer)
+  }, [targetDate, rows])
 
   const todayRow = rows.find((row) => row.isToday)
 
@@ -369,8 +394,12 @@ const Schedule: React.FC = () => {
             columns={columns}
             dataSource={rows}
             rowClassName={(record) =>
-              record.isToday ? "imsakiyah-today" : isLibur(record) ? "imsakiyah-holiday" : ""
+              [
+                record.isToday ? "imsakiyah-today" : isLibur(record) ? "imsakiyah-holiday" : "",
+                isValid(record.date) && toLocalISODate(record.date) === highlightDate ? "imsakiyah-target" : "",
+              ].join(" ")
             }
+            onRow={(record) => ({ "data-date": isValid(record.date) ? toLocalISODate(record.date) : undefined }) as any}
             bordered
             pagination={false}
             scroll={{ x: "max-content" }}
@@ -383,7 +412,10 @@ const Schedule: React.FC = () => {
           {rows.map((row) => (
             <li
               key={row.key}
-              className={`rounded-xl border p-3 ${
+              data-date={isValid(row.date) ? toLocalISODate(row.date) : undefined}
+              className={`rounded-xl border p-3 scroll-mt-28 transition-shadow duration-500 ${
+                isValid(row.date) && toLocalISODate(row.date) === highlightDate ? "ring-4 ring-red-300 " : ""
+              }${
                 row.isToday
                   ? "border-green-500 bg-green-50"
                   : isLibur(row)

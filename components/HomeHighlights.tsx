@@ -66,7 +66,7 @@ function NextHolidayCard({ holiday }: { holiday: NonNullable<ReturnType<typeof g
   const when = days === 0 ? "Hari ini" : days === 1 ? "Besok" : `${days} hari lagi`
   return (
     <HighlightCard
-      href={`/imsakiyah?bulan=${date.getMonth() + 1}&tahun=${date.getFullYear()}`}
+      href={`/imsakiyah?bulan=${date.getMonth() + 1}&tahun=${date.getFullYear()}&tanggal=${date.getDate()}`}
       icon={<CalendarHeart className="h-6 w-6" />}
       eyebrow="Libur berikutnya"
       title={holiday.name}
