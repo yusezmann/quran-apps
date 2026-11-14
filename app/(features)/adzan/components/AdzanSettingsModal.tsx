@@ -52,7 +52,7 @@ export default function AdzanSettingsModal() {
   const runTest = async () => {
     setTesting(true)
     try {
-      await scheduleTestNotification(settings.sound)
+      await scheduleTestNotification(settings.sound, { ignoreSilent: settings.ignoreSilent })
       toast.success("Notifikasi uji akan berbunyi dalam 10 detik. Coba kunci layar sekarang.")
     } catch (e: any) {
       toast.error("Tes gagal: " + (e?.message ?? "error tidak diketahui"))
@@ -197,6 +197,23 @@ export default function AdzanSettingsModal() {
               </option>
             ))}
           </select>
+          {/* Mode senyap (Android): adzan diputar sebagai alarm */}
+          {native && (
+            <label className="mt-5 flex items-center justify-between gap-4 rounded-xl border border-gray-200 p-3">
+              <span className="leading-snug">
+                <span className="block font-semibold text-gray-900">Tetap bunyikan saat mode senyap</span>
+                <span className="text-sm text-gray-600">
+                  Adzan diputar seperti alarm (memakai volume alarm), tetap berbunyi walau HP senyap atau getar
+                </span>
+              </span>
+              <Switch
+                checked={settings.ignoreSilent}
+                disabled={!settings.enabled}
+                onChange={(on) => settings.update({ ignoreSilent: on })}
+                aria-label="Tetap bunyikan saat mode senyap"
+              />
+            </label>
+          )}
         </fieldset>
 
         {/* Keterbatasan & izin */}

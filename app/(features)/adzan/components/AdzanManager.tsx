@@ -57,6 +57,7 @@ export default function AdzanManager() {
     prayers: settings.prayers,
     sound: settings.sound,
     reminderMinutes: settings.reminderMinutes,
+    ignoreSilent: settings.ignoreSilent,
   })
 
   // ---- APK: jadwalkan notifikasi native setiap jadwal/pengaturan berubah ----
@@ -77,7 +78,7 @@ export default function AdzanManager() {
     if (settings.enabled && days.length === 0) return
     const timer = window.setTimeout(() => {
       const events = buildAdzanEvents(days, settings, new Date())
-      scheduleNativeAdzan(events).catch(() => {})
+      scheduleNativeAdzan(events, { ignoreSilent: settings.ignoreSilent }).catch(() => {})
     }, 800)
     return () => window.clearTimeout(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps

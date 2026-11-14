@@ -93,13 +93,17 @@ const TEST_NOTIFICATION_ID = 1
 let queue: Promise<unknown> = Promise.resolve()
 
 /** Ganti seluruh jadwal notifikasi adzan dengan daftar baru (diserialisasi). */
-export function scheduleNativeAdzan(events: AdzanEvent[]): Promise<void> {
-  const run = queue.then(() => doSchedule(events))
+export function scheduleNativeAdzan(events: AdzanEvent[], opts: { ignoreSilent?: boolean } = {}): Promise<void> {
+  const run = queue.then(() => doSchedule(events, !!opts.ignoreSilent))
   queue = run.catch(() => {})
   return run
 }
 
-async function doSchedule(events: AdzanEvent[]) {
+/** Channel untuk suara adzan: bertipe ALARM bila "tetap berbunyi saat mode senyap" aktif. */
+const channelFor = (sound: keyof typeof ADZAN_SOUNDS, ignoreSilent: boolean) =>
+  ignoreSilent ? ADZAN_SOUNDS[sound].alarmChannelId : ADZAN_SOUNDS[sound].channelId
+
+async function doSchedule(events: AdzanEvent[], ignoreSilent: boolean) {
   try {
     const permission = await LocalNotifications.checkPermissions()
     if (permission.display !== "granted") {
@@ -129,7 +133,7 @@ async function doSchedule(events: AdzanEvent[]) {
           body: e.body,
           schedule: { at: e.at, allowWhileIdle: true },
           isExactNotification: exact,
-          channelId: e.sound ? ADZAN_SOUNDS[e.sound].channelId : REMINDER_CHANNEL,
+          channelId: e.sound ? channelFor(e.sound, ignoreSilent) : REMINDER_CHANNEL,
           sound: e.sound ? ADZAN_SOUNDS[e.sound].raw : undefined,
           smallIcon: "ic_stat_adzan",
           autoCancel: true,
@@ -156,7 +160,10 @@ async function doSchedule(events: AdzanEvent[]) {
 }
 
 /** Notifikasi uji 10 detik lagi dengan suara adzan pilihan — untuk memastikan notifikasi berbunyi di HP ini. */
-export async function scheduleTestNotification(sound: keyof typeof ADZAN_SOUNDS): Promise<void> {
+export async function scheduleTestNotification(
+  sound: keyof typeof ADZAN_SOUNDS,
+  opts: { ignoreSilent?: boolean } = {},
+): Promise<void> {
   const granted = await requestNativePermission()
   if (!granted) throw new Error("Izin notifikasi belum diberikan")
   await ensureChannels()
@@ -168,7 +175,7 @@ export async function scheduleTestNotification(sound: keyof typeof ADZAN_SOUNDS)
         body: "Jika Anda mendengar adzan ini, notifikasi adzan berfungsi.",
         schedule: { at: new Date(Date.now() + 10_000), allowWhileIdle: true },
         isExactNotification: (await exactAlarmStatus()) !== "denied",
-        channelId: ADZAN_SOUNDS[sound].channelId,
+        channelId: channelFor(sound, !!opts.ignoreSilent),
         sound: ADZAN_SOUNDS[sound].raw,
         smallIcon: "ic_stat_adzan",
         autoCancel: true,

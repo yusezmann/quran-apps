@@ -18,9 +18,10 @@ export const PRAYER_LABEL: Record<Prayer, string> = {
  * jadi tiap suara punya channel sendiri).
  */
 export const ADZAN_SOUNDS = {
-  makkah: { label: "Adzan Makkah", src: "/assets/audio/adzan-makkah.mp3", raw: "adzan_makkah.mp3", channelId: "adzan_makkah" },
-  mesir: { label: "Adzan Mesir", src: "/assets/audio/adzan-mesir.mp3", raw: "adzan_mesir.mp3", channelId: "adzan_mesir" },
-  subuh: { label: "Adzan Subuh", src: "/assets/audio/adzan-shubuh.mp3", raw: "adzan_shubuh.mp3", channelId: "adzan_subuh" },
+  // alarmChannelId: channel bertipe ALARM (dibuat di MainActivity.java) untuk "tetap berbunyi saat mode senyap"
+  makkah: { label: "Adzan Makkah", src: "/assets/audio/adzan-makkah.mp3", raw: "adzan_makkah.mp3", channelId: "adzan_makkah", alarmChannelId: "adzan_makkah_alarm" },
+  mesir: { label: "Adzan Mesir", src: "/assets/audio/adzan-mesir.mp3", raw: "adzan_mesir.mp3", channelId: "adzan_mesir", alarmChannelId: "adzan_mesir_alarm" },
+  subuh: { label: "Adzan Subuh", src: "/assets/audio/adzan-shubuh.mp3", raw: "adzan_shubuh.mp3", channelId: "adzan_subuh", alarmChannelId: "adzan_subuh_alarm" },
 } as const
 export type AdzanSoundId = keyof typeof ADZAN_SOUNDS
 /** Suara yang bisa dipilih pengguna; Subuh selalu memakai "Adzan Subuh" (ada lafaz ash-shalatu khairun minan naum). */
@@ -35,6 +36,8 @@ export interface AdzanSettings {
   sound: AdzanSoundId
   /** Pengingat sebelum waktu sholat (0 = tidak ada) */
   reminderMinutes: ReminderMinutes
+  /** Android: putar adzan sebagai alarm agar tetap berbunyi walau HP dalam mode senyap */
+  ignoreSilent: boolean
 }
 
 export const DEFAULT_ADZAN_SETTINGS: AdzanSettings = {
@@ -42,6 +45,7 @@ export const DEFAULT_ADZAN_SETTINGS: AdzanSettings = {
   prayers: { subuh: true, dzuhur: true, ashar: true, maghrib: true, isya: true },
   sound: "makkah",
   reminderMinutes: 0,
+  ignoreSilent: false,
 }
 
 /** Suara yang dipakai untuk waktu sholat tertentu. */
@@ -64,7 +68,15 @@ export const useAdzanSettings = create<AdzanSettingsStore>()(
     {
       name: "quran-apps:adzan",
       version: 1,
-      partialize: ({ enabled, prayers, sound, reminderMinutes }) => ({ enabled, prayers, sound, reminderMinutes }),
+      partialize: ({ enabled, prayers, sound, reminderMinutes, ignoreSilent }) => ({
+        enabled,
+        prayers,
+        sound,
+        reminderMinutes,
+        ignoreSilent,
+      }),
+      // Data lama (tanpa ignoreSilent) tetap dibaca dengan nilai bawaan
+      merge: (persisted, current) => ({ ...current, ...(persisted as object) }),
     },
   ),
 )
