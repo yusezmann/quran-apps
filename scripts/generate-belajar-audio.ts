@@ -46,6 +46,15 @@ const voice = args.find((a) => a.startsWith("--voice="))?.slice(8) ?? "ar-XA-Wav
  */
 const VOICE_OVERRIDES: Record<string, string> = {
   "alif-fathah": "ar-XA-Wavenet-A",
+  "ain-fathah": "ar-XA-Wavenet-A",
+}
+
+/**
+ * Pengecualian teks per file, hasil uji dengar: عَ pendek kurang jelas, عَا (sedikit panjang)
+ * membuat bunyi 'ain dari tenggorokan lebih terdengar untuk anak.
+ */
+const TEXT_OVERRIDES: Record<string, string> = {
+  "ain-fathah": "عَا",
 }
 
 async function synthesize(key: string, text: string, voiceName = voice): Promise<Buffer> {
@@ -90,7 +99,7 @@ async function main() {
     if (existsSync(file) && !force && !only) continue
     process.stdout.write(`• ${job.label.padEnd(22)} ${job.text}  → ${job.id}.mp3 ... `)
     const customVoice = args.some((a) => a.startsWith("--voice=")) ? voice : VOICE_OVERRIDES[job.id] ?? voice
-    writeFileSync(file, await synthesize(key, job.text, customVoice))
+    writeFileSync(file, await synthesize(key, TEXT_OVERRIDES[job.id] ?? job.text, customVoice))
     made++
     console.log("ok")
   }
