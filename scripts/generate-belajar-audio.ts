@@ -40,13 +40,21 @@ const only = args.find((a) => a.startsWith("--only="))?.slice(7).split(",")
 // Suara WaveNet perempuan, jelas & lembut untuk anak (kuota gratis 1 juta karakter/bulan)
 const voice = args.find((a) => a.startsWith("--voice="))?.slice(8) ?? "ar-XA-Wavenet-D"
 
-async function synthesize(key: string, text: string): Promise<Buffer> {
+/**
+ * Pengecualian suara per file, hasil uji dengar (suara D terdengar seperti "ha" untuk أَ).
+ * Tidak berlaku bila --voice diisi.
+ */
+const VOICE_OVERRIDES: Record<string, string> = {
+  "alif-fathah": "ar-XA-Wavenet-A",
+}
+
+async function synthesize(key: string, text: string, voiceName = voice): Promise<Buffer> {
   const res = await fetch(`https://texttospeech.googleapis.com/v1/text:synthesize?key=${key}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       input: { text },
-      voice: { languageCode: "ar-XA", name: voice },
+      voice: { languageCode: "ar-XA", name: voiceName },
       audioConfig: { audioEncoding: "MP3", speakingRate: 0.8, sampleRateHertz: 24000 },
     }),
   })
@@ -81,7 +89,8 @@ async function main() {
     const file = join(OUT_DIR, `${job.id}.mp3`)
     if (existsSync(file) && !force && !only) continue
     process.stdout.write(`• ${job.label.padEnd(22)} ${job.text}  → ${job.id}.mp3 ... `)
-    writeFileSync(file, await synthesize(key, job.text))
+    const customVoice = args.some((a) => a.startsWith("--voice=")) ? voice : VOICE_OVERRIDES[job.id] ?? voice
+    writeFileSync(file, await synthesize(key, job.text, customVoice))
     made++
     console.log("ok")
   }
