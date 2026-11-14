@@ -7,6 +7,7 @@ import { Footer } from "@/components/footer"
 import SurahList from "./components/surah-list"
 import QuranReader from "./components/QuranReader"
 import { useQuranStore } from "./store/quranStore"
+import QuranTabs from "./components/QuranTabs"
 
 export default function QuranPage() {
   const setCurrentSurah = useQuranStore((s) => s.setCurrentSurah)
@@ -31,6 +32,7 @@ export default function QuranPage() {
       <div className="relative z-10 pt-28 pb-6 text-center px-4">
         <h1 className="text-3xl xl:text-4xl font-bold text-white mb-1 leading-tight">Al-Qur&apos;an</h1>
         <p className="text-white/85 leading-snug">Baca, dengarkan, dan pelajari tafsirnya</p>
+        <QuranTabs />
       </div>
 
       <main className="relative z-10 container mx-auto px-4 xl:px-0 pb-10 xl:pb-16">

@@ -91,7 +91,8 @@ test("Doa & Hadits: tombol panah menggulir halaman (tidak diblokir daftar deskto
   for (const path of ["/doa", "/hadits"]) {
     await page.goto(path)
     await page.waitForLoadState("networkidle")
-    await page.mouse.click(5, 400)
+    // Klik area netral (judul halaman) agar fokus di halaman, bukan di tombol daftar
+    await page.getByRole("heading", { level: 1 }).click()
     for (let i = 0; i < 6; i++) await page.keyboard.press("ArrowDown")
     await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(100)
   }

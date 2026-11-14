@@ -13,7 +13,7 @@ export interface NavItem {
 
 export const NAV_ITEMS: NavItem[] = [
   { label: "Beranda", path: "/", mobile: true },
-  { label: "Al-Qur'an", path: "/quran", mobile: true },
+  { label: "Al-Qur'an", path: "/quran", mobile: true, alsoActiveOn: ["/quran/belajar"] },
   { label: "Kiblat", path: "/kiblat", mobile: true },
   { label: "Doa & Hadits", path: "/doa", mobile: true, alsoActiveOn: ["/hadits"] },
   { label: "Asmaul Husna", path: "/asmaulhusna", mobile: true },
@@ -23,5 +23,6 @@ export const NAV_ITEMS: NavItem[] = [
 export function isNavActive(path: string, pathname: string | null): boolean {
   if (!pathname) return false
   const item = NAV_ITEMS.find((i) => i.path === path)
-  return pathname === path || (item?.alsoActiveOn?.includes(pathname) ?? false)
+  const p = pathname.length > 1 ? pathname.replace(/\/$/, "") : pathname
+  return p === path || (item?.alsoActiveOn?.includes(p) ?? false)
 }
