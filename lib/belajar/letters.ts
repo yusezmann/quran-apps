@@ -87,13 +87,24 @@ export function syllablePairs(lessonIndex: number, count = 6): Array<[Letter, Le
   const pool = lettersUpTo(lessonIndex).filter((l) => l.id !== "alif")
   const current = LESSONS[lessonIndex].letters.filter((l) => l.id !== "alif")
   const pairs: Array<[Letter, Letter]> = []
-  for (let k = 0; pairs.length < count && k < 60; k++) {
-    const a = current[k % current.length]
-    const b = pool[(k * 5 + 3) % pool.length]
-    if (a.id !== b.id && !pairs.some(([x, y]) => x.id === a.id && y.id === b.id)) pairs.push([a, b])
+  const add = (pair: [Letter, Letter]) => {
+    if (pairs.length < count && pair[0].id !== pair[1].id && !pairs.some(([x, y]) => x.id === pair[0].id && y.id === pair[1].id))
+      pairs.push(pair)
+  }
+  // Huruf baru dipasangkan dengan huruf lain (makin jauh), lalu urutan kebalikannya (x, baru)
+  for (const reverse of [false, true]) {
+    for (let offset = 1; offset < pool.length; offset++) {
+      for (const a of current) {
+        const b = pool[(pool.findIndex((l) => l.id === a.id) + offset) % pool.length]
+        add(reverse ? [b, a] : [a, b])
+      }
+    }
   }
   return pairs
 }
 
 /** Gabungkan bentuk sambung: huruf Arab otomatis menyambung bila ditulis berdampingan. */
 export const joinSyllables = (letters: Letter[]) => letters.map(withFathah).join("")
+
+/** Nama file suara untuk pasangan sambung, mis. "sambung-ba-ta". */
+export const pairAudioId = (pair: Letter[]) => `sambung-${pair.map((l) => l.id).join("-")}`

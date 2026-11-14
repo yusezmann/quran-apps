@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { ArrowLeft, ArrowRight, RotateCcw, Star, Volume2 } from "lucide-react"
-import { LESSONS, joinSyllables, lettersUpTo, syllablePairs, withFathah, type Letter } from "@/lib/belajar/letters"
+import { LESSONS, joinSyllables, lettersUpTo, pairAudioId, syllablePairs, withFathah, type Letter } from "@/lib/belajar/letters"
 import { speakArabic, stopSpeaking } from "@/lib/belajar/speech"
 import { useBelajarProgress } from "@/lib/belajar/progress"
 
@@ -202,7 +202,7 @@ function JoinStep({ lessonIndex }: { lessonIndex: number }) {
               text={text}
               caption={pair.map((l) => l.fathahLatin).join(" - ")}
               color={pair[0].color}
-              onTap={() => speakArabic(text)}
+              onTap={() => speakArabic(text, pairAudioId(pair))}
             />
           )
         })}

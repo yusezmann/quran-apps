@@ -13,9 +13,9 @@
  * lalu lib/belajar/recorded-audio.json diperbarui sehingga aplikasi otomatis memakainya.
  * File yang Anda ganti dengan rekaman sendiri tidak ditimpa kecuali memakai --force/--only.
  */
-import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from "node:fs"
+import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, unlinkSync } from "node:fs"
 import { join } from "node:path"
-import { LETTERS, withFathah } from "../lib/belajar/letters.ts"
+import { LESSONS, LETTERS, joinSyllables, pairAudioId, syllablePairs, withFathah } from "../lib/belajar/letters.ts"
 
 const ROOT = process.cwd()
 const OUT_DIR = join(ROOT, "public/assets/belajar/audio")
@@ -62,7 +62,19 @@ async function main() {
   const jobs = LETTERS.flatMap((l) => [
     { id: l.id, text: l.nameAr, label: `${l.latin} (nama huruf)` },
     { id: `${l.id}-fathah`, text: withFathah(l), label: `${l.fathahLatin} (fathah)` },
-  ]).filter((j) => !only || only.includes(j.id.replace(/-fathah$/, "")))
+  ])
+    // Latihan "Sambung": semua pasangan yang muncul di 7 pelajaran
+    .concat(
+      LESSONS.flatMap((lesson) =>
+        syllablePairs(lesson.index).map((pair) => ({
+          id: pairAudioId(pair),
+          text: joinSyllables(pair),
+          label: `${pair.map((l) => l.fathahLatin).join("-")} (sambung)`,
+        })),
+      ),
+    )
+    .filter((j, i, all) => all.findIndex((x) => x.id === j.id) === i)
+    .filter((j) => !only || only.includes(j.id.replace(/-fathah$/, "")))
 
   let made = 0
   for (const job of jobs) {
@@ -72,6 +84,15 @@ async function main() {
     writeFileSync(file, await synthesize(key, job.text))
     made++
     console.log("ok")
+  }
+
+  // Hapus file "sambung" lama yang tidak lagi dipakai pelajaran mana pun
+  const wanted = new Set(jobs.map((j) => j.id))
+  if (!only) {
+    for (const f of readdirSync(OUT_DIR)) {
+      const id = f.slice(0, -4)
+      if (f.startsWith("sambung-") && f.endsWith(".mp3") && !wanted.has(id)) unlinkSync(join(OUT_DIR, f))
+    }
   }
 
   // Manifest: semua file mp3 yang ada (hasil TTS maupun rekaman sendiri)

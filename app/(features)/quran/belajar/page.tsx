@@ -42,11 +42,13 @@ export default function BelajarPage() {
   const [voiceOk, setVoiceOk] = useState<boolean | null>(null)
 
   useEffect(() => {
-    hasArabicVoice().then(setVoiceOk)
+    // Huruf & fathah memakai file suara bawaan aplikasi, jadi suara Arab perangkat hanya dibutuhkan
+    // sebagai cadangan. Petunjuk pemasangan hanya muncul bila suara BENAR-BENAR gagal diputar.
     // Suara gagal diputar saat kartu diketuk → tampilkan petunjuk pemasangan
     const onNoVoice = () => setVoiceOk(false)
     // Kembali dari pengaturan TTS Android → cek ulang
-    const onVisible = () => document.visibilityState === "visible" && hasArabicVoice().then(setVoiceOk)
+    const onVisible = () =>
+      document.visibilityState === "visible" && hasArabicVoice().then((ok) => ok && setVoiceOk(true))
     window.addEventListener(NO_VOICE_EVENT, onNoVoice)
     document.addEventListener("visibilitychange", onVisible)
     return () => {
@@ -81,7 +83,7 @@ export default function BelajarPage() {
       <main className="relative z-10 mx-auto max-w-3xl px-4 pb-10">
         {voiceOk === false && (
           <div role="note" className="mb-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-snug text-amber-900">
-            <p className="font-semibold">Suara bahasa Arab belum tersedia di perangkat ini</p>
+            <p className="font-semibold">Sebagian suara belum bisa diputar di perangkat ini</p>
             <p className="mt-1">
               Tekan tombol di bawah, pilih <b>Google Speech Services</b> (atau mesin TTS HP Anda) → <b>Instal data
               suara</b> → <b>Arab</b>, lalu kembali ke aplikasi ini. Pastikan juga volume <b>media</b> tidak nol.
