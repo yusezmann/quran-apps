@@ -10,7 +10,7 @@ import LessonView from "./components/LessonView"
 import SurahPractice from "./components/SurahPractice"
 import { LESSONS } from "@/lib/belajar/letters"
 import { isLessonUnlocked, useBelajarProgress } from "@/lib/belajar/progress"
-import { hasArabicVoice, openTtsInstall, speakArabic } from "@/lib/belajar/speech"
+import { NO_VOICE_EVENT, hasArabicVoice, openTtsInstall, speakArabic } from "@/lib/belajar/speech"
 
 /** Surat pendek untuk anak: Al-Fatihah lalu juz 30 dari yang terpendek. */
 const SHORT_SURAHS: Array<[number, string, number]> = [
@@ -43,7 +43,22 @@ export default function BelajarPage() {
 
   useEffect(() => {
     hasArabicVoice().then(setVoiceOk)
+    // Suara gagal diputar saat kartu diketuk → tampilkan petunjuk pemasangan
+    const onNoVoice = () => setVoiceOk(false)
+    // Kembali dari pengaturan TTS Android → cek ulang
+    const onVisible = () => document.visibilityState === "visible" && hasArabicVoice().then(setVoiceOk)
+    window.addEventListener(NO_VOICE_EVENT, onNoVoice)
+    document.addEventListener("visibilitychange", onVisible)
+    return () => {
+      window.removeEventListener(NO_VOICE_EVENT, onNoVoice)
+      document.removeEventListener("visibilitychange", onVisible)
+    }
   }, [])
+
+  // Petunjuk dipasang di atas agar terlihat dari halaman mana pun (peta, pelajaran, surat)
+  useEffect(() => {
+    if (voiceOk === false) window.scrollTo({ top: 0, behavior: "smooth" })
+  }, [voiceOk])
 
   // Kembali ke atas setiap pindah tampilan
   useEffect(() => {
@@ -68,8 +83,8 @@ export default function BelajarPage() {
           <div role="note" className="mb-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-snug text-amber-900">
             <p className="font-semibold">Suara bahasa Arab belum tersedia di perangkat ini</p>
             <p className="mt-1">
-              Pasang data suara Arab di pengaturan Text-to-Speech HP (Google Speech Services → bahasa Arab), lalu buka
-              lagi halaman ini.
+              Tekan tombol di bawah, pilih <b>Google Speech Services</b> (atau mesin TTS HP Anda) → <b>Instal data
+              suara</b> → <b>Arab</b>, lalu kembali ke aplikasi ini. Pastikan juga volume <b>media</b> tidak nol.
             </p>
             <button
               type="button"
