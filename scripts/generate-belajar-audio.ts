@@ -45,18 +45,34 @@ const voice = args.find((a) => a.startsWith("--voice="))?.slice(8) ?? "ar-XA-Wav
  * Tidak berlaku bila --voice diisi.
  */
 const VOICE_OVERRIDES: Record<string, string> = {
-  "alif-fathah": "ar-XA-Wavenet-A",
   "ain-fathah": "ar-XA-Wavenet-A",
+  "alif-fathah": "ar-XA-Wavenet-A",
+  "dal-fathah": "ar-XA-Wavenet-A",
+  "dhod-fathah": "ar-XA-Wavenet-A",
+  "dzal-fathah": "ar-XA-Wavenet-A",
   "ghoin-fathah": "ar-XA-Wavenet-A",
+  "ha-fathah": "ar-XA-Wavenet-A",
+  "ha2-fathah": "ar-XA-Wavenet-A",
+  "kaf-fathah": "ar-XA-Wavenet-A",
+  "kho-fathah": "ar-XA-Wavenet-A",
+  "qof-fathah": "ar-XA-Wavenet-A",
+  "shod-fathah": "ar-XA-Wavenet-A",
+  "sin-fathah": "ar-XA-Wavenet-A",
+  "ta-fathah": "ar-XA-Wavenet-A",
+  "tho-fathah": "ar-XA-Wavenet-A",
+  "tsa-fathah": "ar-XA-Wavenet-A",
+  "zai-fathah": "ar-XA-Wavenet-A",
+  "zho-fathah": "ar-XA-Wavenet-A",
 }
 
 /**
- * Pengecualian teks per file, hasil uji dengar: عَ pendek kurang jelas, عَا (sedikit panjang)
- * membuat bunyi 'ain dari tenggorokan lebih terdengar untuk anak.
+ * Pengecualian teks per file, hasil uji dengar (pilihan orang tua, 15 Nov 2026).
  */
-const TEXT_OVERRIDES: Record<string, string> = {
-  "ain-fathah": "عَا",
-}
+const TEXT_OVERRIDES: Record<string, string> = Object.fromEntries(
+  // bunyi sedikit panjang (huruf + ا): hasil uji dengar, lebih jelas untuk huruf yang mirip
+  ["ain-fathah", "dal-fathah", "dhod-fathah", "dzal-fathah", "ghoin-fathah", "ha2-fathah", "kaf-fathah", "kho-fathah", "qof-fathah", "shod-fathah", "ta-fathah", "tho-fathah", "tsa-fathah", "zai-fathah", "zho-fathah"]
+    .map((id) => [id, withFathah(LETTERS.find((l) => `${l.id}-fathah` === id)!) + "ا"]),
+)
 
 async function synthesize(key: string, text: string, voiceName = voice): Promise<Buffer> {
   const res = await fetch(`https://texttospeech.googleapis.com/v1/text:synthesize?key=${key}`, {
