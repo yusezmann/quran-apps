@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "belajar:audio": "node --experimental-strip-types scripts/generate-belajar-audio.ts"
   },
   "dependencies": {
     "@capacitor-community/text-to-speech": "^8.0.2",
