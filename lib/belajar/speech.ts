@@ -2,8 +2,15 @@
 
 import { RECORDED_AUDIO } from "./recorded-audio"
 
-/** Plugin dimuat saat dipakai (di browser), karena ia mengakses `window` dan gagal saat prerender. */
-const tts = () => import("@capacitor-community/text-to-speech").then((m) => m.TextToSpeech)
+/**
+ * Plugin dimuat saat dipakai (di browser), karena ia mengakses `window` dan gagal saat prerender.
+ * PENTING: plugin Capacitor adalah Proxy yang menganggap SETIAP properti sebagai metode native,
+ * termasuk `.then`. Jangan kembalikan plugin langsung dari Promise (akan memanggil
+ * "TextToSpeech.then()" yang tidak ada) — bungkus dalam objek.
+ */
+let pluginPromise: Promise<{ plugin: typeof import("@capacitor-community/text-to-speech").TextToSpeech }> | null = null
+const ttsBox = () =>
+  (pluginPromise ??= import("@capacitor-community/text-to-speech").then((m) => ({ plugin: m.TextToSpeech })))
 
 /**
  * Suara untuk "Belajar":
@@ -29,7 +36,7 @@ export async function stopSpeaking() {
   currentAudio?.pause()
   currentAudio = null
   try {
-    await (await tts()).stop()
+    await (await ttsBox()).plugin.stop()
   } catch {
     // abaikan
   }
@@ -42,7 +49,7 @@ export async function stopSpeaking() {
  */
 async function findArabicTag(): Promise<string | null> {
   if (arabicTag) return arabicTag
-  const plugin = await tts()
+  const { plugin } = await ttsBox()
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
       for (const lang of ARABIC_TAGS) {
@@ -95,7 +102,7 @@ export async function speakArabic(text: string, audioId?: string): Promise<Speak
   }
 
   try {
-    const plugin = await tts()
+    const { plugin } = await ttsBox()
     // Jangan ditunggu sampai selesai bicara (speak resolve setelah ucapan berakhir)
     plugin.speak({ text, lang, rate: 0.7, pitch: 1.05, volume: 1, category: "playback" }).catch((error) => {
       console.error("TTS gagal:", error)
@@ -113,7 +120,7 @@ export async function speakArabic(text: string, audioId?: string): Promise<Speak
 export async function openTtsInstall() {
   try {
     arabicTag = null // cek ulang setelah pengguna memasang suara
-    await (await tts()).openInstall()
+    await (await ttsBox()).plugin.openInstall()
   } catch {
     // tidak tersedia di web
   }
