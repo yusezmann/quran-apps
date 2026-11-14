@@ -47,6 +47,7 @@ const voice = args.find((a) => a.startsWith("--voice="))?.slice(8) ?? "ar-XA-Wav
 const VOICE_OVERRIDES: Record<string, string> = {
   "alif-fathah": "ar-XA-Wavenet-A",
   "ain-fathah": "ar-XA-Wavenet-A",
+  "ghoin-fathah": "ar-XA-Wavenet-A",
 }
 
 /**
