@@ -15,6 +15,8 @@ import BalloonGame from "./components/games/BalloonGame"
 import MemoryGame from "./components/games/MemoryGame"
 import OddOneGame from "./components/games/OddOneGame"
 import StickerBook from "./components/games/StickerBook"
+import TraceGame from "./components/games/TraceGame"
+import ParentReport from "./components/ParentReport"
 import { NO_VOICE_EVENT, hasArabicVoice, openTtsInstall, speakArabic } from "@/lib/belajar/speech"
 
 /** Surat pendek untuk anak: Al-Fatihah lalu juz 30 dari yang terpendek. */
@@ -38,12 +40,13 @@ const SHORT_SURAHS: Array<[number, string, number]> = [
   [99, "Az-Zalzalah", 8],
 ]
 
-type GameId = "balon" | "pasangan" | "beda"
+type GameId = "balon" | "pasangan" | "beda" | "tebal"
 
 const GAMES: Array<{ id: GameId; emoji: string; name: string; desc: string; bg: string }> = [
   { id: "balon", emoji: "🎈", name: "Pecah Balon", desc: "Dengar & pecahkan", bg: "from-sky-400 to-blue-500" },
   { id: "pasangan", emoji: "🃏", name: "Cari Pasangan", desc: "Ingat kartunya", bg: "from-pink-400 to-rose-500" },
   { id: "beda", emoji: "🔍", name: "Mana yang Beda?", desc: "Lihat titiknya", bg: "from-violet-400 to-purple-600" },
+  { id: "tebal", emoji: "✍️", name: "Tebalkan Huruf", desc: "Latih menulis", bg: "from-amber-400 to-orange-500" },
 ]
 
 type View =
@@ -52,6 +55,7 @@ type View =
   | { kind: "surah"; number: number }
   | { kind: "game"; game: GameId; session: number }
   | { kind: "stickers" }
+  | { kind: "parent" }
 
 export default function BelajarPage() {
   const [view, setView] = useState<View>({ kind: "home" })
@@ -59,7 +63,8 @@ export default function BelajarPage() {
   const memorized = useBelajarProgress((s) => s.memorized)
   const totalAllStars = useTotalStars()
   const [voiceOk, setVoiceOk] = useState<boolean | null>(null)
-  const { pool, fresh } = useMemo(() => gamePool(stars), [stars])
+  const letterStats = useBelajarProgress((s) => s.letterStats)
+  const { pool, fresh, weak } = useMemo(() => gamePool(stars, letterStats), [stars, letterStats])
 
   useEffect(() => {
     // Huruf & fathah memakai file suara bawaan aplikasi, jadi suara Arab perangkat hanya dibutuhkan
@@ -122,18 +127,26 @@ export default function BelajarPage() {
         {view.kind === "lesson" && <LessonView lessonIndex={view.index} onExit={() => setView({ kind: "home" })} />}
         {view.kind === "surah" && <SurahPractice surahNumber={view.number} onExit={() => setView({ kind: "home" })} />}
         {view.kind === "stickers" && <StickerBook onExit={() => setView({ kind: "home" })} />}
+        {view.kind === "parent" && (
+          <ParentReport
+            onExit={() => setView({ kind: "home" })}
+            onPlayOdd={() => setView({ kind: "game", game: "beda", session: 0 })}
+          />
+        )}
         {view.kind === "game" &&
           (() => {
             const key = `${view.game}-${view.session}` // sesi baru = komponen baru (Main lagi)
             const props = {
               pool,
               fresh,
+              weak,
               onAgain: () => setView({ ...view, session: view.session + 1 }),
               onExit: () => setView({ kind: "home" }),
               onStickers: () => setView({ kind: "stickers" }),
             }
             if (view.game === "balon") return <BalloonGame key={key} {...props} />
             if (view.game === "pasangan") return <MemoryGame key={key} {...props} />
+            if (view.game === "tebal") return <TraceGame key={key} {...props} />
             return <OddOneGame key={key} {...props} />
           })()}
 
@@ -147,7 +160,7 @@ export default function BelajarPage() {
                 </h2>
                 <p className="text-sm text-gray-500">Kumpulkan bintang untuk membuka stiker</p>
               </div>
-              <ul className="grid grid-cols-3 gap-3">
+              <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 {GAMES.map((g) => (
                   <li key={g.id}>
                     <button
@@ -272,6 +285,24 @@ export default function BelajarPage() {
                 })}
               </ul>
             </section>
+
+            {/* Untuk orang tua */}
+            <button
+              type="button"
+              onClick={() => setView({ kind: "parent" })}
+              className="flex w-full items-center gap-4 rounded-3xl bg-white p-5 text-left shadow-lg hover:bg-gray-50"
+            >
+              <span className="text-4xl" aria-hidden="true">
+                👨‍👩‍👧
+              </span>
+              <span className="flex-1 leading-tight">
+                <span className="block text-lg font-bold text-gray-900">Laporan untuk Orang Tua</span>
+                <span className="text-sm text-gray-500">Huruf yang perlu dilatih, sering tertukar & hari belajar</span>
+              </span>
+              <span className="text-2xl text-gray-400" aria-hidden="true">
+                ›
+              </span>
+            </button>
 
             <p className="flex items-center justify-center gap-2 text-center text-xs text-gray-500">
               <Volume2 className="h-4 w-4" />

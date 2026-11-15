@@ -1,4 +1,6 @@
 import { LESSONS, LETTERS, lettersUpTo, type Letter } from "./letters"
+import type { LetterStat } from "./progress"
+import { weakLetters } from "./stats"
 
 export const shuffle = <T,>(arr: readonly T[]): T[] =>
   arr
@@ -17,15 +19,26 @@ export function highestUnlocked(stars: Record<number, number>) {
 
 /**
  * Huruf untuk game: hanya yang sudah/sedang dipelajari.
- * `fresh` = huruf pelajaran terbaru, diutamakan sebagai soal.
+ * `fresh` = huruf pelajaran terbaru, `weak` = huruf yang masih sering salah (dari catatan jawaban).
  */
-export function gamePool(stars: Record<number, number>) {
+export function gamePool(stars: Record<number, number>, letterStats: Record<string, LetterStat> = {}) {
   const top = highestUnlocked(stars)
-  return { pool: lettersUpTo(top), fresh: LESSONS[top].letters }
+  const pool = lettersUpTo(top)
+  const weak = weakLetters(letterStats)
+    .map((w) => w.letter)
+    .filter((l) => pool.some((p) => p.id === l.id))
+  return { pool, fresh: LESSONS[top].letters, weak }
 }
 
-/** Pilih huruf soal: separuh dari pelajaran terbaru, sisanya dari semua yang sudah dipelajari. */
-export const pickTarget = (pool: Letter[], fresh: Letter[]) => (Math.random() < 0.5 ? pick(fresh) : pick(pool))
+/**
+ * Pilih huruf soal (latihan yang menyesuaikan):
+ * ±35% huruf yang masih lemah (bila ada), ±35% huruf pelajaran terbaru, sisanya acak dari yang sudah dipelajari.
+ */
+export const pickTarget = (pool: Letter[], fresh: Letter[], weak: Letter[] = []) => {
+  const r = Math.random()
+  if (weak.length && r < 0.35) return pick(weak)
+  return r < 0.7 ? pick(fresh) : pick(pool)
+}
 
 /** Bintang sesi: 3 = semua benar pertama kali, 2 = hampir semua, 1 = sudah mencoba. */
 export const sessionStars = (firstTry: number, total: number) => (firstTry >= total ? 3 : firstTry >= total - 2 ? 2 : 1)

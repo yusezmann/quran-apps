@@ -5,6 +5,7 @@ import { withFathah, type Letter } from "@/lib/belajar/letters"
 import { lookalikes, pick, pickTarget, sessionStars, shuffle } from "@/lib/belajar/games"
 import { speakArabic } from "@/lib/belajar/speech"
 import { sfxCorrect } from "@/lib/belajar/sfx"
+import { recordAttempt } from "@/lib/belajar/progress"
 import { GameFinish, GameFrame, RoundStars } from "./GameKit"
 
 const ROUNDS = 6
@@ -15,9 +16,9 @@ interface Round {
   cells: Letter[]
 }
 
-function makeRound(pool: Letter[], fresh: Letter[], n: number, prev?: Letter): Round {
-  let same = pickTarget(pool, fresh)
-  for (let i = 0; i < 5 && prev && same.id === prev.id; i++) same = pickTarget(pool, fresh)
+function makeRound(pool: Letter[], fresh: Letter[], weak: Letter[], n: number, prev?: Letter): Round {
+  let same = pickTarget(pool, fresh, weak)
+  for (let i = 0; i < 5 && prev && same.id === prev.id; i++) same = pickTarget(pool, fresh, weak)
   // Utamakan huruf yang bentuknya mirip (mis. ب dengan ت) — itu yang perlu dilatih
   const similar = lookalikes(same, pool)
   const odd = similar.length ? pick(similar) : pick(pool.filter((l) => l.id !== same.id))
@@ -31,19 +32,21 @@ function makeRound(pool: Letter[], fresh: Letter[], n: number, prev?: Letter): R
 export default function OddOneGame({
   pool,
   fresh,
+  weak,
   onAgain,
   onExit,
   onStickers,
 }: {
   pool: Letter[]
   fresh: Letter[]
+  weak: Letter[]
   onAgain: () => void
   onExit: () => void
   onStickers: () => void
 }) {
   const size = (r: number) => (r < 3 ? 4 : 6)
   const [roundNo, setRoundNo] = useState(0)
-  const [round, setRound] = useState(() => makeRound(pool, fresh, size(0)))
+  const [round, setRound] = useState(() => makeRound(pool, fresh, weak, size(0)))
   const [results, setResults] = useState<Array<boolean | undefined>>(() => Array(ROUNDS).fill(undefined))
   const [missed, setMissed] = useState(false)
   const [wiggle, setWiggle] = useState<{ i: number; n: number } | null>(null)
@@ -53,6 +56,8 @@ export default function OddOneGame({
 
   const tap = (i: number) => {
     if (found !== null) return
+    // yang dicari = huruf yang beda; salah ketuk = tertukar dengan huruf yang sama
+    recordAttempt(round.odd.id, round.cells[i].id)
     if (round.cells[i].id !== round.odd.id) {
       setMissed(true)
       setWiggle((w) => ({ i, n: (w?.n ?? 0) + 1 }))
@@ -67,7 +72,7 @@ export default function OddOneGame({
       setFound(null)
       setMissed(false)
       setWiggle(null)
-      if (roundNo + 1 < ROUNDS) setRound(makeRound(pool, fresh, size(roundNo + 1), round.same))
+      if (roundNo + 1 < ROUNDS) setRound(makeRound(pool, fresh, weak, size(roundNo + 1), round.same))
       setRoundNo((n) => n + 1)
     }, 1800)
   }

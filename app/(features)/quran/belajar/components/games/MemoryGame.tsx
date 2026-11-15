@@ -15,9 +15,11 @@ interface Card {
   letter: Letter
 }
 
-function makeDeck(pool: Letter[], fresh: Letter[]): Card[] {
-  // Minimal 2 huruf dari pelajaran terbaru, sisanya dari huruf yang sudah dipelajari
+function makeDeck(pool: Letter[], fresh: Letter[], weak: Letter[]): Card[] {
+  // 2 huruf pelajaran terbaru + 1 huruf yang masih lemah (bila ada), sisanya dari yang sudah dipelajari
   const picked = shuffle(fresh).slice(0, 2)
+  const weakOne = shuffle(weak).find((w) => !picked.some((p) => p.id === w.id))
+  if (weakOne) picked.push(weakOne)
   const rest = shuffle(pool.filter((l) => !picked.some((p) => p.id === l.id))).slice(0, PAIRS - picked.length)
   const letters = [...picked, ...rest]
   return shuffle([...letters, ...letters]).map((letter, key) => ({ key, letter }))
@@ -30,17 +32,19 @@ function makeDeck(pool: Letter[], fresh: Letter[]): Card[] {
 export default function MemoryGame({
   pool,
   fresh,
+  weak,
   onAgain,
   onExit,
   onStickers,
 }: {
   pool: Letter[]
   fresh: Letter[]
+  weak: Letter[]
   onAgain: () => void
   onExit: () => void
   onStickers: () => void
 }) {
-  const [deck] = useState(() => makeDeck(pool, fresh))
+  const [deck] = useState(() => makeDeck(pool, fresh, weak))
   const [open, setOpen] = useState<number[]>([])
   const [matched, setMatched] = useState<string[]>([])
   const [misses, setMisses] = useState(0)

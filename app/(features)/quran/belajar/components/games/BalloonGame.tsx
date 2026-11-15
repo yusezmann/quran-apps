@@ -6,6 +6,7 @@ import { withFathah, type Letter } from "@/lib/belajar/letters"
 import { pickTarget, sessionStars, shuffle } from "@/lib/belajar/games"
 import { speakArabicAndWait } from "@/lib/belajar/speech"
 import { sfxCorrect, sfxPop } from "@/lib/belajar/sfx"
+import { recordAttempt } from "@/lib/belajar/progress"
 import { GameFinish, GameFrame, RoundStars } from "./GameKit"
 
 const ROUNDS = 6
@@ -16,10 +17,10 @@ interface Round {
   balloons: Array<{ letter: Letter; lane: string; duration: number; delay: number }>
 }
 
-function makeRound(pool: Letter[], fresh: Letter[], prev?: Letter): Round {
-  let target = pickTarget(pool, fresh)
+function makeRound(pool: Letter[], fresh: Letter[], weak: Letter[], prev?: Letter): Round {
+  let target = pickTarget(pool, fresh, weak)
   // Hindari soal yang sama dua kali berturut-turut
-  for (let i = 0; i < 5 && prev && target.id === prev.id; i++) target = pickTarget(pool, fresh)
+  for (let i = 0; i < 5 && prev && target.id === prev.id; i++) target = pickTarget(pool, fresh, weak)
   const others = shuffle(pool.filter((l) => l.id !== target.id)).slice(0, 3)
   const lanes = shuffle(LANES)
   return {
@@ -41,18 +42,20 @@ type Phase = "listening" | "answer" | "feedback" | "celebrate"
 export default function BalloonGame({
   pool,
   fresh,
+  weak,
   onAgain,
   onExit,
   onStickers,
 }: {
   pool: Letter[]
   fresh: Letter[]
+  weak: Letter[]
   onAgain: () => void
   onExit: () => void
   onStickers: () => void
 }) {
   const [roundNo, setRoundNo] = useState(0)
-  const [round, setRound] = useState(() => makeRound(pool, fresh))
+  const [round, setRound] = useState(() => makeRound(pool, fresh, weak))
   const [results, setResults] = useState<Array<boolean | undefined>>(() => Array(ROUNDS).fill(undefined))
   const [phase, setPhase] = useState<Phase>("listening")
   const [missed, setMissed] = useState(false)
@@ -75,6 +78,7 @@ export default function BalloonGame({
 
   const tap = async (l: Letter) => {
     if (phase !== "answer" || popped) return
+    recordAttempt(round.target.id, l.id)
     if (l.id !== round.target.id) {
       setMissed(true)
       setWiggle((w) => ({ id: l.id, n: (w?.n ?? 0) + 1 }))
@@ -94,7 +98,7 @@ export default function BalloonGame({
       setPopped(null)
       setMissed(false)
       setWiggle(null)
-      if (roundNo + 1 < ROUNDS) setRound(makeRound(pool, fresh, round.target))
+      if (roundNo + 1 < ROUNDS) setRound(makeRound(pool, fresh, weak, round.target))
       setRoundNo((n) => n + 1)
     }, 1200)
   }

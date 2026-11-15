@@ -70,3 +70,72 @@ test("Game: Mana yang Beda sampai selesai, lalu stiker terbuka di buku stiker", 
   await expect(page.getByText(/^[1-9]\d*\/24 stiker$/)).toBeVisible()
   await expect(page.getByRole("listitem", { name: "Apel" })).toBeVisible()
 })
+
+test("Game: Tebalkan Huruf — menebalkan mengikuti garis huruf dianggap berhasil", async ({ page }) => {
+  await page.getByRole("button", { name: /Tebalkan Huruf/ }).click()
+  let successes = 0
+  for (let n = 0; n < 5; n++) {
+    await expect(page.getByText(/^Tebalkan huruf /)).toBeVisible({ timeout: 15_000 })
+    await page.waitForTimeout(300)
+    const guide = page.locator("canvas").first()
+    // Ambil baris-baris piksel huruf abu-abu (koordinat kanvas 600×600)
+    const runs = await guide.evaluate((c: HTMLCanvasElement) => {
+      const d = c.getContext("2d")!.getImageData(0, 0, c.width, c.height).data
+      const out: Array<[number, number, number]> = []
+      for (let y = 0; y < c.height; y += 14) {
+        let start = -1
+        for (let x = 0; x <= c.width; x++) {
+          const on = x < c.width && d[(y * c.width + x) * 4 + 3] > 0
+          if (on && start < 0) start = x
+          if (!on && start >= 0) {
+            out.push([y, start, x - 1])
+            start = -1
+          }
+        }
+      }
+      return { runs: out, size: c.width }
+    })
+    const box = (await guide.boundingBox())!
+    const at = (v: number) => (v / runs.size) * box.width
+    for (const [y, x0, x1] of runs.runs) {
+      if (await page.getByText(/⭐ Bagus!/).isVisible()) break
+      await page.mouse.move(box.x + at(x0), box.y + at(y))
+      await page.mouse.down()
+      await page.mouse.move(box.x + at(x1), box.y + at(y), { steps: 4 })
+      await page.mouse.up()
+    }
+    if (await page.getByText(/⭐ Bagus!/).isVisible()) successes++
+    else await page.getByRole("button", { name: "Lewati" }).click()
+    await expect(page.getByText(/^Tebalkan huruf /).or(finished(page))).toBeVisible({ timeout: 5_000 })
+  }
+  await expect(finished(page)).toBeVisible()
+  expect(successes).toBeGreaterThanOrEqual(4)
+})
+
+test("Laporan orang tua menampilkan huruf yang perlu dilatih & yang sering tertukar", async ({ page }) => {
+  await page.evaluate(() => {
+    const raw = JSON.parse(localStorage.getItem("quran-apps:belajar")!)
+    raw.state.letterStats = { kho: { r: 1, w: 4 }, ha: { r: 2, w: 3 }, ba: { r: 6, w: 0 } }
+    raw.state.confusions = { "ha|kho": 5 }
+    localStorage.setItem("quran-apps:belajar", JSON.stringify(raw))
+  })
+  await page.reload()
+  await page.getByRole("button", { name: /Laporan untuk Orang Tua/ }).click()
+  await expect(page.getByRole("button", { name: /Dengar kho, 20% benar/ })).toBeVisible()
+  await expect(page.getByText("ج titik di dalam bawah, ح tanpa titik, خ titik di atas.", { exact: false })).toBeVisible()
+  await expect(page.getByRole("button", { name: /Dengar ba, 100% benar/ })).toBeVisible()
+})
+
+test("Game: Tebalkan Huruf — coretan asal di seluruh kanvas tidak dianggap berhasil", async ({ page }) => {
+  await page.getByRole("button", { name: /Tebalkan Huruf/ }).click()
+  await expect(page.getByText(/^Tebalkan huruf /)).toBeVisible({ timeout: 15_000 })
+  const box = (await page.locator("canvas").first().boundingBox())!
+  for (let y = 10; y < box.height; y += 18) {
+    await page.mouse.move(box.x + 5, box.y + y)
+    await page.mouse.down()
+    await page.mouse.move(box.x + box.width - 5, box.y + y, { steps: 6 })
+    await page.mouse.up()
+  }
+  await expect(page.getByText(/⭐ Bagus!/)).toHaveCount(0)
+  await expect(page.getByText("Pelan-pelan, ikuti garis abu-abu ya ✍️")).toBeVisible()
+})

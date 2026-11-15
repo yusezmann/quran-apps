@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState } from "react"
 import { ArrowLeft, ArrowRight, RotateCcw, Star, Volume2 } from "lucide-react"
 import { LESSONS, joinSyllables, lettersUpTo, pairAudioId, syllablePairs, withFathah, type Letter } from "@/lib/belajar/letters"
 import { speakArabic, speakArabicAndWait, stopSpeaking } from "@/lib/belajar/speech"
-import { useBelajarProgress } from "@/lib/belajar/progress"
+import { recordAttempt, useBelajarProgress } from "@/lib/belajar/progress"
+import { mostConfusedWith } from "@/lib/belajar/stats"
 
 const STEPS = ["Kenal huruf", "Fathah", "Sambung", "Kuis"] as const
 const QUIZ_LENGTH = 6
@@ -67,7 +68,10 @@ function buildQuiz(lessonIndex: number): Question[] {
   const shuffle = <T,>(arr: T[]) => arr.map((v) => [Math.random(), v] as const).sort((a, b) => a[0] - b[0]).map(([, v]) => v)
   return Array.from({ length: QUIZ_LENGTH }, (_, i) => {
     const answer = current[i % current.length]
-    const others = shuffle(pool.filter((l) => l.id !== answer.id)).slice(0, 2)
+    // Latihan yang menyesuaikan: bila huruf ini pernah tertukar, jadikan pasangannya salah satu pilihan
+    const confused = mostConfusedWith(answer.id, useBelajarProgress.getState().confusions, pool)
+    const rest = shuffle(pool.filter((l) => l.id !== answer.id && l.id !== confused?.id))
+    const others = (confused ? [confused, ...rest] : rest).slice(0, 2)
     return { answer, options: shuffle([answer, ...others]) }
   })
 }
@@ -271,6 +275,7 @@ function QuizStep({
 
   const choose = async (l: Letter) => {
     if (phase !== "answer") return
+    recordAttempt(q.answer.id, l.id)
     if (l.id !== q.answer.id) {
       // Bukan hukuman: kartu yang dipilih menyebut bunyinya, lalu soal diulang
       setWrongThisQuestion((w) => [...w, l.id])
