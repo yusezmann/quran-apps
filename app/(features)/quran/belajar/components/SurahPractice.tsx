@@ -6,6 +6,7 @@ import { ArrowLeft, ChevronLeft, ChevronRight, Pause, Play, Star } from "lucide-
 import { fetchSurah } from "@/app/(features)/quran/services/quranService"
 import { useBelajarProgress } from "@/lib/belajar/progress"
 import { stopSpeaking } from "@/lib/belajar/speech"
+import { QARI_OPTIONS } from "@/lib/quran/qari"
 
 const REPEAT_OPTIONS = [1, 3, 5]
 const SPEED_OPTIONS = [
@@ -31,6 +32,11 @@ export default function SurahPractice({ surahNumber, onExit }: { surahNumber: nu
   const [playing, setPlaying] = useState(false)
   const playedCount = useRef(0)
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const qari = useBelajarProgress((s) => s.qari)
+  const setQari = useBelajarProgress((s) => s.setQari)
+  // Dibaca lewat ref agar ayat berikutnya (dipanggil dari onended) memakai pilihan terbaru
+  const settings = useRef({ qari, repeat })
+  settings.current = { qari, repeat }
 
   const ayat = surah?.ayat ?? []
   const current = ayat[ayahIndex]
@@ -45,12 +51,12 @@ export default function SurahPractice({ surahNumber, onExit }: { surahNumber: nu
     if (!a) return
     stopSpeaking()
     audioRef.current?.pause()
-    const el = new Audio(a.audio["05"])
+    const el = new Audio(a.audio[settings.current.qari] || a.audio["05"])
     el.playbackRate = rate
     audioRef.current = el
     el.onended = () => {
       playedCount.current += 1
-      if (playedCount.current < repeat) {
+      if (playedCount.current < settings.current.repeat) {
         el.currentTime = 0
         el.play().catch(() => setPlaying(false))
         return
@@ -76,6 +82,14 @@ export default function SurahPractice({ surahNumber, onExit }: { surahNumber: nu
   }
 
   useEffect(() => () => audioRef.current?.pause(), [])
+  // Ganti qari saat sedang diputar → putar ulang ayat ini dengan suara qari baru
+  useEffect(() => {
+    if (playing) {
+      playedCount.current = 0
+      playCurrent()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [qari])
   useEffect(() => {
     if (audioRef.current) audioRef.current.playbackRate = rate
   }, [rate])
@@ -183,6 +197,24 @@ export default function SurahPractice({ surahNumber, onExit }: { surahNumber: nu
                     className={`flex-1 rounded-full py-2 font-semibold ${rate === o.rate ? "bg-green-600 text-white" : "bg-gray-100 text-gray-700"}`}
                   >
                     {o.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="sm:col-span-2">
+              <p className="mb-2 font-semibold text-gray-700">Qari</p>
+              <div className="flex flex-wrap gap-2" role="group" aria-label="Pilih qari">
+                {QARI_OPTIONS.map((o) => (
+                  <button
+                    key={o.value}
+                    type="button"
+                    title={o.label}
+                    aria-label={`Qari ${o.label}`}
+                    aria-pressed={qari === o.value}
+                    onClick={() => setQari(o.value)}
+                    className={`rounded-full px-4 py-2 font-semibold ${qari === o.value ? "bg-green-600 text-white" : "bg-gray-100 text-gray-700"}`}
+                  >
+                    {o.short}
                   </button>
                 ))}
               </div>

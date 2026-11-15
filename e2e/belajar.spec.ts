@@ -35,6 +35,11 @@ test("Belajar: hafalan surat pendek bisa ditandai hafal", async ({ page }) => {
   await page.goto("/quran/belajar")
   await page.getByRole("button", { name: "An-Nas 6 ayat" }).click()
   await expect(page.getByText("Ayat 1 dari 6")).toBeVisible({ timeout: 30_000 })
+  // Qari bisa dipilih & tersimpan
+  await expect(page.getByRole("button", { name: "Qari Misyari Rasyid Al-Afasi" })).toHaveAttribute("aria-pressed", "true")
+  await page.getByRole("button", { name: "Qari Abdurrahman As-Sudais" }).click()
+  await expect(page.getByRole("button", { name: "Qari Abdurrahman As-Sudais" })).toHaveAttribute("aria-pressed", "true")
+  await page.screenshot({ path: "test-results/qari.png", fullPage: true })
   await page.getByRole("button", { name: "Tandai hafal" }).click()
   await page.getByRole("button", { name: "Daftar surat" }).click()
   await expect(page.getByText("1 surat sudah hafal")).toBeVisible()

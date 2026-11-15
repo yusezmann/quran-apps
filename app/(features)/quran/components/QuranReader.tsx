@@ -14,6 +14,7 @@ import {
 import { Button, Card, Modal, Select } from "antd"
 import { LeftOutlined, RightOutlined } from "@ant-design/icons"
 import { FaBookOpen } from "react-icons/fa"
+import { QARI_OPTIONS } from "@/lib/quran/qari"
 
 export default function QuranReader() {
   const currentSurah = useQuranStore((state) => state.currentSurah)
@@ -297,13 +298,7 @@ export default function QuranReader() {
             <Select
               defaultValue={selectedQari}
               onChange={(value) => setSelectedQari(value)}
-              options={[
-                { label: "Abdullah-Al-Juhany", value: "01" },
-                { label: "Abdul-Muhsin-Al-Qasim", value: "02" },
-                { label: "Abdurrahman-as-Sudais", value: "03" },
-                { label: "Ibrahim-Al-Dossari", value: "04" },
-                { label: "Misyari-Rasyid-Al-Afasi", value: "05" },
-              ]}
+              options={QARI_OPTIONS.map((o) => ({ label: o.label, value: o.value }))}
               className="mt-1 w-full md:w-64"
               placeholder="Pilih Qari"
             />

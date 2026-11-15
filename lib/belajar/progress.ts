@@ -1,5 +1,6 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
+import type { QariId } from "@/lib/quran/qari"
 
 /** Progres belajar anak (tersimpan di perangkat). */
 interface BelajarProgress {
@@ -7,6 +8,9 @@ interface BelajarProgress {
   stars: Record<number, number>
   /** surat pendek yang ditandai sudah hafal (nomor surat) */
   memorized: number[]
+  /** qari untuk hafalan surat pendek */
+  qari: QariId
+  setQari: (qari: QariId) => void
   setStars: (lesson: number, stars: number) => void
   toggleMemorized: (surah: number) => void
 }
@@ -16,6 +20,8 @@ export const useBelajarProgress = create<BelajarProgress>()(
     (set) => ({
       stars: {},
       memorized: [],
+      qari: "05",
+      setQari: (qari) => set({ qari }),
       // simpan nilai terbaik
       setStars: (lesson, stars) => set((s) => ({ stars: { ...s.stars, [lesson]: Math.max(stars, s.stars[lesson] ?? 0) } })),
       toggleMemorized: (surah) =>
