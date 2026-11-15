@@ -41,38 +41,27 @@ const only = args.find((a) => a.startsWith("--only="))?.slice(7).split(",")
 const voice = args.find((a) => a.startsWith("--voice="))?.slice(8) ?? "ar-XA-Wavenet-D"
 
 /**
- * Pengecualian suara per file, hasil uji dengar (suara D terdengar seperti "ha" untuk أَ).
- * Tidak berlaku bila --voice diisi.
+ * Pilihan suara per file hasil uji dengar orang tua (15 Nov 2026), untuk SEMUA 56 file huruf.
+ * Kode: "A"/"B"/"C"/"D" = suara ar-XA-Wavenet-<kode>; akhiran "+" = fathah dibaca agak panjang (huruf + ا).
+ * File yang tidak tercantum memakai suara bawaan (D, pendek). Tidak berlaku bila --voice diisi.
  */
-const VOICE_OVERRIDES: Record<string, string> = {
-  "ain-fathah": "ar-XA-Wavenet-A",
-  "alif-fathah": "ar-XA-Wavenet-A",
-  "dal-fathah": "ar-XA-Wavenet-A",
-  "dhod-fathah": "ar-XA-Wavenet-A",
-  "dzal-fathah": "ar-XA-Wavenet-A",
-  "ghoin-fathah": "ar-XA-Wavenet-A",
-  "ha-fathah": "ar-XA-Wavenet-A",
-  "ha2-fathah": "ar-XA-Wavenet-A",
-  "kaf-fathah": "ar-XA-Wavenet-A",
-  "kho-fathah": "ar-XA-Wavenet-A",
-  "qof-fathah": "ar-XA-Wavenet-A",
-  "shod-fathah": "ar-XA-Wavenet-A",
-  "sin-fathah": "ar-XA-Wavenet-A",
-  "ta-fathah": "ar-XA-Wavenet-A",
-  "tho-fathah": "ar-XA-Wavenet-A",
-  "tsa-fathah": "ar-XA-Wavenet-A",
-  "zai-fathah": "ar-XA-Wavenet-A",
-  "zho-fathah": "ar-XA-Wavenet-A",
+const CHOICES: Record<string, string> = {
+  // nama huruf
+  alif: "A", ba: "A", jim: "A", kho: "A", dal: "A", ro: "A", zai: "A", sin: "A", syin: "A", dhod: "A",
+  tho: "A", ain: "A", ghoin: "A", qof: "A", lam: "A", nun: "A", wau: "A", ha2: "A", ya: "A",
+  // fathah pendek
+  "alif-fathah": "A", "ha-fathah": "A", "ro-fathah": "A", "zai-fathah": "A", "dhod-fathah": "A",
+  "ain-fathah": "A", "ghoin-fathah": "A", "wau-fathah": "A",
+  // fathah agak panjang
+  "ta-fathah": "A+", "ha2-fathah": "A+", "syin-fathah": "A+", "fa-fathah": "A+", "qof-fathah": "A+",
+  "mim-fathah": "A+", "nun-fathah": "A+", "ya-fathah": "A+", "dzal-fathah": "B+",
 }
 
-/**
- * Pengecualian teks per file, hasil uji dengar (pilihan orang tua, 15 Nov 2026).
- */
-const TEXT_OVERRIDES: Record<string, string> = Object.fromEntries(
-  // bunyi sedikit panjang (huruf + ا): hasil uji dengar, lebih jelas untuk huruf yang mirip
-  ["ain-fathah", "dal-fathah", "dhod-fathah", "dzal-fathah", "ghoin-fathah", "ha2-fathah", "kaf-fathah", "kho-fathah", "qof-fathah", "shod-fathah", "ta-fathah", "tho-fathah", "tsa-fathah", "zai-fathah", "zho-fathah"]
-    .map((id) => [id, withFathah(LETTERS.find((l) => `${l.id}-fathah` === id)!) + "ا"]),
-)
+const choiceFor = (id: string) => {
+  const c = CHOICES[id]
+  if (!c) return { voice: null, long: false }
+  return { voice: `ar-XA-Wavenet-${c[0]}`, long: c.endsWith("+") }
+}
 
 async function synthesize(key: string, text: string, voiceName = voice): Promise<Buffer> {
   const res = await fetch(`https://texttospeech.googleapis.com/v1/text:synthesize?key=${key}`, {
@@ -115,8 +104,9 @@ async function main() {
     const file = join(OUT_DIR, `${job.id}.mp3`)
     if (existsSync(file) && !force && !only) continue
     process.stdout.write(`• ${job.label.padEnd(22)} ${job.text}  → ${job.id}.mp3 ... `)
-    const customVoice = args.some((a) => a.startsWith("--voice=")) ? voice : VOICE_OVERRIDES[job.id] ?? voice
-    writeFileSync(file, await synthesize(key, TEXT_OVERRIDES[job.id] ?? job.text, customVoice))
+    const choice = args.some((a) => a.startsWith("--voice=")) ? { voice: null, long: false } : choiceFor(job.id)
+    const text = choice.long ? job.text + "ا" : job.text
+    writeFileSync(file, await synthesize(key, text, choice.voice ?? voice))
     made++
     console.log("ok")
   }
