@@ -40,14 +40,15 @@ function SoundCard({
       } ${big ? "aspect-square" : "min-h-[110px] px-4"}`}
       style={{ borderColor: color }}
     >
+      {/* Tinggi baris longgar: huruf seperti ج ح خ punya ekor di bawah garis yang bisa menimpa teks latin */}
       <span
         dir="rtl"
-        className={`font-tertiary leading-none ${big ? "text-7xl md:text-8xl" : "text-5xl md:text-6xl"}`}
+        className={`font-tertiary leading-[1.2] ${caption ? "pb-[0.45em]" : ""} ${big ? "text-6xl md:text-7xl" : "text-5xl md:text-6xl"}`}
         style={{ color }}
       >
         {text}
       </span>
-      {caption && <span className="mt-2 text-base font-semibold text-gray-600">{caption}</span>}
+      {caption && <span className="text-base font-semibold leading-tight text-gray-600">{caption}</span>}
       <Volume2 className="absolute right-3 top-3 h-5 w-5 text-gray-300" aria-hidden="true" />
     </button>
   )
@@ -89,7 +90,7 @@ export default function LessonView({ lessonIndex, onExit }: { lessonIndex: numbe
         >
           <ArrowLeft className="h-4 w-4" /> Peta belajar
         </button>
-        <p className="text-sm font-semibold text-gray-600">Pelajaran {lessonIndex + 1}</p>
+        <p className="text-sm font-semibold text-white">Pelajaran {lessonIndex + 1}</p>
       </div>
       <ol className="grid grid-cols-4 gap-2" aria-label="Langkah pelajaran">
         {STEPS.map((name, i) => (
@@ -99,7 +100,12 @@ export default function LessonView({ lessonIndex, onExit }: { lessonIndex: numbe
               onClick={() => setStep(i)}
               aria-current={i === step ? "step" : undefined}
               className={`w-full rounded-full px-1 py-2 text-xs font-semibold leading-tight transition-colors ${
-                i === step ? "bg-green-600 text-white" : i < step ? "bg-green-100 text-green-800" : "bg-white text-gray-500"
+                // Langkah ini berada di atas latar hijau: aktif = kuning menyolok, selesai = putih hijau, berikutnya = putih pudar
+                i === step
+                  ? "bg-amber-400 text-amber-950 shadow-md ring-2 ring-white"
+                  : i < step
+                    ? "bg-white text-green-800"
+                    : "bg-white/70 text-gray-600"
               }`}
             >
               {name}
@@ -383,7 +389,7 @@ function QuizStep({
               aria-label={`Pilih ${l.fathahLatin}`}
               onClick={() => choose(l)}
               disabled={locked || wrong}
-              className={`relative flex aspect-square items-center justify-center rounded-3xl border-4 bg-white shadow-md transition-all ${
+              className={`flex min-h-[7.5rem] flex-col items-center justify-center rounded-3xl border-4 bg-white py-2 shadow-md transition-all ${
                 right
                   ? "scale-110 border-green-500 bg-green-50"
                   : wrong
@@ -393,10 +399,10 @@ function QuizStep({
                       : "border-gray-200 active:scale-95"
               }`}
             >
-              <span dir="rtl" className="font-tertiary text-6xl leading-none" style={{ color: l.color }}>
+              <span dir="rtl" className={`font-tertiary text-5xl leading-[1.2] sm:text-6xl ${wrong ? "pb-[0.45em]" : ""}`} style={{ color: l.color }}>
                 {withFathah(l)}
               </span>
-              {wrong && <span className="absolute bottom-2 text-sm font-semibold text-gray-600">{l.fathahLatin}</span>}
+              {wrong && <span className="text-sm font-semibold leading-tight text-gray-600">{l.fathahLatin}</span>}
             </button>
           )
         })}
