@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Lock, Star, Volume2 } from "lucide-react"
 import Header from "@/components/Header"
 import PageBackground from "@/components/PageBackground"
@@ -9,7 +9,12 @@ import QuranTabs from "../components/QuranTabs"
 import LessonView from "./components/LessonView"
 import SurahPractice from "./components/SurahPractice"
 import { LESSONS } from "@/lib/belajar/letters"
-import { isLessonUnlocked, useBelajarProgress } from "@/lib/belajar/progress"
+import { isLessonUnlocked, useBelajarProgress, useTotalStars } from "@/lib/belajar/progress"
+import { STICKERS, gamePool, stickerCount } from "@/lib/belajar/games"
+import BalloonGame from "./components/games/BalloonGame"
+import MemoryGame from "./components/games/MemoryGame"
+import OddOneGame from "./components/games/OddOneGame"
+import StickerBook from "./components/games/StickerBook"
 import { NO_VOICE_EVENT, hasArabicVoice, openTtsInstall, speakArabic } from "@/lib/belajar/speech"
 
 /** Surat pendek untuk anak: Al-Fatihah lalu juz 30 dari yang terpendek. */
@@ -33,13 +38,28 @@ const SHORT_SURAHS: Array<[number, string, number]> = [
   [99, "Az-Zalzalah", 8],
 ]
 
-type View = { kind: "home" } | { kind: "lesson"; index: number } | { kind: "surah"; number: number }
+type GameId = "balon" | "pasangan" | "beda"
+
+const GAMES: Array<{ id: GameId; emoji: string; name: string; desc: string; bg: string }> = [
+  { id: "balon", emoji: "🎈", name: "Pecah Balon", desc: "Dengar & pecahkan", bg: "from-sky-400 to-blue-500" },
+  { id: "pasangan", emoji: "🃏", name: "Cari Pasangan", desc: "Ingat kartunya", bg: "from-pink-400 to-rose-500" },
+  { id: "beda", emoji: "🔍", name: "Mana yang Beda?", desc: "Lihat titiknya", bg: "from-violet-400 to-purple-600" },
+]
+
+type View =
+  | { kind: "home" }
+  | { kind: "lesson"; index: number }
+  | { kind: "surah"; number: number }
+  | { kind: "game"; game: GameId; session: number }
+  | { kind: "stickers" }
 
 export default function BelajarPage() {
   const [view, setView] = useState<View>({ kind: "home" })
   const stars = useBelajarProgress((s) => s.stars)
   const memorized = useBelajarProgress((s) => s.memorized)
+  const totalAllStars = useTotalStars()
   const [voiceOk, setVoiceOk] = useState<boolean | null>(null)
+  const { pool, fresh } = useMemo(() => gamePool(stars), [stars])
 
   useEffect(() => {
     // Huruf & fathah memakai file suara bawaan aplikasi, jadi suara Arab perangkat hanya dibutuhkan
@@ -64,7 +84,8 @@ export default function BelajarPage() {
 
   // Kembali ke atas setiap pindah tampilan
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "smooth" })
+    // Game menggulir sendiri ke area permainan
+    if (view.kind !== "game") window.scrollTo({ top: 0, behavior: "smooth" })
   }, [view])
 
   const totalStars = Object.values(stars).reduce((a, b) => a + b, 0)
@@ -100,9 +121,69 @@ export default function BelajarPage() {
 
         {view.kind === "lesson" && <LessonView lessonIndex={view.index} onExit={() => setView({ kind: "home" })} />}
         {view.kind === "surah" && <SurahPractice surahNumber={view.number} onExit={() => setView({ kind: "home" })} />}
+        {view.kind === "stickers" && <StickerBook onExit={() => setView({ kind: "home" })} />}
+        {view.kind === "game" &&
+          (() => {
+            const key = `${view.game}-${view.session}` // sesi baru = komponen baru (Main lagi)
+            const props = {
+              pool,
+              fresh,
+              onAgain: () => setView({ ...view, session: view.session + 1 }),
+              onExit: () => setView({ kind: "home" }),
+              onStickers: () => setView({ kind: "stickers" }),
+            }
+            if (view.game === "balon") return <BalloonGame key={key} {...props} />
+            if (view.game === "pasangan") return <MemoryGame key={key} {...props} />
+            return <OddOneGame key={key} {...props} />
+          })()}
 
         {view.kind === "home" && (
           <div className="space-y-8">
+            {/* Game: hanya memakai huruf dari pelajaran yang sudah terbuka */}
+            <section aria-labelledby="main-game" className="rounded-3xl bg-white p-5 shadow-lg">
+              <div className="mb-4">
+                <h2 id="main-game" className="text-xl font-bold text-gray-900">
+                  Main Game 🎮
+                </h2>
+                <p className="text-sm text-gray-500">Kumpulkan bintang untuk membuka stiker</p>
+              </div>
+              <ul className="grid grid-cols-3 gap-3">
+                {GAMES.map((g) => (
+                  <li key={g.id}>
+                    <button
+                      type="button"
+                      onClick={() => setView({ kind: "game", game: g.id, session: 0 })}
+                      className={`flex w-full flex-col items-center gap-1 rounded-2xl bg-gradient-to-br ${g.bg} px-2 py-4 text-white shadow-md transition-transform hover:scale-[1.03] active:scale-95`}
+                    >
+                      <span className="text-4xl sm:text-5xl" aria-hidden="true">
+                        {g.emoji}
+                      </span>
+                      <span className="text-sm font-bold leading-tight sm:text-base">{g.name}</span>
+                      <span className="hidden text-xs text-white/85 sm:block">{g.desc}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              <button
+                type="button"
+                onClick={() => setView({ kind: "stickers" })}
+                className="mt-3 flex w-full items-center gap-3 rounded-2xl border-2 border-amber-200 bg-amber-50 px-4 py-3 text-left hover:bg-amber-100"
+              >
+                <span className="text-3xl" aria-hidden="true">
+                  📒
+                </span>
+                <span className="flex-1 leading-tight">
+                  <span className="block font-bold text-amber-900">Buku Stiker</span>
+                  <span className="text-xs text-amber-800">
+                    {stickerCount(totalAllStars)} dari {STICKERS.length} stiker terkumpul
+                  </span>
+                </span>
+                <span className="text-2xl" aria-hidden="true">
+                  {STICKERS.slice(0, stickerCount(totalAllStars)).slice(-3).map(([e]) => e).join("") || "❔"}
+                </span>
+              </button>
+            </section>
+
             {/* Peta belajar Iqro' 1 */}
             <section aria-labelledby="peta-belajar" className="rounded-3xl bg-white p-5 shadow-lg">
               <div className="mb-4 flex items-center justify-between gap-3">
