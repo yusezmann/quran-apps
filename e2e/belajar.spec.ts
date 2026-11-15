@@ -12,18 +12,21 @@ test("Belajar: tab di Al-Qur'an, pelajaran terkunci berurutan, kuis memberi bint
   await page.getByRole("button", { name: "Pelajaran 1" }).click()
   await page.getByRole("button", { name: "Kuis" }).click()
 
-  // Jawab benar semua: jawaban = huruf yang dibunyikan; ambil dari teks yang dikirim ke speechSynthesis
-  for (let i = 0; i < 6; i++) {
-    await expect(page.getByText(`Soal ${i + 1} dari 6`)).toBeVisible()
-    const options = page.getByRole("button", { name: /^Pilih / })
-    const count = await options.count()
-    let answered = false
-    for (let k = 0; k < count && !answered; k++) {
-      await options.nth(k).click()
-      answered = await page.getByText("⭐ Benar!").isVisible().catch(() => false)
-    }
+  // Kartu terkunci selama bunyi soal diputar (mencegah anak asal ketuk)
+  await expect(page.getByText("Soal 1 dari 6")).toBeVisible()
+  await expect(page.getByRole("button", { name: /^Pilih / }).first()).toBeDisabled()
+
+  // Jawab dengan mencoba kartu satu per satu; soal yang salah diulang di akhir
+  const finished = page.getByText("MasyaAllah, hebat!")
+  const openCard = page.locator('button[aria-label^="Pilih "]:not([disabled])').first()
+  for (let attempt = 0; attempt < 40; attempt++) {
+    // Tunggu kartu terbuka (bunyi selesai) atau kuis selesai
+    await expect(openCard.or(finished)).toBeVisible({ timeout: 15_000 })
+    if (await finished.isVisible()) break
+    await openCard.click().catch(() => {})
+    await page.waitForTimeout(300)
   }
-  await expect(page.getByText("MasyaAllah, hebat!")).toBeVisible()
+  await expect(finished).toBeVisible({ timeout: 15_000 })
   await page.getByRole("button", { name: "Ke peta belajar" }).click()
   await expect(page.getByRole("button", { name: "Pelajaran 2", exact: true })).toBeEnabled()
 })

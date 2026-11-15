@@ -82,13 +82,35 @@ export async function hasArabicVoice(): Promise<boolean> {
  * Kecepatan sedikit lambat agar jelas untuk anak. Bila gagal, kirim NO_VOICE_EVENT.
  */
 export async function speakArabic(text: string, audioId?: string): Promise<SpeakResult> {
+  return speak(text, audioId, false)
+}
+
+/**
+ * Sama seperti speakArabic, tetapi Promise baru selesai SETELAH bunyi berakhir
+ * (dipakai kuis: kartu baru bisa dipilih setelah anak mendengar soal sampai habis).
+ * Batas aman 5 detik agar tidak pernah menggantung.
+ */
+export async function speakArabicAndWait(text: string, audioId?: string): Promise<SpeakResult> {
+  return Promise.race([
+    speak(text, audioId, true),
+    delay(5000).then(() => "ok" as SpeakResult),
+  ])
+}
+
+async function speak(text: string, audioId: string | undefined, wait: boolean): Promise<SpeakResult> {
   await stopSpeaking()
 
   if (audioId && RECORDED_AUDIO.has(audioId)) {
     try {
       const el = new Audio(`/assets/belajar/audio/${audioId}.mp3`)
       currentAudio = el
+      const ended = new Promise<void>((resolve) => {
+        el.addEventListener("ended", () => resolve(), { once: true })
+        el.addEventListener("pause", () => resolve(), { once: true }) // dihentikan oleh bunyi lain
+        el.addEventListener("error", () => resolve(), { once: true })
+      })
       await el.play()
+      if (wait) await ended
       return "ok"
     } catch {
       // lanjut ke TTS
@@ -103,11 +125,12 @@ export async function speakArabic(text: string, audioId?: string): Promise<Speak
 
   try {
     const { plugin } = await ttsBox()
-    // Jangan ditunggu sampai selesai bicara (speak resolve setelah ucapan berakhir)
-    plugin.speak({ text, lang, rate: 0.7, pitch: 1.05, volume: 1, category: "playback" }).catch((error) => {
+    // speak() resolve setelah ucapan berakhir: ditunggu hanya bila diminta
+    const spoken = plugin.speak({ text, lang, rate: 0.7, pitch: 1.05, volume: 1, category: "playback" }).catch((error) => {
       console.error("TTS gagal:", error)
       window.dispatchEvent(new Event(NO_VOICE_EVENT))
     })
+    if (wait) await spoken
     return "ok"
   } catch (error) {
     console.error("TTS gagal:", error)
