@@ -216,7 +216,7 @@ export default function BelajarPage() {
                         }`}
                       >
                         <span className="text-xs font-semibold text-gray-500">Pelajaran {lesson.index + 1}</span>
-                        <span dir="rtl" className="font-tertiary text-3xl leading-tight text-green-800">
+                        <span dir="rtl" className="font-tertiary pb-[0.35em] pt-[0.15em] text-3xl leading-[1.3] text-green-800">
                           {lesson.title}
                         </span>
                         {unlocked ? (

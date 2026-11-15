@@ -37,13 +37,13 @@ function SoundCard({
       }}
       className={`relative flex flex-col items-center justify-center rounded-3xl border-4 bg-white shadow-md transition-transform active:scale-95 ${
         pulse ? "scale-105" : ""
-      } ${big ? "aspect-square" : "min-h-[110px] px-4"}`}
+      } ${big ? "aspect-square" : "min-h-[110px] px-4 py-3"}`}
       style={{ borderColor: color }}
     >
       {/* Tinggi baris longgar: huruf seperti ج ح خ punya ekor di bawah garis yang bisa menimpa teks latin */}
       <span
         dir="rtl"
-        className={`font-tertiary leading-[1.2] ${caption ? "pb-[0.45em]" : ""} ${big ? "text-6xl md:text-7xl" : "text-5xl md:text-6xl"}`}
+        className={`font-tertiary pt-[0.3em] leading-[1.2] ${caption ? "pb-[0.45em]" : ""} ${big ? "text-6xl md:text-7xl" : "text-5xl md:text-6xl"}`}
         style={{ color }}
       >
         {text}
@@ -406,7 +406,7 @@ function QuizStep({
                       : "border-gray-200 active:scale-95"
               }`}
             >
-              <span dir="rtl" className={`font-tertiary text-5xl leading-[1.2] sm:text-6xl ${wrong ? "pb-[0.45em]" : ""}`} style={{ color: l.color }}>
+              <span dir="rtl" className={`font-tertiary pt-[0.3em] text-5xl leading-[1.2] sm:text-6xl ${wrong ? "pb-[0.45em]" : "pb-[0.2em]"}`} style={{ color: l.color }}>
                 {withFathah(l)}
               </span>
               {wrong && <span className="text-sm font-semibold leading-tight text-gray-600">{l.fathahLatin}</span>}
