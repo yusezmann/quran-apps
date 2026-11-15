@@ -310,7 +310,11 @@ function QuizStep({
           key={i}
           aria-hidden="true"
           className={`h-8 w-8 transition-all duration-300 ${
-            r === true ? "scale-110 fill-amber-400 text-amber-400" : r === false ? "text-gray-400" : "text-gray-200"
+            r === true
+              ? "scale-110 fill-amber-400 text-amber-400"
+              : r === false
+                ? "fill-gray-300 text-gray-300"
+                : "text-gray-300"
           } ${i === qIndex && !done && !isRepeat ? "animate-pulse" : ""}`}
         />
       ))}
@@ -360,12 +364,15 @@ function QuizStep({
 
   return (
     <div className="space-y-4">
-      {starRow}
-      <StepIntro>
-        {isRepeat
-          ? "Ayo coba lagi soal yang tadi 💪"
-          : `Soal ${pos + 1} dari ${quiz.length}: dengarkan, lalu pilih hurufnya 🎧`}
-      </StepIntro>
+      {/* Bintang & petunjuk dalam satu kartu putih: selalu terbaca, tidak bergantung warna latar */}
+      <div className="space-y-2 rounded-2xl bg-white px-4 py-3 text-center shadow-sm">
+        {starRow}
+        <p className="text-base font-medium text-gray-700">
+          {isRepeat
+            ? "Ayo coba lagi soal yang tadi 💪"
+            : `Soal ${pos + 1} dari ${quiz.length}: dengarkan, lalu pilih hurufnya 🎧`}
+        </p>
+      </div>
       <div className="flex justify-center">
         <button
           type="button"
