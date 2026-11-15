@@ -144,9 +144,9 @@ export default function SurahPractice({ surahNumber, onExit }: { surahNumber: nu
               aria-label="Ayat sebelumnya"
               onClick={() => goTo(ayahIndex - 1)}
               disabled={ayahIndex === 0}
-              className="flex h-14 w-14 items-center justify-center rounded-full bg-white shadow disabled:opacity-40"
+              className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-green-600 bg-white text-green-700 shadow-md transition-transform hover:bg-green-50 active:scale-95 disabled:border-gray-200 disabled:text-gray-300 disabled:shadow-none"
             >
-              <ChevronLeft className="h-7 w-7" />
+              <ChevronLeft className="h-8 w-8" strokeWidth={2.75} />
             </button>
             <button
               type="button"
@@ -161,9 +161,9 @@ export default function SurahPractice({ surahNumber, onExit }: { surahNumber: nu
               aria-label="Ayat berikutnya"
               onClick={() => goTo(ayahIndex + 1)}
               disabled={ayahIndex >= ayat.length - 1}
-              className="flex h-14 w-14 items-center justify-center rounded-full bg-white shadow disabled:opacity-40"
+              className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-green-600 bg-white text-green-700 shadow-md transition-transform hover:bg-green-50 active:scale-95 disabled:border-gray-200 disabled:text-gray-300 disabled:shadow-none"
             >
-              <ChevronRight className="h-7 w-7" />
+              <ChevronRight className="h-8 w-8" strokeWidth={2.75} />
             </button>
           </div>
 
