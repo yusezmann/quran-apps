@@ -46,7 +46,13 @@ export function GameFrame({
       {(progress || hint) && (
         <div className="space-y-2 rounded-2xl bg-white px-4 py-3 text-center shadow-sm">
           {progress}
-          {hint && <p className="text-base font-medium text-gray-700">{hint}</p>}
+          {/* Tinggi tetap 2 baris: saat petunjuk berganti, area game di bawahnya tidak bergeser
+              (penting untuk Tebalkan Huruf — kanvas tidak boleh pindah saat anak sedang menulis) */}
+          {hint && (
+            <p className="flex min-h-[3.25rem] items-center justify-center text-base font-medium leading-snug text-gray-700">
+              {hint}
+            </p>
+          )}
         </div>
       )}
       {children}

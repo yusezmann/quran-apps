@@ -78,6 +78,9 @@ test("Game: Tebalkan Huruf — menebalkan mengikuti garis huruf dianggap berhasi
     await expect(page.getByText(/^Tebalkan huruf /)).toBeVisible({ timeout: 15_000 })
     await page.waitForTimeout(300)
     const guide = page.locator("canvas").first()
+    // Seluruh kanvas harus terlihat di layar agar "jari" bisa mencapai ekor huruf
+    await guide.evaluate((c) => c.scrollIntoView({ block: "center", behavior: "instant" }))
+    await page.waitForTimeout(900)
     // Ambil baris-baris piksel huruf abu-abu (koordinat kanvas 600×600)
     const runs = await guide.evaluate((c: HTMLCanvasElement) => {
       const d = c.getContext("2d")!.getImageData(0, 0, c.width, c.height).data
@@ -129,6 +132,8 @@ test("Laporan orang tua menampilkan huruf yang perlu dilatih & yang sering tertu
 test("Game: Tebalkan Huruf — coretan asal di seluruh kanvas tidak dianggap berhasil", async ({ page }) => {
   await page.getByRole("button", { name: /Tebalkan Huruf/ }).click()
   await expect(page.getByText(/^Tebalkan huruf /)).toBeVisible({ timeout: 15_000 })
+  await page.locator("canvas").first().evaluate((c) => c.scrollIntoView({ block: "center", behavior: "instant" }))
+  await page.waitForTimeout(300)
   const box = (await page.locator("canvas").first().boundingBox())!
   for (let y = 10; y < box.height; y += 18) {
     await page.mouse.move(box.x + 5, box.y + y)
@@ -138,4 +143,50 @@ test("Game: Tebalkan Huruf — coretan asal di seluruh kanvas tidak dianggap ber
   }
   await expect(page.getByText(/⭐ Bagus!/)).toHaveCount(0)
   await expect(page.getByText("Pelan-pelan, ikuti garis abu-abu ya ✍️")).toBeVisible()
+})
+
+test("Game: Tebalkan Huruf — coretan kasar di atas huruf 'Ain (dari laporan pengguna) tidak lolos", async ({ page }) => {
+  // Buka pelajaran 5 (ظ ع غ ف) & tandai 'ain lemah agar sering muncul
+  await page.evaluate(() => {
+    const raw = JSON.parse(localStorage.getItem("quran-apps:belajar")!)
+    raw.state.stars = { 0: 3, 1: 3, 2: 3, 3: 3 }
+    raw.state.letterStats = { ain: { r: 0, w: 9 } }
+    localStorage.setItem("quran-apps:belajar", JSON.stringify(raw))
+  })
+  await page.reload()
+  await page.getByRole("button", { name: /Tebalkan Huruf/ }).click()
+  // Bentuk coretan dari screenshot pengguna (pecahan lebar kanvas)
+  const strokes = [
+    [[0.13, 0.25], [0.24, 0.3], [0.38, 0.39], [0.55, 0.49], [0.73, 0.7], [0.82, 0.82]],
+    [[0.24, 0.2], [0.45, 0.16]],
+    [[0.33, 0.26], [0.56, 0.28]],
+    [[0.56, 0.28], [0.38, 0.35], [0.3, 0.49], [0.26, 0.59], [0.3, 0.73], [0.38, 0.8], [0.56, 0.82], [0.71, 0.78]],
+    [[0.71, 0.32], [0.64, 0.49], [0.59, 0.66], [0.54, 0.85]],
+  ]
+  let tested = false
+  for (let i = 0; i < 40 && !tested; i++) {
+    const hint = page.getByText(/^Tebalkan huruf /)
+    await expect(hint.or(finished(page))).toBeVisible({ timeout: 15_000 })
+    if (await finished(page).isVisible()) {
+      await page.getByRole("button", { name: "Main lagi" }).click()
+      continue
+    }
+    if (!((await hint.textContent()) ?? "").includes("'Ain")) {
+      await page.getByRole("button", { name: "Lewati" }).click()
+      await page.waitForTimeout(900)
+      continue
+    }
+    await page.locator("canvas").first().evaluate((c) => c.scrollIntoView({ block: "center", behavior: "instant" }))
+    await page.waitForTimeout(400)
+    const box = (await page.locator("canvas").first().boundingBox())!
+    for (const s of strokes) {
+      await page.mouse.move(box.x + s[0][0] * box.width, box.y + s[0][1] * box.height)
+      await page.mouse.down()
+      for (const [x, y] of s.slice(1)) await page.mouse.move(box.x + x * box.width, box.y + y * box.height, { steps: 4 })
+      await page.mouse.up()
+    }
+    await expect(page.getByText(/⭐ Bagus!/)).toHaveCount(0)
+    tested = true
+  }
+  expect(tested).toBe(true)
 })

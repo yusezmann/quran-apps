@@ -15,12 +15,17 @@ const L = 300
 const PX = 2
 /** Resolusi kanvas analisis (ringan dihitung). */
 const A = 0.5
-const BRUSH = 24
-/** Toleransi keluar garis (logis). */
-const TOLERANCE = 18
-/** Selesai bila ≥ 60% huruf tertutup dan coretan sebagian besar di dalam garis. */
-const NEED_COVER = 0.6
-const MAX_OUTSIDE = 0.45
+const BRUSH = 20
+/** Toleransi keluar garis (logis): sedikit lebih lebar dari setengah kuas. */
+const TOLERANCE = 12
+/**
+ * Selesai bila: ≥ 70% huruf tertutup, SETIAP bagian huruf (petak 5×5) ikut ditebalkan,
+ * dan paling banyak 30% coretan keluar garis. Mencegah coretan kasar asal menutupi.
+ */
+const NEED_COVER = 0.7
+const NEED_PART = 0.5
+const MAX_OUTSIDE = 0.3
+const GRID = 5
 
 function pickLetters(pool: Letter[], fresh: Letter[], weak: Letter[]) {
   const out: Letter[] = []
@@ -66,6 +71,13 @@ function drawGlyph(
   }
 }
 
+/** Indeks petak (bagian huruf) untuk piksel ke-i pada kanvas analisis N×N. */
+const cellOf = (i: number, N: number) => {
+  const x = i % N
+  const y = Math.floor(i / N)
+  return Math.min(GRID - 1, Math.floor((y * GRID) / N)) * GRID + Math.min(GRID - 1, Math.floor((x * GRID) / N))
+}
+
 const canvas2d = (w: number) => {
   const c = document.createElement("canvas")
   c.width = c.height = w
@@ -98,12 +110,20 @@ export default function TraceGame({
   const [outside, setOutside] = useState(0)
   const [cleared, setCleared] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [missingPart, setMissingPart] = useState(false)
   const [ready, setReady] = useState(false)
 
   const guideRef = useRef<HTMLCanvasElement>(null)
   const drawRef = useRef<HTMLCanvasElement>(null)
   const probeRef = useRef<HTMLSpanElement>(null)
-  const analysis = useRef<{ core: Uint8Array; tol: Uint8Array; coreTotal: number; stroke: CanvasRenderingContext2D } | null>(null)
+  const analysis = useRef<{
+    core: Uint8Array
+    tol: Uint8Array
+    coreTotal: number
+    /** jumlah piksel huruf per petak (bagian huruf) */
+    cellCore: number[]
+    stroke: CanvasRenderingContext2D
+  } | null>(null)
   const pen = useRef<{ drawing: boolean; x: number; y: number; moves: number }>({ drawing: false, x: 0, y: 0, moves: 0 })
   const family = useRef("serif")
 
@@ -121,6 +141,7 @@ export default function TraceGame({
     setOutside(0)
     setCleared(false)
     setSuccess(false)
+    setMissingPart(false)
     ;(async () => {
       family.current = probeRef.current ? getComputedStyle(probeRef.current).fontFamily : "serif"
       try {
@@ -148,12 +169,14 @@ export default function TraceGame({
       const core = new Uint8Array(N * N)
       const tol = new Uint8Array(N * N)
       let coreTotal = 0
+      const cellCore = Array(GRID * GRID).fill(0)
       for (let i = 0; i < N * N; i++) {
         core[i] = coreData[i * 4 + 3] > 100 ? 1 : 0
         tol[i] = tolData[i * 4 + 3] > 20 ? 1 : 0
         coreTotal += core[i]
+        if (core[i]) cellCore[cellOf(i, N)]++
       }
-      analysis.current = { core, tol, coreTotal, stroke: canvas2d(N) }
+      analysis.current = { core, tol, coreTotal, cellCore, stroke: canvas2d(N) }
       setReady(true)
       sayName()
     })()
@@ -164,23 +187,30 @@ export default function TraceGame({
 
   const evaluate = () => {
     const a = analysis.current
-    if (!a) return { c: 0, o: 0 }
+    if (!a) return { c: 0, o: 0, parts: false }
     const N = L * A
     const data = a.stroke.getImageData(0, 0, N, N).data
     let covered = 0
     let total = 0
     let out = 0
+    const cellCovered = Array(GRID * GRID).fill(0)
     for (let i = 0; i < N * N; i++) {
       if (data[i * 4 + 3] < 40) continue
       total++
-      if (a.core[i]) covered++
+      if (a.core[i]) {
+        covered++
+        cellCovered[cellOf(i, N)]++
+      }
       if (!a.tol[i]) out++
     }
     const c = covered / Math.max(1, a.coreTotal)
     const o = total ? out / total : 0
+    // Setiap bagian huruf yang cukup besar harus ikut ditebalkan (bukan hanya sebagian huruf)
+    const minPart = Math.max(6, a.coreTotal * 0.04)
+    const parts = a.cellCore.every((n, k) => n < minPart || cellCovered[k] / n >= NEED_PART)
     setCover(c)
     setOutside(o)
-    return { c, o }
+    return { c, o, parts }
   }
 
   const point = (e: React.PointerEvent) => {
@@ -225,14 +255,16 @@ export default function TraceGame({
   const onUp = () => {
     if (!pen.current.drawing) return
     pen.current.drawing = false
-    const { c, o } = evaluate()
-    if (c >= NEED_COVER && o <= MAX_OUTSIDE) finishLetter(!cleared)
+    const { c, o, parts } = evaluate()
+    setMissingPart(c >= NEED_COVER * 0.8 && !parts)
+    if (c >= NEED_COVER && parts && o <= MAX_OUTSIDE) finishLetter(!cleared)
   }
 
   const finishLetter = (clean: boolean) => {
     setSuccess(true)
     setResults((r) => r.map((v, i) => (i === idx ? clean : v)))
-    // Tunjukkan huruf utuh berwarna sebagai hadiah
+    // Hadiah: coretan memudar & huruf utuh berwarna terlihat jelas
+    drawRef.current!.getContext("2d")!.clearRect(0, 0, L * PX, L * PX)
     const guide = guideRef.current!.getContext("2d")!
     drawGlyph(guide, letter.char, family.current, PX, { fill: letter.color })
     sfxCorrect()
@@ -245,6 +277,7 @@ export default function TraceGame({
     analysis.current?.stroke.clearRect(0, 0, L * A, L * A)
     setCover(0)
     setOutside(0)
+    setMissingPart(false)
     setCleared(true)
   }
 
@@ -283,6 +316,8 @@ export default function TraceGame({
           ? `⭐ Bagus! Ini huruf ${letter.latin}`
           : tooMessy
             ? "Pelan-pelan, ikuti garis abu-abu ya ✍️"
+            : missingPart
+              ? "Hampir! Masih ada bagian yang belum ditebalkan 👀"
             : `Tebalkan huruf ${letter.latin} dengan jarimu ✍️`
       }
     >
@@ -310,7 +345,13 @@ export default function TraceGame({
       </div>
 
       {/* Bilah kemajuan: seberapa banyak huruf sudah ditebalkan */}
-      <div className="mx-auto h-3 w-full max-w-[360px] overflow-hidden rounded-full bg-gray-200" aria-hidden="true">
+      <div
+        className="mx-auto h-3 w-full max-w-[360px] overflow-hidden rounded-full bg-gray-200"
+        aria-hidden="true"
+        data-testid="trace-progress"
+        data-cover={cover.toFixed(2)}
+        data-outside={outside.toFixed(2)}
+      >
         <div
           className={`h-full rounded-full transition-all ${success ? "bg-green-500" : "bg-amber-400"}`}
           style={{ width: `${(success ? 1 : progress) * 100}%` }}
