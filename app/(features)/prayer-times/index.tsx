@@ -193,7 +193,7 @@ const PrayerTimeComponent = () => {
               <div className="flex items-center justify-center xl:justify-start text-sm xl:px-6 xl:relative xl:-top-16">
                 <button
                   type="button"
-                  onClick={openAdzanSettings}
+                  onClick={() => openAdzanSettings()}
                   className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs xl:text-sm font-medium ring-1 backdrop-blur-sm transition-colors ${
                     adzanEnabled
                       ? "bg-green-500/90 text-white ring-green-300 hover:bg-green-500"

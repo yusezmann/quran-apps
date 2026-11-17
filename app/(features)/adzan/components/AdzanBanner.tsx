@@ -1,6 +1,6 @@
 "use client"
 
-import { BellRing, Play, Square, X } from "lucide-react"
+import { BellRing, Play, Square, VolumeX, X } from "lucide-react"
 import { LocalNotifications } from "@capacitor/local-notifications"
 import { PRAYER_LABEL, soundFor, useAdzanSettings, useAdzanUi } from "@/lib/adzan/settings"
 import { playAdzanSound, stopAdzanSound } from "@/lib/adzan/player"
@@ -11,6 +11,8 @@ export default function AdzanBanner() {
   const active = useAdzanUi((s) => s.active)
   const setActive = useAdzanUi((s) => s.setActive)
   const sound = useAdzanSettings((s) => s.sound)
+  const ignoreSilent = useAdzanSettings((s) => s.ignoreSilent)
+  const openSettings = useAdzanUi((s) => s.openSettings)
   if (!active) return null
 
   const label = PRAYER_LABEL[active.prayer]
@@ -65,6 +67,21 @@ export default function AdzanBanner() {
           </button>
         )}
       </div>
+
+      {/* APK: suara adzan memakai suara notifikasi → bisu bila HP senyap. Beri jalan keluar langsung. */}
+      {isNativeApp() && !active.blocked && !ignoreSilent && (
+        <div className="mt-3 flex items-center gap-3 rounded-xl bg-white/10 px-3 py-2 text-sm">
+          <VolumeX className="h-5 w-5 shrink-0 text-white/80" aria-hidden="true" />
+          <p className="flex-1 leading-snug text-white/90">Tidak terdengar? HP mungkin sedang senyap.</p>
+          <button
+            type="button"
+            onClick={() => openSettings("silent")}
+            className="shrink-0 rounded-full bg-amber-300 px-3 py-1.5 font-semibold text-amber-950 hover:bg-amber-200"
+          >
+            Atur
+          </button>
+        </div>
+      )}
     </div>
   )
 }

@@ -84,7 +84,9 @@ export const useAdzanSettings = create<AdzanSettingsStore>()(
 /** Status UI adzan: modal pengaturan & adzan yang sedang berbunyi. */
 interface AdzanUiStore {
   settingsOpen: boolean
-  openSettings: () => void
+  /** bagian pengaturan yang disorot saat dibuka (mis. dari petunjuk di banner) */
+  focus: "silent" | null
+  openSettings: (focus?: "silent") => void
   closeSettings: () => void
   /** Adzan yang sedang aktif (banner); `blocked` = browser menolak autoplay */
   active: { prayer: Prayer; blocked: boolean } | null
@@ -93,8 +95,9 @@ interface AdzanUiStore {
 
 export const useAdzanUi = create<AdzanUiStore>()((set) => ({
   settingsOpen: false,
-  openSettings: () => set({ settingsOpen: true }),
-  closeSettings: () => set({ settingsOpen: false }),
+  focus: null,
+  openSettings: (focus) => set({ settingsOpen: true, focus: focus ?? null }),
+  closeSettings: () => set({ settingsOpen: false, focus: null }),
   active: null,
   setActive: (active) => set({ active }),
 }))

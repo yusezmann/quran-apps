@@ -33,6 +33,7 @@ const APK_URL = "https://github.com/yusezmann/quran-apps/releases/latest/downloa
 export default function AdzanSettingsModal() {
   const open = useAdzanUi((s) => s.settingsOpen)
   const close = useAdzanUi((s) => s.closeSettings)
+  const focus = useAdzanUi((s) => s.focus)
   const settings = useAdzanSettings()
   const [native] = useState(isNativeApp)
   const [previewing, setPreviewing] = useState<AdzanSoundId | null>(null)
@@ -199,7 +200,15 @@ export default function AdzanSettingsModal() {
           </select>
           {/* Mode senyap (Android): adzan diputar sebagai alarm */}
           {native && (
-            <label className="mt-5 flex items-center justify-between gap-4 rounded-xl border border-gray-200 p-3">
+            <label
+              ref={(el) => {
+                // Dibuka dari petunjuk banner: gulir & sorot pilihan ini
+                if (el && focus === "silent") window.setTimeout(() => el.scrollIntoView({ block: "center", behavior: "smooth" }), 300)
+              }}
+              className={`mt-5 flex items-center justify-between gap-4 rounded-xl border p-3 transition-colors ${
+                focus === "silent" ? "border-amber-400 bg-amber-50 ring-2 ring-amber-300" : "border-gray-200"
+              }`}
+            >
               <span className="leading-snug">
                 <span className="block font-semibold text-gray-900">Tetap bunyikan saat mode senyap</span>
                 <span className="text-sm text-gray-600">
