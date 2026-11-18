@@ -29,6 +29,12 @@ public final class AdzanAlarmScheduler {
     private static final String PREFS = "adzan_alarms";
     private static final String KEY_ALARMS = "alarms";
     static final String ACTION_FIRE = "com.quran.apps.adzan.FIRE";
+    /**
+     * Jalur kedua untuk alarm yang sama (setExactAndAllowWhileIdle, jenis yang sama dengan pengingat
+     * notifikasi). Sebagian HP menahan setAlarmClock dari aplikasi pihak ketiga; mana pun yang tiba
+     * duluan memutar adzan, yang kedua diabaikan (lihat AdzanAlarmReceiver).
+     */
+    static final String ACTION_FIRE_BACKUP = "com.quran.apps.adzan.FIRE_BACKUP";
 
     /** ID khusus tes; tidak disimpan di daftar jadwal. */
     public static final int TEST_ID = 999_001;
@@ -37,6 +43,12 @@ public final class AdzanAlarmScheduler {
 
     /** Ganti seluruh jadwal adzan dengan daftar baru. */
     public static synchronized void replaceAll(Context context, JSONArray alarms) {
+        // Jadwal tidak berubah: daftarkan ulang TANPA membatalkan dulu (alarm dengan identitas sama hanya
+        // ditimpa). Tetap didaftarkan karena "Paksa berhenti" di pengaturan Android menghapus semua alarm.
+        if (alarms.toString().equals(prefs(context).getString(KEY_ALARMS, ""))) {
+            scheduleStored(context);
+            return;
+        }
         cancelStored(context);
         prefs(context).edit().putString(KEY_ALARMS, alarms.toString()).apply();
         scheduleStored(context);
@@ -84,9 +96,11 @@ public final class AdzanAlarmScheduler {
         if (am == null) return;
         int id = alarm.optInt("id");
         long at = alarm.optLong("at");
-        PendingIntent fire = firePendingIntent(context, id, alarm);
+        PendingIntent fire = firePendingIntent(context, id, alarm, ACTION_FIRE);
+        PendingIntent backup = firePendingIntent(context, id, alarm, ACTION_FIRE_BACKUP);
         try {
             if (canScheduleExact(context)) {
+                am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, backup);
                 // setAlarmClock: prioritas tertinggi, tidak ditunda Doze, dan boleh memulai layanan pemutar
                 PendingIntent show = PendingIntent.getActivity(
                     context,
@@ -97,12 +111,12 @@ public final class AdzanAlarmScheduler {
                 am.setAlarmClock(new AlarmManager.AlarmClockInfo(at, show), fire);
             } else {
                 // Izin alarm tepat ditolak pengguna: tetap dijadwalkan (bisa terlambat beberapa menit)
-                am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, fire);
+                am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, backup);
             }
         } catch (SecurityException e) {
             Log.w(TAG, "Alarm tepat tidak diizinkan, memakai alarm biasa", e);
             AdzanLog.add(context, "izin-alarm-ditolak", String.valueOf(e.getMessage()));
-            am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, fire);
+            am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, backup);
         }
     }
 
@@ -120,15 +134,20 @@ public final class AdzanAlarmScheduler {
         AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         if (am == null) return;
         JSONArray alarms = load(context);
+        long now = System.currentTimeMillis();
         for (int i = 0; i < alarms.length(); i++) {
             JSONObject a = alarms.optJSONObject(i);
             if (a == null) continue;
-            am.cancel(firePendingIntent(context, a.optInt("id"), a));
+            // Alarm yang sudah/sedang jatuh tempo JANGAN dibatalkan: bisa jadi sistem belum sempat
+            // mengirimnya (mis. aplikasi dibuka tepat saat waktu sholat). Duplikat dicegah di receiver.
+            if (a.optLong("at") <= now) continue;
+            am.cancel(firePendingIntent(context, a.optInt("id"), a, ACTION_FIRE));
+            am.cancel(firePendingIntent(context, a.optInt("id"), a, ACTION_FIRE_BACKUP));
         }
     }
 
-    private static PendingIntent firePendingIntent(Context context, int id, JSONObject alarm) {
-        Intent intent = new Intent(context, AdzanAlarmReceiver.class).setAction(ACTION_FIRE);
+    private static PendingIntent firePendingIntent(Context context, int id, JSONObject alarm, String action) {
+        Intent intent = new Intent(context, AdzanAlarmReceiver.class).setAction(action);
         intent.putExtra(AdzanPlayerService.EXTRA_ID, id);
         intent.putExtra(AdzanPlayerService.EXTRA_SOUND, alarm.optString("sound", "adzan_makkah"));
         intent.putExtra(AdzanPlayerService.EXTRA_TITLE, alarm.optString("title", "Waktu sholat telah tiba"));

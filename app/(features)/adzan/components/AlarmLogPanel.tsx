@@ -19,6 +19,7 @@ const LABEL: Record<string, string> = {
   "gagal-memutar": "⚠️ Gagal memutar",
   "izin-alarm-ditolak": "⚠️ Izin alarm ditolak",
   "pulihkan-jadwal": "Jadwal dipulihkan",
+  "duplikat-diabaikan": "Jalur kedua (diabaikan)",
 }
 
 const fmt = (t: number) =>
