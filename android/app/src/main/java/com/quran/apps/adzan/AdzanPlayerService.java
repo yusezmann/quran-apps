@@ -38,6 +38,7 @@ public class AdzanPlayerService extends Service {
     static final String EXTRA_TITLE = "title";
     static final String EXTRA_BODY = "body";
     static final String EXTRA_PRAYER = "prayer";
+    static final String EXTRA_AT = "at";
 
     /** Channel notifikasi saat adzan diputar: tanpa suara (suara diputar sendiri oleh layanan ini). */
     private static final String CHANNEL_PLAYING = "adzan_playing";
@@ -46,6 +47,7 @@ public class AdzanPlayerService extends Service {
     private MediaPlayer player;
     private NotificationCompat.Builder builder;
     private String prayer = "";
+    private long startedAt = 0;
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -56,6 +58,7 @@ public class AdzanPlayerService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         String action = intent != null ? intent.getAction() : null;
         if (ACTION_STOP.equals(action)) {
+            if (player != null) AdzanLog.add(this, "dihentikan-pengguna", "setelah " + playedSeconds() + " dtk");
             finish(true);
             return START_NOT_STICKY;
         }
@@ -90,11 +93,13 @@ public class AdzanPlayerService extends Service {
         } catch (RuntimeException e) {
             // Mis. sistem menolak layanan latar depan: tetap tampilkan notifikasi bersuara alarm
             Log.w(TAG, "startForeground gagal, memakai notifikasi cadangan", e);
+            AdzanLog.add(this, "startForeground-gagal", e.getClass().getSimpleName() + ": " + e.getMessage());
             postFallbackNotification(this, intent);
             stopSelf();
             return START_NOT_STICKY;
         }
 
+        AdzanLog.add(this, "pemutar-mulai", prayer + ", suara " + sound + ", " + audioInfo());
         play(sound != null ? sound : "adzan_makkah");
         AdzanAlarmPlugin.emit("adzanStarted", prayer);
         return START_NOT_STICKY;
@@ -116,16 +121,25 @@ public class AdzanPlayerService extends Service {
             );
             player.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
             player.setDataSource(this, uri);
-            player.setOnCompletionListener(mp -> finish(false));
+            player.setOnCompletionListener(mp -> {
+                AdzanLog.add(this, "adzan-selesai", "diputar " + playedSeconds() + " dtk");
+                finish(false);
+            });
             player.setOnErrorListener((mp, what, extra) -> {
                 Log.w(TAG, "MediaPlayer error " + what + "/" + extra);
+                AdzanLog.add(this, "pemutar-error", what + "/" + extra);
                 finish(false);
                 return true;
             });
-            player.setOnPreparedListener(MediaPlayer::start);
+            player.setOnPreparedListener(mp -> {
+                mp.start();
+                startedAt = System.currentTimeMillis();
+                AdzanLog.add(this, "adzan-berbunyi", audioInfo());
+            });
             player.prepareAsync();
         } catch (Exception e) {
             Log.e(TAG, "Gagal memutar adzan", e);
+            AdzanLog.add(this, "gagal-memutar", e.getClass().getSimpleName() + ": " + e.getMessage());
             finish(false);
         }
     }
@@ -162,8 +176,32 @@ public class AdzanPlayerService extends Service {
         player = null;
     }
 
+    /** Volume alarm, mode dering, dan mode Jangan Ganggu saat ini (untuk diagnosa). */
+    private String audioInfo() {
+        try {
+            android.media.AudioManager am = (android.media.AudioManager) getSystemService(Context.AUDIO_SERVICE);
+            NotificationManager nm = getSystemService(NotificationManager.class);
+            String ringer;
+            int mode = am.getRingerMode();
+            if (mode == android.media.AudioManager.RINGER_MODE_SILENT) ringer = "senyap";
+            else if (mode == android.media.AudioManager.RINGER_MODE_VIBRATE) ringer = "getar";
+            else ringer = "normal";
+            int dnd = nm != null ? nm.getCurrentInterruptionFilter() : -1;
+            return "volume alarm " + am.getStreamVolume(android.media.AudioManager.STREAM_ALARM) + "/"
+                + am.getStreamMaxVolume(android.media.AudioManager.STREAM_ALARM) + ", mode " + ringer + ", DND " + dnd;
+        } catch (RuntimeException e) {
+            return "info audio tidak tersedia";
+        }
+    }
+
+    private long playedSeconds() {
+        return startedAt > 0 ? (System.currentTimeMillis() - startedAt) / 1000 : 0;
+    }
+
     @Override
     public void onDestroy() {
+        // Layanan dimatikan sistem saat adzan masih diputar -> penyebab adzan terpotong / tidak terdengar
+        if (player != null) AdzanLog.add(this, "dihentikan-sistem", "setelah " + playedSeconds() + " dtk");
         releasePlayer();
         super.onDestroy();
     }
@@ -205,6 +243,7 @@ public class AdzanPlayerService extends Service {
      * (dibuat di MainActivity) yang membunyikan adzan lewat suara channel.
      */
     static void postFallbackNotification(Context context, Intent source) {
+        AdzanLog.add(context, "notifikasi-cadangan", "suara lewat channel notifikasi alarm");
         String sound = source.getStringExtra(EXTRA_SOUND);
         String channel = "adzan_shubuh".equals(sound) ? "adzan_subuh_alarm" : (sound != null ? sound : "adzan_makkah") + "_alarm";
         String title = source.getStringExtra(EXTRA_TITLE);

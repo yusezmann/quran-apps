@@ -16,6 +16,8 @@ import {
   type AdzanSoundId,
 } from "@/lib/adzan/settings"
 import { onAdzanEnded, playAdzanSound, stopAdzanSound } from "@/lib/adzan/player"
+import AlarmLogPanel from "./AlarmLogPanel"
+import { alarmAvailable } from "@/lib/adzan/alarm"
 import {
   exactAlarmStatus,
   getNativeStatus,
@@ -244,6 +246,19 @@ export default function AdzanSettingsModal() {
         {native && settings.enabled && (
           <div className="space-y-3 rounded-xl border border-gray-200 p-3 text-sm">
             <NativeStatusLine status={nativeStatus} />
+            {/* Mode yang benar-benar dipakai: penting untuk diagnosa bila adzan tidak berbunyi */}
+            <p className="text-xs leading-snug text-gray-600">
+              Mode adzan:{" "}
+              {settings.ignoreSilent ? (
+                alarmAvailable() ? (
+                  <b className="text-green-700">Alarm (volume alarm, tetap berbunyi saat senyap)</b>
+                ) : (
+                  <b className="text-red-700">Notifikasi — mode alarm belum tersedia di versi aplikasi ini</b>
+                )
+              ) : (
+                <b>Notifikasi (ikut senyap bila HP senyap)</b>
+              )}
+            </p>
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
@@ -271,6 +286,7 @@ export default function AdzanSettingsModal() {
                 ? " Adzan diputar sebagai alarm: pastikan volume alarm tidak nol."
                 : " Jika tidak berbunyi: pastikan notifikasi diizinkan, HP tidak senyap, dan penghemat baterai untuk aplikasi ini dimatikan (Pengaturan → Aplikasi → Quran Apps → Baterai → Tidak dibatasi)."}
             </p>
+            <AlarmLogPanel />
           </div>
         )}
         {!native && (

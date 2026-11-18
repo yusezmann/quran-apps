@@ -20,6 +20,13 @@ export interface NativeAlarm {
   prayer: string
 }
 
+/** Satu baris catatan diagnosa: t = waktu (ms), ev = kejadian, d = detail */
+export interface AlarmLogEntry {
+  t: number
+  ev: string
+  d: string
+}
+
 interface AlarmStatus {
   count: number
   exact: boolean
@@ -31,6 +38,8 @@ interface AdzanAlarmPlugin {
   stop(): Promise<void>
   test(options: { sound: string; delayMs: number; title?: string; body?: string }): Promise<AlarmStatus>
   status(): Promise<AlarmStatus>
+  log(): Promise<{ entries: AlarmLogEntry[] }>
+  clearLog(): Promise<void>
   addListener(event: "adzanStarted" | "adzanStopped", cb: (data: { prayer: string }) => void): Promise<PluginListenerHandle>
 }
 
@@ -70,4 +79,19 @@ export function onAlarmEvents(handlers: { started: (prayer: string) => void; sto
     AdzanAlarm.addListener("adzanStopped", () => handlers.stopped()),
   ]
   return () => handles.forEach((h) => h.then((x) => x.remove()).catch(() => {}))
+}
+
+/** Catatan diagnosa alarm adzan (terbaru di akhir); kosong di web / APK lama. */
+export async function alarmLog(): Promise<AlarmLogEntry[]> {
+  if (!alarmAvailable()) return []
+  try {
+    return (await AdzanAlarm.log()).entries ?? []
+  } catch {
+    return []
+  }
+}
+
+export async function clearAlarmLog(): Promise<void> {
+  if (!alarmAvailable()) return
+  await AdzanAlarm.clearLog()
 }

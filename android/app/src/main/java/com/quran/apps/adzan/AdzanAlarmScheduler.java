@@ -40,6 +40,24 @@ public final class AdzanAlarmScheduler {
         cancelStored(context);
         prefs(context).edit().putString(KEY_ALARMS, alarms.toString()).apply();
         scheduleStored(context);
+        AdzanLog.add(context, "jadwal", alarms.length() + " alarm, tepat=" + canScheduleExact(context) + nextInfo(alarms));
+    }
+
+    private static String nextInfo(JSONArray alarms) {
+        long now = System.currentTimeMillis();
+        long next = Long.MAX_VALUE;
+        String prayer = "";
+        for (int i = 0; i < alarms.length(); i++) {
+            JSONObject a = alarms.optJSONObject(i);
+            if (a == null) continue;
+            long at = a.optLong("at");
+            if (at > now && at < next) {
+                next = at;
+                prayer = a.optString("prayer");
+            }
+        }
+        if (next == Long.MAX_VALUE) return "";
+        return ", berikutnya " + prayer + " " + android.text.format.DateFormat.format("dd/MM HH:mm", next);
     }
 
     /** Hapus semua jadwal adzan. */
@@ -83,6 +101,7 @@ public final class AdzanAlarmScheduler {
             }
         } catch (SecurityException e) {
             Log.w(TAG, "Alarm tepat tidak diizinkan, memakai alarm biasa", e);
+            AdzanLog.add(context, "izin-alarm-ditolak", String.valueOf(e.getMessage()));
             am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, fire);
         }
     }
@@ -115,6 +134,7 @@ public final class AdzanAlarmScheduler {
         intent.putExtra(AdzanPlayerService.EXTRA_TITLE, alarm.optString("title", "Waktu sholat telah tiba"));
         intent.putExtra(AdzanPlayerService.EXTRA_BODY, alarm.optString("body", ""));
         intent.putExtra(AdzanPlayerService.EXTRA_PRAYER, alarm.optString("prayer", ""));
+        intent.putExtra(AdzanPlayerService.EXTRA_AT, alarm.optLong("at"));
         return PendingIntent.getBroadcast(context, id, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     }
 

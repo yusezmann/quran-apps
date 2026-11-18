@@ -93,6 +93,23 @@ public class AdzanAlarmPlugin extends Plugin {
         }
     }
 
+    /** Catatan diagnosa (terbaru di akhir). */
+    @PluginMethod
+    public void log(PluginCall call) {
+        JSONArray source = AdzanLog.all(getContext());
+        JSArray entries = new JSArray();
+        for (int i = 0; i < source.length(); i++) entries.put(source.opt(i));
+        JSObject r = new JSObject();
+        r.put("entries", entries);
+        call.resolve(r);
+    }
+
+    @PluginMethod
+    public void clearLog(PluginCall call) {
+        AdzanLog.clear(getContext());
+        call.resolve();
+    }
+
     @PluginMethod
     public void status(PluginCall call) {
         call.resolve(statusObject());
