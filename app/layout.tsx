@@ -1,6 +1,6 @@
 import { Toaster } from "sonner"
 import type { Metadata } from "next"
-import { Poppins, Scheherazade_New, Reem_Kufi, Noto_Nastaliq_Urdu, Noto_Sans_Arabic, Amiri, Cairo } from "next/font/google"
+import localFont from "next/font/local"
 import "./globals.css"
 import { QueryProvider } from "@/components/providers/query-provider"
 import { AntdProvider } from "@/components/providers/antd-provider"
@@ -9,49 +9,73 @@ import AdzanBanner from "@/app/(features)/adzan/components/AdzanBanner"
 import AdzanSettingsModal from "@/app/(features)/adzan/components/AdzanSettingsModal"
 import AutoLocationManager from "@/components/AutoLocationManager"
 
-const poppins = Poppins({
-  subsets: ["latin"],
-  weight: ["100", "200", "300", "400", "500", "600", "700", "800"],
+/*
+ * Font disimpan di dalam proyek (app/fonts/google, lisensi OFL — lihat OFL-LICENSES.txt), bukan diunduh
+ * dari Google Fonts saat build. Build jadi tidak gagal bila koneksi ke Google bermasalah.
+ * Dibuat dengan fonttools: ketebalan sama seperti sebelumnya, hanya huruf Latin & Arab (fitur sambung huruf tetap).
+ */
+const poppins = localFont({
+  src: [
+    { path: "./fonts/google/Poppins-100.woff2", weight: "100", style: "normal" },
+    { path: "./fonts/google/Poppins-200.woff2", weight: "200", style: "normal" },
+    { path: "./fonts/google/Poppins-300.woff2", weight: "300", style: "normal" },
+    { path: "./fonts/google/Poppins-400.woff2", weight: "400", style: "normal" },
+    { path: "./fonts/google/Poppins-500.woff2", weight: "500", style: "normal" },
+    { path: "./fonts/google/Poppins-600.woff2", weight: "600", style: "normal" },
+    { path: "./fonts/google/Poppins-700.woff2", weight: "700", style: "normal" },
+    { path: "./fonts/google/Poppins-800.woff2", weight: "800", style: "normal" },
+  ],
   variable: "--font-poppins",
+  display: "swap",
 })
 
-const reemkufi = Reem_Kufi({
-  subsets: ["arabic"],
-  weight: ["400", "700"],
+const reemkufi = localFont({
+  src: [
+    { path: "./fonts/google/ReemKufi-400.woff2", weight: "400", style: "normal" },
+    { path: "./fonts/google/ReemKufi-700.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-reem-kufi",
+  display: "swap",
 })
 
-const amiriQuran = Scheherazade_New({
-  subsets: ["arabic"],
-  weight: ["400"],
+const amiriQuran = localFont({
+  src: "./fonts/google/ScheherazadeNew-400.woff2",
+  weight: "400",
   variable: "--font-amiri",
+  display: "swap",
 })
 
 // Font khusus untuk Asmaul Husna - lebih jelas dan mudah dibaca
-const notoNastaliq = Noto_Nastaliq_Urdu({
-  subsets: ["arabic"],
-  weight: ["400"],
+const notoNastaliq = localFont({
+  src: "./fonts/google/NotoNastaliqUrdu-400.woff2",
+  weight: "400",
   variable: "--font-noto-nastaliq",
+  display: "swap",
 })
 
-const notoSansArabic = Noto_Sans_Arabic({
-  subsets: ["arabic"],
-  weight: ["400", "500", "600", "700"],
+const notoSansArabic = localFont({
+  src: "./fonts/google/NotoSansArabic-VF.woff2",
+  weight: "400 700",
   variable: "--font-noto-sans-arabic",
+  display: "swap",
 })
 
 // Font Amiri - sangat bagus untuk teks Arab, lebih jelas dan mudah dibaca
-const amiri = Amiri({
-  subsets: ["arabic"],
-  weight: ["400", "700"],
+const amiri = localFont({
+  src: [
+    { path: "./fonts/google/Amiri-400.woff2", weight: "400", style: "normal" },
+    { path: "./fonts/google/Amiri-700.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-amiri-husna",
+  display: "swap",
 })
 
 // Font Cairo - sangat jelas dan mudah dibaca untuk teks Arab
-const cairo = Cairo({
-  subsets: ["arabic"],
-  weight: ["400", "500", "600", "700"],
+const cairo = localFont({
+  src: "./fonts/google/Cairo-VF.woff2",
+  weight: "400 700",
   variable: "--font-cairo",
+  display: "swap",
 })
 
 export const metadata: Metadata = {

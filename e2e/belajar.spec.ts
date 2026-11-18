@@ -3,6 +3,8 @@ import { test, expect, devices } from "@playwright/test"
 test.use({ ...devices["Pixel 7"], channel: "chrome" })
 
 test("Belajar: tab di Al-Qur'an, pelajaran terkunci berurutan, kuis memberi bintang & membuka pelajaran 2", async ({ page }) => {
+  // Kuis sengaja lambat: tebakan salah memutar 2 bunyi sebelum kartu terbuka lagi
+  test.setTimeout(240_000)
   await page.goto("/quran")
   await page.getByRole("navigation", { name: "Al-Qur'an" }).getByRole("link", { name: "Belajar" }).click()
   await expect(page).toHaveURL(/\/quran\/belajar/)
