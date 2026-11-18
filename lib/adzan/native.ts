@@ -2,6 +2,7 @@ import { Capacitor } from "@capacitor/core"
 import { LocalNotifications } from "@capacitor/local-notifications"
 import { ADZAN_SOUNDS } from "./settings"
 import type { AdzanEvent } from "./schedule"
+import { alarmAvailable, cancelAlarms, rawName, scheduleAlarms, testAlarm } from "./alarm"
 
 /**
  * Notifikasi adzan native (APK Android) lewat @capacitor/local-notifications.
@@ -120,14 +121,36 @@ async function doSchedule(events: AdzanEvent[], ignoreSilent: boolean) {
     // Jika izin belum ada, jadwalkan sebagai alarm biasa dan tampilkan tombol "Izinkan" di pengaturan.
     const exact = (await exactAlarmStatus()) !== "denied"
 
+    // "Tetap bunyikan saat mode senyap": adzan dijadwalkan sebagai ALARM native (diputar sendiri lewat
+    // volume alarm). Pengingat sebelum sholat tetap memakai notifikasi biasa.
+    const useAlarm = ignoreSilent && alarmAvailable()
+    if (useAlarm) {
+      await scheduleAlarms(
+        events
+          .filter((e) => e.sound)
+          .map((e) => ({
+            id: e.id,
+            at: e.at.getTime(),
+            sound: rawName(ADZAN_SOUNDS[e.sound!].raw),
+            title: e.title,
+            body: e.body,
+            prayer: e.prayer,
+          })),
+      )
+    } else {
+      await cancelAlarms().catch(() => {})
+    }
+    const lnEvents = useAlarm ? events.filter((e) => !e.sound) : events
+
     const pending = await LocalNotifications.getPending()
-    const newIds = new Set(events.map((e) => e.id))
+    // Adzan yang kini dijadwalkan sebagai alarm ikut dibersihkan dari notifikasi (tidak dobel)
+    const newIds = new Set(lnEvents.map((e) => e.id))
 
     // 1) Jadwalkan dulu (ID sama menimpa jadwal lama), 2) baru bersihkan yang sudah tidak dipakai.
     //    Urutan ini memastikan jadwal tidak pernah kosong bila langkah penjadwalan gagal.
-    if (events.length) {
+    if (lnEvents.length) {
       await LocalNotifications.schedule({
-        notifications: events.map((e) => ({
+        notifications: lnEvents.map((e) => ({
           id: e.id,
           title: e.title,
           body: e.body,
@@ -159,13 +182,22 @@ async function doSchedule(events: AdzanEvent[], ignoreSilent: boolean) {
   }
 }
 
-/** Notifikasi uji 10 detik lagi dengan suara adzan pilihan — untuk memastikan notifikasi berbunyi di HP ini. */
+/**
+ * Adzan uji beberapa saat lagi dengan suara pilihan — memakai jalur yang SAMA dengan adzan sungguhan
+ * (alarm native bila "tetap bunyikan saat mode senyap" aktif). `delayMs` panjang (mis. 3 menit)
+ * untuk menguji saat HP terkunci & tertidur, kondisi yang mirip waktu sholat sebenarnya.
+ */
 export async function scheduleTestNotification(
   sound: keyof typeof ADZAN_SOUNDS,
-  opts: { ignoreSilent?: boolean } = {},
+  opts: { ignoreSilent?: boolean; delayMs?: number } = {},
 ): Promise<void> {
+  const delayMs = opts.delayMs ?? 10_000
   const granted = await requestNativePermission()
   if (!granted) throw new Error("Izin notifikasi belum diberikan")
+  if (opts.ignoreSilent && alarmAvailable()) {
+    await testAlarm(rawName(ADZAN_SOUNDS[sound].raw), delayMs)
+    return
+  }
   await ensureChannels()
   await LocalNotifications.schedule({
     notifications: [
@@ -173,7 +205,7 @@ export async function scheduleTestNotification(
         id: TEST_NOTIFICATION_ID,
         title: "Tes adzan",
         body: "Jika Anda mendengar adzan ini, notifikasi adzan berfungsi.",
-        schedule: { at: new Date(Date.now() + 10_000), allowWhileIdle: true },
+        schedule: { at: new Date(Date.now() + delayMs), allowWhileIdle: true },
         isExactNotification: (await exactAlarmStatus()) !== "denied",
         channelId: channelFor(sound, !!opts.ignoreSilent),
         sound: ADZAN_SOUNDS[sound].raw,

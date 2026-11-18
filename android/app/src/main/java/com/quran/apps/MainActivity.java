@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import com.getcapacitor.BridgeActivity;
+import com.quran.apps.adzan.AdzanAlarmPlugin;
 
 public class MainActivity extends BridgeActivity {
 
@@ -31,6 +32,8 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        // Plugin buatan sendiri harus didaftarkan sebelum super.onCreate
+        registerPlugin(AdzanAlarmPlugin.class);
         super.onCreate(savedInstanceState);
         createAdzanAlarmChannels();
     }

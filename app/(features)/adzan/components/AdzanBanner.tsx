@@ -5,6 +5,7 @@ import { LocalNotifications } from "@capacitor/local-notifications"
 import { PRAYER_LABEL, soundFor, useAdzanSettings, useAdzanUi } from "@/lib/adzan/settings"
 import { playAdzanSound, stopAdzanSound } from "@/lib/adzan/player"
 import { isNativeApp } from "@/lib/adzan/native"
+import { stopAlarm } from "@/lib/adzan/alarm"
 
 /** Banner saat masuk waktu sholat: hentikan adzan, atau putar manual bila browser memblokir autoplay. */
 export default function AdzanBanner() {
@@ -20,7 +21,10 @@ export default function AdzanBanner() {
   const stop = () => {
     stopAdzanSound()
     // Di APK, menutup notifikasi juga menghentikan suaranya
-    if (isNativeApp()) LocalNotifications.removeAllDeliveredNotifications().catch(() => {})
+    if (isNativeApp()) {
+      LocalNotifications.removeAllDeliveredNotifications().catch(() => {})
+      stopAlarm().catch(() => {}) // mode alarm: hentikan pemutar adzan native
+    }
     setActive(null)
   }
 

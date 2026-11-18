@@ -7,6 +7,7 @@ import { buildAdzanEvents, dueEvents, type AdzanEvent } from "@/lib/adzan/schedu
 import { useAdzanSettings, useAdzanUi, type Prayer } from "@/lib/adzan/settings"
 import { onAdzanEnded, playAdzanSound } from "@/lib/adzan/player"
 import { NATIVE_DAYS_AHEAD, isNativeApp, scheduleNativeAdzan } from "@/lib/adzan/native"
+import { onAlarmEvents } from "@/lib/adzan/alarm"
 import { useUpcomingDays } from "../hooks/useUpcomingDays"
 
 /** Toleransi keterlambatan timer (tab latar belakang dibatasi browser hingga ~1x/menit). */
@@ -97,6 +98,15 @@ export default function AdzanManager() {
     return () => {
       handle.then((h) => h?.remove())
     }
+  }, [native, setActive])
+
+  // APK, mode alarm: banner ikut tampil saat alarm adzan berbunyi & tertutup saat berhenti
+  useEffect(() => {
+    if (!native) return
+    return onAlarmEvents({
+      started: (prayer) => prayer && setActive({ prayer: prayer as Prayer, blocked: false }),
+      stopped: () => setActive(null),
+    })
   }, [native, setActive])
 
   // ---- Web: putar adzan di tab ----

@@ -50,10 +50,14 @@ export default function AdzanSettingsModal() {
     return () => document.removeEventListener("visibilitychange", refresh)
   }, [open, native])
 
-  const runTest = async () => {
+  const runTest = async (delayMs = 10_000) => {
     setTesting(true)
     try {
-      await scheduleTestNotification(settings.sound, { ignoreSilent: settings.ignoreSilent })
+      await scheduleTestNotification(settings.sound, { ignoreSilent: settings.ignoreSilent, delayMs })
+      if (delayMs > 60_000) {
+        toast.success("Adzan uji akan berbunyi 3 menit lagi. Kunci layar & letakkan HP, lalu tunggu.")
+        return
+      }
       toast.success("Notifikasi uji akan berbunyi dalam 10 detik. Coba kunci layar sekarang.")
     } catch (e: any) {
       toast.error("Tes gagal: " + (e?.message ?? "error tidak diketahui"))
@@ -240,19 +244,32 @@ export default function AdzanSettingsModal() {
         {native && settings.enabled && (
           <div className="space-y-3 rounded-xl border border-gray-200 p-3 text-sm">
             <NativeStatusLine status={nativeStatus} />
-            <button
-              type="button"
-              onClick={runTest}
-              disabled={testing}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-green-600 px-3 py-2 font-medium text-green-700 hover:bg-green-50 disabled:opacity-60"
-            >
-              <BellRing className="h-4 w-4" />
-              {testing ? "Menunggu notifikasi uji..." : "Tes notifikasi adzan (10 detik)"}
-            </button>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => runTest(10_000)}
+                disabled={testing}
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-green-600 px-3 py-2 font-medium text-green-700 hover:bg-green-50 disabled:opacity-60"
+              >
+                <BellRing className="h-4 w-4" />
+                {testing ? "Menunggu..." : "Tes 10 detik"}
+              </button>
+              {/* Mirip kondisi waktu sholat sebenarnya: HP terkunci & tertidur beberapa menit */}
+              <button
+                type="button"
+                onClick={() => runTest(180_000)}
+                disabled={testing}
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-green-600 px-3 py-2 font-medium text-white hover:bg-green-700 disabled:opacity-60"
+              >
+                <BellRing className="h-4 w-4" />
+                Tes 3 menit
+              </button>
+            </div>
             <p className="leading-snug text-xs text-gray-500">
-              Jika tes tidak berbunyi: pastikan notifikasi aplikasi diizinkan, mode senyap/Jangan Ganggu mati,
-              dan nonaktifkan <b>penghemat baterai</b> untuk aplikasi ini (Pengaturan → Aplikasi → Quran Apps →
-              Baterai → Tidak dibatasi).
+              <b>Tes 3 menit</b>: tekan, lalu kunci layar & letakkan HP. Ini meniru kondisi saat waktu sholat tiba.
+              {settings.ignoreSilent
+                ? " Adzan diputar sebagai alarm: pastikan volume alarm tidak nol."
+                : " Jika tidak berbunyi: pastikan notifikasi diizinkan, HP tidak senyap, dan penghemat baterai untuk aplikasi ini dimatikan (Pengaturan → Aplikasi → Quran Apps → Baterai → Tidak dibatasi)."}
             </p>
           </div>
         )}
