@@ -58,3 +58,25 @@ test("Hafalan: lompat ke ayat lewat penanda & ulangi dari ayat 1 di ayat terakhi
   await page.getByRole("button", { name: "Ulangi dari ayat 1" }).click()
   await expect(page.getByText("Ayat 1 dari 6")).toBeVisible()
 })
+
+test("Hafalan: kata yang sedang dibaca menyala mengikuti audio qari", async ({ page }) => {
+  test.setTimeout(120_000)
+  await page.goto("/quran/belajar")
+  await page.getByRole("button", { name: "An-Nas 6 ayat" }).click()
+  await expect(page.getByText("Ayat 1 dari 6")).toBeVisible({ timeout: 30_000 })
+  await expect(page.getByRole("button", { name: /^Kata \d+$/ })).toHaveCount(4) // قُلْ أَعُوذُ بِرَبِّ ٱلنَّاسِ
+  await page.getByRole("button", { name: "Ulangi tiap ayat" }).first().waitFor({ state: "detached" }).catch(() => {})
+  await page.getByRole("button", { name: "1×" }).click()
+  await page.getByRole("button", { name: "Putar" }).click()
+
+  // Catat kata yang menyala selama ±6 detik
+  const seen = new Set<string>()
+  for (let i = 0; i < 40; i++) {
+    const lit = await page.locator("button.bg-amber-200").getAttribute("aria-label", { timeout: 200 }).catch(() => null)
+    if (lit) seen.add(lit)
+    await page.waitForTimeout(150)
+  }
+  console.log("RESULT kata yang menyala:", Array.from(seen).join(", "))
+  expect(seen.size).toBeGreaterThanOrEqual(3) // berpindah dari kata ke kata
+  await page.screenshot({ path: "test-results/hafalan-highlight.png" })
+})

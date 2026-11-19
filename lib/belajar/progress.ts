@@ -26,7 +26,10 @@ interface BelajarProgress {
   /** nama panggilan anak (diisi orang tua) untuk sapaan di aplikasi anak */
   childName: string
   setChildName: (name: string) => void
-  /** qari untuk hafalan surat pendek */
+  /** qari hafalan surat pendek (id Quran.com, dengan highlight per kata) */
+  hafalanQari: number
+  setHafalanQari: (id: number) => void
+  /** qari lama (equran) — tidak dipakai lagi di hafalan, disimpan agar data lama tetap terbaca */
   qari: QariId
   setQari: (qari: QariId) => void
   setStars: (lesson: number, stars: number) => void
@@ -71,6 +74,8 @@ export const useBelajarProgress = create<BelajarProgress>()(
       resetStats: () => set({ letterStats: {}, confusions: {} }),
       childName: "",
       setChildName: (name) => set({ childName: name.replace(/\s+/g, " ").trimStart().slice(0, 20) }),
+      hafalanQari: 7,
+      setHafalanQari: (id) => set({ hafalanQari: id }),
       qari: "05",
       setQari: (qari) => set({ qari }),
       // simpan nilai terbaik

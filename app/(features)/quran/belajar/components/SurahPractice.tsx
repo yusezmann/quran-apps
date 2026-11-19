@@ -1,106 +1,206 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { ArrowLeft, ChevronLeft, ChevronRight, Pause, Play, RotateCcw, Star } from "lucide-react"
 import { fetchSurah } from "@/app/(features)/quran/services/quranService"
 import { useBelajarProgress } from "@/lib/belajar/progress"
 import { stopSpeaking } from "@/lib/belajar/speech"
-import { QARI_OPTIONS } from "@/lib/quran/qari"
+import { HAFALAN_QARI, fetchChapterAudio, fetchChapterWords, type ChapterAudio } from "@/lib/belajar/recitation"
 
 const REPEAT_OPTIONS = [1, 3, 5]
 const SPEED_OPTIONS = [
   { label: "Normal", rate: 1 },
   { label: "Lambat", rate: 0.75 },
 ]
+const DAY = 24 * 60 * 60 * 1000
 
 /**
- * Mode hafalan surat pendek untuk anak: satu ayat per layar, teks besar,
- * ayat diulang N kali lalu lanjut otomatis, bisa diperlambat.
+ * Mode hafalan surat pendek untuk anak: satu ayat per layar, teks besar per kata,
+ * KATA YANG SEDANG DIBACA MENYALA mengikuti suara qari (data waktu per kata dari Quran.com).
+ * Ayat diulang N kali lalu lanjut otomatis; bisa diperlambat; ketuk satu kata untuk mendengar kata itu saja.
  */
 export default function SurahPractice({ surahNumber, onExit }: { surahNumber: number; onExit: () => void }) {
-  const { data: surah, isLoading, error } = useQuery({
-    queryKey: ["surah", surahNumber],
-    queryFn: () => fetchSurah(surahNumber),
-  })
+  const qariId = useBelajarProgress((s) => s.hafalanQari)
+  const setQariId = useBelajarProgress((s) => s.setHafalanQari)
   const memorized = useBelajarProgress((s) => s.memorized.includes(surahNumber))
   const toggleMemorized = useBelajarProgress((s) => s.toggleMemorized)
+
+  // Latin & terjemahan (equran.id), kata-kata ayat & audio + waktu per kata (Quran.com)
+  const surahQ = useQuery({ queryKey: ["surah", surahNumber], queryFn: () => fetchSurah(surahNumber) })
+  const wordsQ = useQuery({
+    queryKey: ["hafalan-words", surahNumber],
+    queryFn: () => fetchChapterWords(surahNumber),
+    staleTime: 30 * DAY,
+  })
+  const audioQ = useQuery({
+    queryKey: ["hafalan-audio", qariId, surahNumber],
+    queryFn: () => fetchChapterAudio(qariId, surahNumber),
+    staleTime: 30 * DAY,
+  })
 
   const [ayahIndex, setAyahIndex] = useState(0)
   const [repeat, setRepeat] = useState(3)
   const [rate, setRate] = useState(1)
   const [playing, setPlaying] = useState(false)
-  const playedCount = useRef(0)
-  const audioRef = useRef<HTMLAudioElement | null>(null)
-  const qari = useBelajarProgress((s) => s.qari)
-  const setQari = useBelajarProgress((s) => s.setQari)
-  // Dibaca lewat ref agar ayat berikutnya (dipanggil dari onended) memakai pilihan terbaru
-  const settings = useRef({ qari, repeat })
-  settings.current = { qari, repeat }
+  const [activeWord, setActiveWord] = useState(-1)
 
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const rafRef = useRef<number | null>(null)
+  // Nilai terbaru untuk dibaca di dalam loop animasi (tanpa menunggu render)
+  const live = useRef({ ayahIndex: 0, repeat: 3, played: 0, mode: "verse" as "verse" | "word", wordEnd: 0, timing: null as ChapterAudio | null })
+  live.current.repeat = repeat
+  live.current.timing = audioQ.data ?? null
+
+  const surah = surahQ.data
   const ayat = surah?.ayat ?? []
   const current = ayat[ayahIndex]
+  const verseNo = current?.nomorAyat ?? ayahIndex + 1
+  const verseWords = wordsQ.data?.[verseNo]
+  const ready = !!(surah && wordsQ.data && audioQ.data)
+  const error = surahQ.error || wordsQ.error || audioQ.error
 
-  const stop = () => {
-    audioRef.current?.pause()
-    setPlaying(false)
+  const stopLoop = () => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current)
+    rafRef.current = null
   }
 
-  const playCurrent = (index = ayahIndex) => {
-    const a = ayat[index]
-    if (!a) return
-    stopSpeaking()
+  const stop = useCallback(() => {
+    stopLoop()
     audioRef.current?.pause()
-    const el = new Audio(a.audio[settings.current.qari] || a.audio["05"])
-    el.playbackRate = rate
+    setPlaying(false)
+    setActiveWord(-1)
+  }, [])
+
+  // Audio surat untuk qari terpilih (satu file, dipotong per ayat dengan data waktu)
+  useEffect(() => {
+    if (!audioQ.data) return
+    stop()
+    const el = new Audio(audioQ.data.url)
+    el.preload = "auto"
     audioRef.current = el
-    el.onended = () => {
-      playedCount.current += 1
-      if (playedCount.current < settings.current.repeat) {
-        el.currentTime = 0
-        el.play().catch(() => setPlaying(false))
+    return () => {
+      el.pause()
+      el.src = ""
+    }
+  }, [audioQ.data, stop])
+
+  useEffect(() => {
+    if (audioRef.current) audioRef.current.playbackRate = rate
+  }, [rate])
+
+  useEffect(() => () => stop(), [stop])
+
+  /** Loop animasi: cari kata yang sedang dibaca & tangani akhir ayat / akhir kata. */
+  const tick = () => {
+    const el = audioRef.current
+    const timing = live.current.timing
+    if (!el || !timing) return
+    const t = el.currentTime * 1000
+    const state = live.current
+
+    if (state.mode === "word") {
+      if (t >= state.wordEnd || el.ended) {
+        el.pause()
+        setPlaying(false)
+        setActiveWord(-1)
         return
       }
-      // Ayat berikutnya otomatis; berhenti di akhir surat
-      playedCount.current = 0
-      if (index + 1 < ayat.length) {
-        setAyahIndex(index + 1)
-        playCurrent(index + 1)
-      } else {
-        setPlaying(false)
+    } else {
+      const verse = timing.verses[ayatNumber(state.ayahIndex)]
+      if (verse) {
+        const seg = verse.segments.findIndex(([, s, e]) => t >= s && t < e)
+        setActiveWord((prev) => (seg >= 0 ? verse.segments[seg][0] - 1 : prev))
+        if (t >= verse.to - 40 || el.ended) {
+          onVerseEnd()
+          return
+        }
       }
     }
+    rafRef.current = requestAnimationFrame(tick)
+  }
+
+  /** Nomor ayat dari indeks (ayat di equran berurutan 1..n) */
+  const ayatNumber = (index: number) => ayat[index]?.nomorAyat ?? index + 1
+
+  const playVerse = (index: number) => {
+    const el = audioRef.current
+    const verse = audioQ.data?.verses[ayatNumber(index)]
+    if (!el || !verse) return
+    stopSpeaking()
+    stopLoop()
+    live.current.ayahIndex = index
+    live.current.mode = "verse"
+    el.currentTime = verse.from / 1000
+    el.playbackRate = rate
+    setActiveWord(-1)
     el.play()
-      .then(() => setPlaying(true))
+      .then(() => {
+        setPlaying(true)
+        rafRef.current = requestAnimationFrame(tick)
+      })
+      .catch(() => setPlaying(false))
+  }
+
+  const onVerseEnd = () => {
+    const state = live.current
+    state.played += 1
+    if (state.played < state.repeat) {
+      playVerse(state.ayahIndex) // ulangi ayat yang sama
+      return
+    }
+    state.played = 0
+    if (state.ayahIndex + 1 < ayat.length) {
+      setAyahIndex(state.ayahIndex + 1)
+      playVerse(state.ayahIndex + 1)
+    } else {
+      stop() // akhir surat
+    }
+  }
+
+  /** Ketuk satu kata: putar kata itu saja. */
+  const playWord = (wordIdx: number) => {
+    const el = audioRef.current
+    const verse = audioQ.data?.verses[verseNo]
+    const seg = verse?.segments.find(([pos]) => pos === wordIdx + 1)
+    if (!el || !seg) return
+    stopSpeaking()
+    stopLoop()
+    live.current.mode = "word"
+    live.current.wordEnd = seg[2]
+    el.currentTime = seg[1] / 1000
+    el.playbackRate = rate
+    setActiveWord(wordIdx)
+    el.play()
+      .then(() => {
+        setPlaying(true)
+        rafRef.current = requestAnimationFrame(tick)
+      })
       .catch(() => setPlaying(false))
   }
 
   const goTo = (i: number) => {
     stop()
-    playedCount.current = 0
-    setAyahIndex(Math.max(0, Math.min(ayat.length - 1, i)))
+    live.current.played = 0
+    const next = Math.max(0, Math.min(ayat.length - 1, i))
+    live.current.ayahIndex = next
+    setAyahIndex(next)
   }
 
   /** Kembali ke ayat 1 dan langsung memutarnya (menghafal = mengulang dari awal) */
   const restart = () => {
-    stop()
-    playedCount.current = 0
-    setAyahIndex(0)
-    playCurrent(0)
+    goTo(0)
+    playVerse(0)
   }
 
-  useEffect(() => () => audioRef.current?.pause(), [])
-  // Ganti qari saat sedang diputar → putar ulang ayat ini dengan suara qari baru
-  useEffect(() => {
+  const togglePlay = () => {
     if (playing) {
-      playedCount.current = 0
-      playCurrent()
+      stop()
+      return
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [qari])
-  useEffect(() => {
-    if (audioRef.current) audioRef.current.playbackRate = rate
-  }, [rate])
+    live.current.played = 0
+    playVerse(ayahIndex)
+  }
 
   return (
     <div className="space-y-5">
@@ -128,18 +228,38 @@ export default function SurahPractice({ surahNumber, onExit }: { surahNumber: nu
         </button>
       </div>
 
-      {isLoading && <p className="rounded-2xl bg-white p-6 text-center text-gray-500">Memuat surat...</p>}
+      {!ready && !error && <p className="rounded-2xl bg-white p-6 text-center text-gray-500">Memuat surat...</p>}
       {error && <p className="rounded-2xl bg-white p-6 text-center text-red-600">Gagal memuat surat. Periksa internet.</p>}
 
-      {surah && current && (
+      {ready && current && (
         <>
           <div className="rounded-3xl bg-white p-5 text-center shadow-lg">
-            <p className="text-lg font-bold text-green-800">{surah.namaLatin}</p>
+            <p className="text-lg font-bold text-green-800">{surah!.namaLatin}</p>
             <p className="text-sm text-gray-500">
-              Ayat {current.nomorAyat} dari {surah.jumlahAyat}
+              Ayat {current.nomorAyat} dari {surah!.jumlahAyat}
             </p>
-            <p dir="rtl" className="font-tertiary mt-5 text-4xl leading-[2.2] text-gray-900 md:text-5xl md:leading-[2.2]">
-              {current.teksArab}
+
+            {/* Ayat per kata: kata yang sedang dibaca menyala; ketuk kata untuk mendengarnya */}
+            <p dir="rtl" className="font-tertiary mt-5 text-4xl leading-[2.3] text-gray-900 md:text-5xl md:leading-[2.3]">
+              {(verseWords?.words ?? [current.teksArab]).map((w, i) => (
+                <span key={i}>
+                  <button
+                    type="button"
+                    onClick={() => playWord(i)}
+                    aria-label={`Kata ${i + 1}`}
+                    className={`rounded-xl px-1 transition-colors duration-150 ${
+                      i === activeWord ? "bg-amber-200 text-green-900 shadow-[0_0_0_3px_rgba(253,230,138,0.9)]" : "hover:bg-green-50"
+                    }`}
+                  >
+                    {w}
+                  </button>{" "}
+                </span>
+              ))}
+              {verseWords?.end && (
+                <span className="mx-1 inline-flex h-11 min-w-11 items-center justify-center rounded-full border-2 border-green-600 px-1 align-middle text-2xl text-green-700">
+                  {verseWords.end}
+                </span>
+              )}
             </p>
             <p className="mt-4 text-sm italic text-amber-700">{current.teksLatin}</p>
             <p className="mt-2 text-sm text-gray-600">{current.teksIndonesia}</p>
@@ -181,7 +301,7 @@ export default function SurahPractice({ surahNumber, onExit }: { surahNumber: nu
             <button
               type="button"
               aria-label={playing ? "Jeda" : "Putar"}
-              onClick={() => (playing ? stop() : playCurrent())}
+              onClick={togglePlay}
               className="flex h-20 w-20 items-center justify-center rounded-full bg-green-600 text-white shadow-lg active:scale-95"
             >
               {playing ? <Pause className="h-9 w-9" /> : <Play className="ml-1 h-9 w-9" />}
@@ -247,20 +367,23 @@ export default function SurahPractice({ surahNumber, onExit }: { surahNumber: nu
             <div className="sm:col-span-2">
               <p className="mb-2 font-semibold text-gray-700">Qari</p>
               <div className="flex flex-wrap gap-2" role="group" aria-label="Pilih qari">
-                {QARI_OPTIONS.map((o) => (
+                {HAFALAN_QARI.map((o) => (
                   <button
-                    key={o.value}
+                    key={o.id}
                     type="button"
-                    title={o.label}
-                    aria-label={`Qari ${o.label}`}
-                    aria-pressed={qari === o.value}
-                    onClick={() => setQari(o.value)}
-                    className={`rounded-full px-4 py-2 font-semibold ${qari === o.value ? "bg-green-600 text-white" : "bg-gray-100 text-gray-700"}`}
+                    title={o.note ? `${o.name} — ${o.note}` : o.name}
+                    aria-label={`Qari ${o.name}`}
+                    aria-pressed={qariId === o.id}
+                    onClick={() => setQariId(o.id)}
+                    className={`rounded-full px-4 py-2 font-semibold ${qariId === o.id ? "bg-green-600 text-white" : "bg-gray-100 text-gray-700"}`}
                   >
                     {o.short}
                   </button>
                 ))}
               </div>
+              <p className="mt-2 text-xs text-gray-500">
+                Kata yang sedang dibaca akan menyala. Ketuk satu kata untuk mendengar kata itu saja.
+              </p>
             </div>
           </div>
         </>
