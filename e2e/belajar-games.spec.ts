@@ -56,22 +56,41 @@ test("Game: Cari Pasangan sampai semua kartu cocok", async ({ page }) => {
   await expect(finished(page)).toBeVisible({ timeout: 10_000 })
 })
 
-test("Game: Mana yang Beda sampai selesai, lalu stiker terbuka di buku stiker", async ({ page }) => {
-  await page.getByRole("button", { name: /Mana yang Beda/ }).click()
-  for (let r = 0; r < 6; r++) {
-    const cells = page.getByRole("button", { name: /^Kotak / })
-    const n = await cells.count()
-    for (let i = 0; i < n; i++) {
-      await cells.nth(i).click()
-      if (await page.getByText(/Yang beda:/).isVisible().catch(() => false)) break
+test("Stiker hanya untuk bintang penuh: ada salah → tanpa stiker; semua benar → stiker baru", async ({ page }) => {
+  test.setTimeout(240_000) // dua sesi game penuh
+  // Mulai tanpa stiker (data versi baru)
+  await page.evaluate(() => {
+    localStorage.setItem(
+      "quran-apps:belajar",
+      JSON.stringify({ state: { stars: { 0: 3 }, memorized: [], gameStars: 0, stickers: 0, qari: "05" }, version: 2 }),
+    )
+  })
+  await page.reload()
+
+  const play = async (makeOneMistake: boolean) => {
+    for (let r = 0; r < 6; r++) {
+      const cells = page.getByRole("button", { name: /^Kotak / })
+      await expect(cells.first()).toBeVisible()
+      const texts = await cells.allTextContents()
+      const odd = texts.findIndex((t) => texts.filter((x) => x === t).length === 1)
+      if (makeOneMistake && r === 0) await cells.nth(odd === 0 ? 1 : 0).click()
+      await cells.nth(odd).click()
+      await expect(page.getByText(/Yang beda:/)).toBeVisible()
+      await page.waitForTimeout(1900)
     }
-    await expect(page.getByText(/Yang beda:/)).toBeVisible()
-    await page.waitForTimeout(1900)
+    await expect(finished(page)).toBeVisible()
   }
-  await expect(finished(page)).toBeVisible()
-  // 3 bintang pelajaran + bintang game ≥ 4 → minimal 1 stiker
+
+  await page.getByRole("button", { name: /Mana yang Beda/ }).click()
+  await play(true) // 5 dari 6 → ⭐⭐ → tanpa stiker
+  await expect(page.getByText("Dapatkan ⭐⭐⭐ untuk membuka stiker baru!")).toBeVisible()
+  await expect(page.getByText("Stiker baru!", { exact: true })).toHaveCount(0)
+  await page.getByRole("button", { name: "Main lagi" }).click() // langsung sesi baru
+
+  await play(false) // semua benar → ⭐⭐⭐ → stiker pertama
+  await expect(page.getByText("Stiker baru!", { exact: true })).toBeVisible()
   await page.getByRole("button", { name: "📒 Buku stiker" }).click()
-  await expect(page.getByText(/^[1-9]\d*\/24 stiker$/)).toBeVisible()
+  await expect(page.getByText(/^1\/24 stiker$/)).toBeVisible()
   await expect(page.getByRole("listitem", { name: "Apel" })).toBeVisible()
 })
 
@@ -231,4 +250,24 @@ test("Game: Tebalkan — semua 28 huruf & 11 angka tersedia; angka ٣ bisa diteb
   }
   await expect(page.getByText("⭐ Bagus! Ini angka Salasatun")).toBeVisible()
   await page.screenshot({ path: "test-results/tebal-angka.png" })
+})
+
+test("Game: melewati semua (tanpa jawaban benar) tidak memberi bintang/stiker", async ({ page }) => {
+  await page.evaluate(() => {
+    const raw = JSON.parse(localStorage.getItem("quran-apps:belajar")!)
+    raw.state.gameStars = 2 // 1 bintang lagi = stiker baru (bila masih diberi bintang gratis)
+    raw.state.stars = {}
+    localStorage.setItem("quran-apps:belajar", JSON.stringify(raw))
+  })
+  await page.reload()
+  await page.getByRole("button", { name: /Tebalkan Huruf/ }).click()
+  await page.getByRole("button", { name: "🎲 Acak 5 huruf" }).click()
+  for (let i = 0; i < 5; i++) {
+    await expect(page.getByRole("button", { name: "Lewati" })).toBeEnabled({ timeout: 15_000 })
+    await page.getByRole("button", { name: "Lewati" }).click()
+  }
+  await expect(page.getByText("Ayo coba lagi! 💪")).toBeVisible()
+  await expect(page.getByText("Stiker baru!", { exact: true })).toHaveCount(0)
+  const gameStars = await page.evaluate(() => JSON.parse(localStorage.getItem("quran-apps:belajar")!).state.gameStars)
+  expect(gameStars).toBe(2)
 })

@@ -15,7 +15,7 @@ import SambungAyatGame from "./games/SambungAyatGame"
 import { SHORT_SURAHS } from "@/lib/belajar/surahs"
 import { LESSONS } from "@/lib/belajar/letters"
 import { isLessonUnlocked, useBelajarProgress, useTotalStars } from "@/lib/belajar/progress"
-import { STICKERS, gamePool, highestUnlocked, stickerCount } from "@/lib/belajar/games"
+import { STICKERS, gamePool, highestUnlocked } from "@/lib/belajar/games"
 import { NO_VOICE_EVENT, hasArabicVoice, openTtsInstall, speakArabic } from "@/lib/belajar/speech"
 
 type GameId = "balon" | "pasangan" | "beda" | "tebal" | "sambung"
@@ -56,6 +56,7 @@ export default function BelajarApp({ variant }: { variant: "tab" | "kid" }) {
   const memorized = useBelajarProgress((s) => s.memorized)
   const letterStats = useBelajarProgress((s) => s.letterStats)
   const totalAllStars = useTotalStars()
+  const stickerOwned = useBelajarProgress((s) => s.stickers)
   const [voiceOk, setVoiceOk] = useState<boolean | null>(null)
   const { pool, fresh, weak } = useMemo(() => gamePool(stars, letterStats), [stars, letterStats])
   const kid = variant === "kid"
@@ -147,11 +148,11 @@ export default function BelajarApp({ variant }: { variant: "tab" | "kid" }) {
         <span className="flex-1 leading-tight">
           <span className="block font-bold text-amber-900">Buku Stiker</span>
           <span className="text-xs text-amber-800">
-            {stickerCount(totalAllStars)} dari {STICKERS.length} stiker terkumpul
+            {stickerOwned} dari {STICKERS.length} stiker terkumpul
           </span>
         </span>
         <span className="text-2xl" aria-hidden="true">
-          {STICKERS.slice(0, stickerCount(totalAllStars)).slice(-3).map(([e]) => e).join("") || "❔"}
+          {STICKERS.slice(0, stickerOwned).slice(-3).map(([e]) => e).join("") || "❔"}
         </span>
       </button>
     </section>
@@ -320,7 +321,7 @@ export default function BelajarApp({ variant }: { variant: "tab" | "kid" }) {
           <KidHome
             lessonNumber={currentLesson + 1}
             totalStars={totalAllStars}
-            stickers={stickerCount(totalAllStars)}
+            stickers={stickerOwned}
             memorized={memorized.length}
             onOpen={(section) => navigate({ kind: "section", section })}
             onStickers={() => navigate({ kind: "stickers" })}

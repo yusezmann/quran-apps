@@ -40,8 +40,12 @@ export const pickTarget = (pool: Letter[], fresh: Letter[], weak: Letter[] = [])
   return r < 0.7 ? pick(fresh) : pick(pool)
 }
 
-/** Bintang sesi: 3 = semua benar pertama kali, 2 = hampir semua, 1 = sudah mencoba. */
-export const sessionStars = (firstTry: number, total: number) => (firstTry >= total ? 3 : firstTry >= total - 2 ? 2 : 1)
+/**
+ * Bintang sesi: 3 = semua benar, 2 = hampir semua, 1 = ada yang benar, 0 = tidak ada yang benar.
+ * Tanpa jawaban benar tidak ada bintang (dulu minimal 1) — stiker tidak bisa didapat dengan asal lewat/menebak.
+ */
+export const sessionStars = (good: number, total: number) =>
+  good <= 0 ? 0 : good >= total ? 3 : good >= total - 2 ? 2 : 1
 
 /** Kelompok huruf yang bentuknya mirip (dibedakan oleh titik/sedikit garis) — inti Iqro' 1. */
 const LOOKALIKE: string[][] = [
@@ -66,7 +70,8 @@ export const letterById = (id: string) => LETTERS.find((l) => l.id === id)!
 
 /**
  * Stiker hadiah: benda, buah & alam (tanpa makhluk bernyawa).
- * Setiap STARS_PER_STICKER bintang membuka satu stiker berikutnya.
+ * Satu stiker untuk setiap sesi game/kuis dengan bintang penuh (lihat awardSticker di progress.ts).
+ * stickerCount/STARS_PER_STICKER hanya dipakai untuk migrasi data lama.
  */
 export const STARS_PER_STICKER = 3
 export const STICKERS: Array<[string, string]> = [

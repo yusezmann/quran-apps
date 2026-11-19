@@ -2,6 +2,9 @@ import { create } from "zustand"
 import { persist } from "zustand/middleware"
 import type { QariId } from "@/lib/quran/qari"
 
+/** Jumlah stiker di buku stiker (lihat STICKERS di games.ts) */
+export const STICKER_TOTAL = 24
+
 /** Hasil jawaban per huruf: r = benar, w = salah (huruf ini yang dibunyikan/dicari). */
 export type LetterStat = { r: number; w: number }
 
@@ -11,6 +14,10 @@ interface BelajarProgress {
   stars: Record<number, number>
   /** surat pendek yang ditandai sudah hafal (nomor surat) */
   memorized: number[]
+  /** jumlah stiker yang dimiliki: +1 setiap sesi game/kuis dengan bintang penuh (⭐⭐⭐) */
+  stickers: number
+  /** beri stiker bila sesi bintang penuh; mengembalikan indeks stiker baru atau null */
+  awardSticker: (stars: number) => number | null
   /** bintang yang dikumpulkan dari game (bertambah tiap sesi) */
   gameStars: number
   addGameStars: (n: number) => void
@@ -51,10 +58,18 @@ export const pairKey = (a: string, b: string) => (a < b ? `${a}|${b}` : `${b}|${
 
 export const useBelajarProgress = create<BelajarProgress>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       stars: {},
       memorized: [],
       gameStars: 0,
+      stickers: 0,
+      awardSticker: (stars) => {
+        if (stars < 3) return null
+        const have = get().stickers
+        if (have >= STICKER_TOTAL) return null
+        set({ stickers: have + 1 })
+        return have
+      },
       addGameStars: (n) => set((s) => ({ gameStars: s.gameStars + n, activeDays: withToday(s.activeDays) })),
       letterStats: {},
       confusions: {},
@@ -89,7 +104,19 @@ export const useBelajarProgress = create<BelajarProgress>()(
           memorized: s.memorized.includes(surah) ? s.memorized.filter((n) => n !== surah) : [...s.memorized, surah],
         })),
     }),
-    { name: "quran-apps:belajar", version: 1 },
+    {
+      name: "quran-apps:belajar",
+      version: 2,
+      // v1 → v2: stiker dulu dihitung dari total bintang (tiap 3 bintang). Stiker yang sudah terkumpul tetap dimiliki.
+      migrate: (persisted, version) => {
+        const s = (persisted ?? {}) as { stars?: Record<number, number>; gameStars?: number; stickers?: number }
+        if (version < 2 && s.stickers === undefined) {
+          const total = Object.values(s.stars ?? {}).reduce((a, b) => a + b, 0) + (s.gameStars ?? 0)
+          s.stickers = Math.min(STICKER_TOTAL, Math.floor(total / 3))
+        }
+        return s as BelajarProgress
+      },
+    },
   ),
 )
 

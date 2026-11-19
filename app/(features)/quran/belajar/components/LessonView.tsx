@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowRight, RotateCcw, Star, Volume2 } from "lucide-react"
 import { LESSONS, joinSyllables, lettersUpTo, pairAudioId, syllablePairs, withFathah, type Letter } from "@/lib/belajar/letters"
 import { speakArabic, speakArabicAndWait, stopSpeaking } from "@/lib/belajar/speech"
 import { recordAttempt, useBelajarProgress } from "@/lib/belajar/progress"
+import { STICKERS } from "@/lib/belajar/games"
 import { mostConfusedWith } from "@/lib/belajar/stats"
 
 const STEPS = ["Kenal huruf", "Fathah", "Sambung", "Kuis"] as const
@@ -247,6 +248,7 @@ function QuizStep({
   const [results, setResults] = useState<Array<boolean | undefined>>(() => quiz.map(() => undefined))
   const [wrongThisQuestion, setWrongThisQuestion] = useState<string[]>([])
   const [phase, setPhase] = useState<Phase>("listening")
+  const [newSticker, setNewSticker] = useState<number | null>(null)
 
   const done = pos >= queue.length
   const qIndex = queue[pos]
@@ -269,7 +271,10 @@ function QuizStep({
   }, [pos, quiz])
 
   useEffect(() => {
-    if (done) onFinish(stars)
+    if (done) {
+      onFinish(stars)
+      setNewSticker(useBelajarProgress.getState().awardSticker(stars))
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [done])
 
@@ -304,6 +309,7 @@ function QuizStep({
     setQueue(fresh.map((_, i) => i))
     setResults(fresh.map(() => undefined))
     setWrongThisQuestion([])
+    setNewSticker(null)
     setPos(0)
   }
 
@@ -339,6 +345,13 @@ function QuizStep({
           ))}
         </div>
         {starRow}
+        {newSticker !== null ? (
+          <p className="mx-auto w-fit rounded-3xl border-4 border-dashed border-amber-300 bg-amber-50 px-6 py-3 font-bold text-amber-900">
+            Stiker baru! <span className="text-5xl align-middle">{STICKERS[newSticker][0]}</span> {STICKERS[newSticker][1]}
+          </p>
+        ) : stars < 3 ? (
+          <p className="text-sm font-semibold text-amber-800">Dapatkan ⭐⭐⭐ untuk membuka stiker baru!</p>
+        ) : null}
         <p className="text-gray-600">
           Benar di percobaan pertama: {firstTryCorrect} dari {QUIZ_LENGTH}
         </p>

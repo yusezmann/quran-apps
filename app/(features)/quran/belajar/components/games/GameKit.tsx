@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { ArrowLeft, RotateCcw, Star } from "lucide-react"
-import { STICKERS, stickerCount } from "@/lib/belajar/games"
+import { STICKERS } from "@/lib/belajar/games"
 import { useBelajarProgress } from "@/lib/belajar/progress"
 import { sfxWin } from "@/lib/belajar/sfx"
 import { stopSpeaking } from "@/lib/belajar/speech"
@@ -101,18 +101,15 @@ export function GameFinish({
   useEffect(() => {
     if (saved.current) return
     saved.current = true
-    const s = useBelajarProgress.getState()
-    const before = Object.values(s.stars).reduce((a, b) => a + b, 0) + s.gameStars
-    addGameStars(stars)
-    const had = stickerCount(before)
-    const now = stickerCount(before + stars)
-    if (now > had) setNewSticker(now - 1)
-    sfxWin()
+    if (stars > 0) addGameStars(stars)
+    // Stiker hanya untuk bintang penuh
+    setNewSticker(useBelajarProgress.getState().awardSticker(stars))
+    if (stars > 0) sfxWin()
   }, [addGameStars, stars])
 
   return (
     <div className="space-y-5 rounded-3xl bg-white p-6 text-center shadow-lg" role="status">
-      <p className="text-2xl font-bold text-gray-900">MasyaAllah, hebat! 🎉</p>
+      <p className="text-2xl font-bold text-gray-900">{stars > 0 ? "MasyaAllah, hebat! 🎉" : "Ayo coba lagi! 💪"}</p>
       <div className="flex justify-center gap-2" aria-label={`${stars} bintang`}>
         {[1, 2, 3].map((n) => (
           <Star
@@ -124,6 +121,11 @@ export function GameFinish({
       </div>
       <p className="text-gray-600">{summary}</p>
 
+      {newSticker === null && stars > 0 && stars < 3 && (
+        <p className="rounded-2xl bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-900">
+          Dapatkan ⭐⭐⭐ untuk membuka stiker baru!
+        </p>
+      )}
       {newSticker !== null && (
         <button
           type="button"

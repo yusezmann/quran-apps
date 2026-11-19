@@ -1,16 +1,15 @@
 "use client"
 
 import { ArrowLeft, Star } from "lucide-react"
-import { STARS_PER_STICKER, STICKERS, stickerCount } from "@/lib/belajar/games"
-import { useTotalStars } from "@/lib/belajar/progress"
+import { STICKERS } from "@/lib/belajar/games"
+import { useBelajarProgress, useTotalStars } from "@/lib/belajar/progress"
 
-/** Buku stiker: setiap 3 bintang (dari pelajaran & game) membuka satu stiker. */
+/** Buku stiker: setiap sesi game/kuis dengan bintang penuh (⭐⭐⭐) membuka satu stiker. */
 export default function StickerBook({ onExit }: { onExit: () => void }) {
   const total = useTotalStars()
-  const have = stickerCount(total)
+  const have = useBelajarProgress((s) => s.stickers)
   const all = have >= STICKERS.length
-  const toNext = STARS_PER_STICKER - (total % STARS_PER_STICKER)
-  const progress = all ? 100 : ((total % STARS_PER_STICKER) / STARS_PER_STICKER) * 100
+  const progress = (have / STICKERS.length) * 100
 
   return (
     <div className="space-y-4">
@@ -40,7 +39,7 @@ export default function StickerBook({ onExit }: { onExit: () => void }) {
         <p className="mt-2 text-sm text-gray-600">
           {all
             ? "MasyaAllah, semua stiker sudah terkumpul! 🏆"
-            : `${toNext} bintang lagi untuk stiker berikutnya. Main game atau kuis untuk mendapat bintang ⭐`}
+            : "Dapatkan ⭐⭐⭐ (semua benar) di game atau kuis untuk membuka stiker berikutnya."}
         </p>
 
         <ul className="mt-5 grid grid-cols-4 gap-3 sm:grid-cols-6">

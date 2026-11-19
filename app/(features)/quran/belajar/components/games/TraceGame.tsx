@@ -354,6 +354,7 @@ function TracePlay({ items, kind, onAgain, onExit, onStickers }: GameProps & { i
   const finishLetter = (clean: boolean) => {
     setSuccess(true)
     setResults((r) => r.map((v, i) => (i === idx ? clean : v)))
+    setCompleted((n) => n + 1)
     // Hadiah: coretan memudar & huruf utuh berwarna terlihat jelas
     drawRef.current!.getContext("2d")!.clearRect(0, 0, L * PX, L * PX)
     const guide = guideRef.current!.getContext("2d")!
@@ -378,13 +379,14 @@ function TracePlay({ items, kind, onAgain, onExit, onStickers }: GameProps & { i
   }
 
   const firstTry = results.filter((r) => r === true).length
+  const [completed, setCompleted] = useState(0)
 
   if (done) {
     return (
       <GameFrame title={word === "angka" ? "Tebalkan Angka" : "Tebalkan Huruf"} emoji="✍️" onExit={onExit}>
         <GameFinish
-          stars={sessionStars(firstTry, letters.length)}
-          summary={`${word === "angka" ? "Angka" : "Huruf"} yang ditebalkan rapi: ${firstTry} dari ${letters.length}`}
+          stars={sessionStars(completed, letters.length)}
+          summary={`${word === "angka" ? "Angka" : "Huruf"} yang selesai ditebalkan: ${completed} dari ${letters.length}${completed ? ` (${firstTry} rapi tanpa dihapus)` : ". Yang dilewati tidak mendapat bintang."}`}
           onAgain={onAgain}
           onExit={onExit}
           onStickers={onStickers}

@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react"
 import { ArrowLeft, Volume2 } from "lucide-react"
 import { LESSONS, withFathah, type Letter } from "@/lib/belajar/letters"
-import { STICKERS, stickerCount } from "@/lib/belajar/games"
+import { STICKERS } from "@/lib/belajar/games"
 import { useBelajarProgress, useTotalStars } from "@/lib/belajar/progress"
 import { masteredLetters, tipFor, topConfusions, weakLetters } from "@/lib/belajar/stats"
 import { speakArabic } from "@/lib/belajar/speech"
@@ -62,6 +62,7 @@ export default function ParentReport({ onExit, onPlayOdd }: { onExit: () => void
   const childName = useBelajarProgress((s) => s.childName)
   const setChildName = useBelajarProgress((s) => s.setChildName)
   const totalStars = useTotalStars()
+  const stickerOwned = useBelajarProgress((s) => s.stickers)
   const [confirmReset, setConfirmReset] = useState(false)
 
   const weak = useMemo(() => weakLetters(letterStats), [letterStats])
@@ -108,7 +109,7 @@ export default function ParentReport({ onExit, onPlayOdd }: { onExit: () => void
             ["Pelajaran selesai", `${lessonsDone}/${LESSONS.length}`],
             ["Bintang", `⭐ ${totalStars}`],
             ["Surat dihafal", `${memorized.length}`],
-            ["Stiker", `${stickerCount(totalStars)}/${STICKERS.length}`],
+            ["Stiker", `${stickerOwned}/${STICKERS.length}`],
           ].map(([label, value]) => (
             <div key={label} className="rounded-2xl bg-gray-50 px-3 py-2">
               <dt className="text-xs text-gray-500">{label}</dt>
