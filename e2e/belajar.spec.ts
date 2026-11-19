@@ -46,3 +46,15 @@ test("Belajar: hafalan surat pendek bisa ditandai hafal", async ({ page }) => {
   await page.getByRole("button", { name: "Daftar surat" }).click()
   await expect(page.getByText("1 surat sudah hafal")).toBeVisible()
 })
+
+test("Hafalan: lompat ke ayat lewat penanda & ulangi dari ayat 1 di ayat terakhir", async ({ page }) => {
+  await page.goto("/quran/belajar")
+  await page.getByRole("button", { name: "An-Nas 6 ayat" }).click()
+  await expect(page.getByText("Ayat 1 dari 6")).toBeVisible({ timeout: 30_000 })
+  await expect(page.getByRole("button", { name: "Ulangi dari ayat 1" })).toHaveCount(0)
+  await page.getByRole("button", { name: "Ayat 6", exact: true }).click()
+  await expect(page.getByText("Ayat 6 dari 6")).toBeVisible()
+  await page.screenshot({ path: "test-results/hafalan-akhir.png", fullPage: true })
+  await page.getByRole("button", { name: "Ulangi dari ayat 1" }).click()
+  await expect(page.getByText("Ayat 1 dari 6")).toBeVisible()
+})

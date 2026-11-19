@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { ArrowLeft, ChevronLeft, ChevronRight, Pause, Play, Star } from "lucide-react"
+import { ArrowLeft, ChevronLeft, ChevronRight, Pause, Play, RotateCcw, Star } from "lucide-react"
 import { fetchSurah } from "@/app/(features)/quran/services/quranService"
 import { useBelajarProgress } from "@/lib/belajar/progress"
 import { stopSpeaking } from "@/lib/belajar/speech"
@@ -81,6 +81,14 @@ export default function SurahPractice({ surahNumber, onExit }: { surahNumber: nu
     setAyahIndex(Math.max(0, Math.min(ayat.length - 1, i)))
   }
 
+  /** Kembali ke ayat 1 dan langsung memutarnya (menghafal = mengulang dari awal) */
+  const restart = () => {
+    stop()
+    playedCount.current = 0
+    setAyahIndex(0)
+    playCurrent(0)
+  }
+
   useEffect(() => () => audioRef.current?.pause(), [])
   // Ganti qari saat sedang diputar → putar ulang ayat ini dengan suara qari baru
   useEffect(() => {
@@ -135,6 +143,28 @@ export default function SurahPractice({ surahNumber, onExit }: { surahNumber: nu
             </p>
             <p className="mt-4 text-sm italic text-amber-700">{current.teksLatin}</p>
             <p className="mt-2 text-sm text-gray-600">{current.teksIndonesia}</p>
+
+            {/* Penanda ayat: ketuk untuk melompat ke ayat mana pun */}
+            {ayat.length > 1 && (
+              <div className="mt-4 flex flex-wrap justify-center" role="group" aria-label="Pilih ayat">
+                {ayat.map((a, i) => (
+                  <button
+                    key={a.nomorAyat}
+                    type="button"
+                    onClick={() => goTo(i)}
+                    aria-label={`Ayat ${a.nomorAyat}`}
+                    aria-current={i === ayahIndex ? "step" : undefined}
+                    className="p-1.5"
+                  >
+                    <span
+                      className={`block h-3 rounded-full transition-all ${
+                        i === ayahIndex ? "w-7 bg-green-600" : i < ayahIndex ? "w-3 bg-green-300" : "w-3 bg-gray-300"
+                      }`}
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Kontrol besar untuk anak */}
@@ -166,6 +196,19 @@ export default function SurahPractice({ surahNumber, onExit }: { surahNumber: nu
               <ChevronRight className="h-8 w-8" strokeWidth={2.75} />
             </button>
           </div>
+
+          {/* Ayat terakhir: ulangi surat dari awal */}
+          {ayat.length > 1 && ayahIndex === ayat.length - 1 && (
+            <div className="flex justify-center">
+              <button
+                type="button"
+                onClick={restart}
+                className="inline-flex animate-bounce-in items-center gap-2 rounded-full bg-amber-400 px-6 py-3 text-lg font-bold text-amber-950 shadow-md hover:bg-amber-300 active:scale-95"
+              >
+                <RotateCcw className="h-5 w-5" /> Ulangi dari ayat 1
+              </button>
+            </div>
+          )}
 
           {/* Pengaturan untuk orang tua */}
           <div className="grid grid-cols-1 gap-3 rounded-2xl bg-white/90 p-4 text-sm shadow-sm sm:grid-cols-2">
