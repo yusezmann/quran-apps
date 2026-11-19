@@ -16,18 +16,22 @@ test.beforeEach(async ({ page }) => {
   await page.goto("/quran/belajar")
 })
 
-test("Game: Pecah Balon sampai selesai memberi bintang", async ({ page }) => {
-  await page.getByRole("button", { name: /Pecah Balon/ }).click()
-  for (let attempt = 0; attempt < 60; attempt++) {
-    // Tunggu balon bisa dipilih (bunyi selesai) atau game selesai
-    await expect(page.locator("button:enabled", { hasText: "Dengar lagi" }).or(finished(page))).toBeVisible({ timeout: 15_000 })
-    if (await finished(page).isVisible()) break
-    // Balon bergerak terus → klik lewat event (Playwright menunggu elemen diam bila klik biasa)
-    await page.getByRole("button", { name: /^Balon / }).nth(attempt % 4).dispatchEvent("click")
-    await page.waitForTimeout(400)
-  }
-  await expect(finished(page)).toBeVisible({ timeout: 15_000 })
-})
+for (const mode of ["Huruf", "Angka"] as const) {
+  test(`Game: Pecah Balon ${mode} sampai selesai memberi bintang`, async ({ page }) => {
+    await page.getByRole("button", { name: /Pecah Balon/ }).click()
+    await page.getByRole("button", { name: new RegExp(mode) }).click()
+    if (mode === "Angka") await expect(page.getByRole("button", { name: /^Balon angka / })).toHaveCount(4)
+    for (let attempt = 0; attempt < 60; attempt++) {
+      // Tunggu balon bisa dipilih (bunyi selesai) atau game selesai
+      await expect(page.locator("button:enabled", { hasText: "Dengar lagi" }).or(finished(page))).toBeVisible({ timeout: 15_000 })
+      if (await finished(page).isVisible()) break
+      // Balon bergerak terus → klik lewat event (Playwright menunggu elemen diam bila klik biasa)
+      await page.getByRole("button", { name: /^Balon / }).nth(attempt % 4).dispatchEvent("click")
+      await page.waitForTimeout(400)
+    }
+    await expect(finished(page)).toBeVisible({ timeout: 15_000 })
+  })
+}
 
 test("Game: Cari Pasangan sampai semua kartu cocok", async ({ page }) => {
   await page.getByRole("button", { name: /Cari Pasangan/ }).click()
