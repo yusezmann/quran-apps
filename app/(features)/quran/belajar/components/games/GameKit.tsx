@@ -131,10 +131,10 @@ export function GameFinish({
           className="mx-auto flex flex-col items-center rounded-3xl border-4 border-dashed border-amber-300 bg-amber-50 px-8 py-4"
         >
           <span className="text-sm font-bold uppercase tracking-wide text-amber-700">Stiker baru!</span>
-          <span className="animate-bounce-in text-7xl" style={{ animationDelay: "0.6s" }}>
+          <span className="mt-2 animate-bounce-in text-7xl leading-none" style={{ animationDelay: "0.6s" }}>
             {STICKERS[newSticker][0]}
           </span>
-          <span className="font-semibold text-amber-900">{STICKERS[newSticker][1]}</span>
+          <span className="mt-1 font-semibold text-amber-900">{STICKERS[newSticker][1]}</span>
         </button>
       )}
 

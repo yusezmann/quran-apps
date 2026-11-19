@@ -23,6 +23,9 @@ interface BelajarProgress {
   /** catat satu jawaban: `target` = huruf yang benar, `chosen` = yang dipilih anak */
   recordAttempt: (target: string, chosen: string) => void
   resetStats: () => void
+  /** nama panggilan anak (diisi orang tua) untuk sapaan di aplikasi anak */
+  childName: string
+  setChildName: (name: string) => void
   /** qari untuk hafalan surat pendek */
   qari: QariId
   setQari: (qari: QariId) => void
@@ -66,6 +69,8 @@ export const useBelajarProgress = create<BelajarProgress>()(
           }
         }),
       resetStats: () => set({ letterStats: {}, confusions: {} }),
+      childName: "",
+      setChildName: (name) => set({ childName: name.replace(/\s+/g, " ").trimStart().slice(0, 20) }),
       qari: "05",
       setQari: (qari) => set({ qari }),
       // simpan nilai terbaik

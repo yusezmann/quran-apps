@@ -59,6 +59,8 @@ export default function ParentReport({ onExit, onPlayOdd }: { onExit: () => void
   const confusions = useBelajarProgress((s) => s.confusions)
   const activeDays = useBelajarProgress((s) => s.activeDays)
   const resetStats = useBelajarProgress((s) => s.resetStats)
+  const childName = useBelajarProgress((s) => s.childName)
+  const setChildName = useBelajarProgress((s) => s.setChildName)
   const totalStars = useTotalStars()
   const [confirmReset, setConfirmReset] = useState(false)
 
@@ -83,6 +85,22 @@ export default function ParentReport({ onExit, onPlayOdd }: { onExit: () => void
         </button>
         <p className="text-sm font-semibold text-white">👨‍👩‍👧 Untuk Orang Tua</p>
       </div>
+
+      <Card title="Nama anak" note="Dipakai untuk menyapa anak di aplikasi Belajar Mengaji.">
+        <input
+          type="text"
+          value={childName}
+          onChange={(e) => setChildName(e.target.value)}
+          onBlur={(e) => setChildName(e.target.value.trim())}
+          placeholder="mis. Aisyah"
+          maxLength={20}
+          aria-label="Nama anak"
+          className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-lg focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-200"
+        />
+        <p className="mt-2 text-sm text-gray-500">
+          Pratinjau: <b className="text-gray-800">Assalamu&apos;alaikum{childName.trim() ? `, ${childName.trim()}` : ""}!</b>
+        </p>
+      </Card>
 
       <Card title="Ringkasan">
         <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">

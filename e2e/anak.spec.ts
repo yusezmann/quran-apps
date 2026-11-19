@@ -90,3 +90,19 @@ test("aplikasi anak: Angka Arab — kenal, hitung benda, dan kuis sampai selesai
   }
   await expect(finished).toBeVisible({ timeout: 15_000 })
 })
+
+test("aplikasi anak: sapaan memakai nama anak yang diisi orang tua", async ({ page }) => {
+  await page.goto("/anak")
+  await expect(page.getByRole("heading", { name: "Assalamu'alaikum!" })).toBeVisible()
+  const gate = page.getByRole("button", { name: /Untuk orang tua/ })
+  const box = (await gate.boundingBox())!
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+  await page.mouse.down()
+  await page.waitForTimeout(3300)
+  await page.mouse.up()
+  await page.getByRole("textbox", { name: "Nama anak" }).fill("Aisyah")
+  await page.getByRole("button", { name: "Kembali" }).click()
+  await expect(page.getByRole("heading", { name: "Assalamu'alaikum, Aisyah!" })).toBeVisible()
+  await page.reload()
+  await expect(page.getByRole("heading", { name: "Assalamu'alaikum, Aisyah!" })).toBeVisible() // tersimpan
+})

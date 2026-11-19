@@ -4,6 +4,7 @@ import { useEffect } from "react"
 import BelajarApp from "@/app/(features)/quran/belajar/components/BelajarApp"
 import { RECORDED_AUDIO } from "@/lib/belajar/recorded-audio"
 import KidBackground from "./KidBackground"
+import { useBelajarProgress } from "@/lib/belajar/progress"
 
 /**
  * Beranda aplikasi anak "Belajar Mengaji" (/anak).
@@ -11,6 +12,7 @@ import KidBackground from "./KidBackground"
  * (kecuali hafalan surat yang memutar audio qari dari internet).
  */
 export default function AnakPage() {
+  const childName = useBelajarProgress((s) => s.childName.trim())
   useEffect(() => {
     registerOfflineSupport()
   }, [])
@@ -21,7 +23,9 @@ export default function AnakPage() {
 
       <header className="relative z-10 px-4 pb-4 pt-[max(1.5rem,env(safe-area-inset-top))] text-center text-white">
         <p className="text-sm font-semibold uppercase tracking-widest text-white/80">Belajar Mengaji</p>
-        <h1 className="mt-1 text-3xl font-bold drop-shadow sm:text-4xl">Assalamu&apos;alaikum! 👋</h1>
+        <h1 className="mt-1 text-3xl font-bold drop-shadow sm:text-4xl">
+          Assalamu&apos;alaikum{childName ? `, ${childName}` : ""}!
+        </h1>
         <p className="mt-1 text-white/90">Ayo belajar & bermain hari ini</p>
       </header>
 
