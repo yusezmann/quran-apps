@@ -93,3 +93,15 @@ export async function fetchChapterAudio(reciterId: number, chapter: number): Pro
   }
   return { url: file.audio_url, verses }
 }
+
+/**
+ * URL audio per ayat untuk satu surat (dipakai tab Baca: memutar ayat demi ayat).
+ * Kunci = nomor ayat. URL relatif Quran.com dilengkapi ke verses.quran.com.
+ */
+export async function fetchAyahAudio(reciterId: number, chapter: number): Promise<Record<number, string>> {
+  const res = await fetch(`https://api.quran.com/api/v4/recitations/${reciterId}/by_chapter/${chapter}?per_page=300`)
+  if (!res.ok) throw new Error(`Gagal memuat audio ayat (${res.status})`)
+  const data = (await res.json()) as { audio_files: Array<{ verse_key: string; url: string }> }
+  const full = (u: string) => (u.startsWith("//") ? `https:${u}` : u.startsWith("http") ? u : `https://verses.quran.com/${u}`)
+  return Object.fromEntries(data.audio_files.map((f) => [Number(f.verse_key.split(":")[1]), full(f.url)]))
+}

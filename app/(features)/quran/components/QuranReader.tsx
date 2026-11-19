@@ -14,7 +14,8 @@ import {
 import { Button, Card, Modal, Select } from "antd"
 import { LeftOutlined, RightOutlined } from "@ant-design/icons"
 import { FaBookOpen } from "react-icons/fa"
-import { QARI_OPTIONS } from "@/lib/quran/qari"
+import { HAFALAN_QARI, fetchAyahAudio } from "@/lib/belajar/recitation"
+import { useBelajarProgress } from "@/lib/belajar/progress"
 
 export default function QuranReader() {
   const currentSurah = useQuranStore((state) => state.currentSurah)
@@ -28,7 +29,9 @@ export default function QuranReader() {
     name: string
   } | null>(null)
 
-  const [selectedQari, setSelectedQari] = useState("05")
+  // Qari pilihan dipakai bersama di seluruh aplikasi (Baca, Hafalan, game Sambung Ayat); audio dari Quran.com
+  const selectedQari = useBelajarProgress((s) => s.hafalanQari)
+  const setSelectedQari = useBelajarProgress((s) => s.setHafalanQari)
   const {
     data: surah,
     isLoading,
@@ -37,6 +40,14 @@ export default function QuranReader() {
     queryKey: ["surah", currentSurah],
     queryFn: () => fetchSurah(currentSurah),
     enabled: !!currentSurah,
+    retry: 2,
+  })
+
+  const { data: ayahAudio } = useQuery({
+    queryKey: ["ayah-audio", selectedQari, currentSurah],
+    queryFn: () => fetchAyahAudio(selectedQari, currentSurah),
+    enabled: !!currentSurah,
+    staleTime: 30 * 24 * 60 * 60 * 1000,
     retry: 2,
   })
 
@@ -165,11 +176,11 @@ export default function QuranReader() {
         return
       }
 
-      const ayahAudio =
-        (ayah.audio as Record<string, string>)[selectedQari] || ""
+      // Audio qari pilihan (Quran.com); cadangan: audio Al-Afasi dari sumber lama bila belum termuat
+      const src = ayahAudio?.[ayahNumber] || (ayah.audio as Record<string, string>)["05"] || ""
 
-      if (ayahAudio) {
-        audioRef.current.src = ayahAudio
+      if (src) {
+        audioRef.current.src = src
         audioRef.current.play().catch((e) => {
           console.error("Error playing ayah audio:", e)
           setAudioError(
@@ -204,7 +215,8 @@ export default function QuranReader() {
         }
       }
     }
-  }, [currentAyah, surah])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentAyah, surah, ayahAudio])
 
   const stopAyah = () => {
     if (audioRef.current) {
@@ -296,9 +308,9 @@ export default function QuranReader() {
           <div className="w-full md:w-auto flex flex-col">
             <label className="text-sm font-medium text-gray-600">Qari:</label>
             <Select
-              defaultValue={selectedQari}
+              value={selectedQari}
               onChange={(value) => setSelectedQari(value)}
-              options={QARI_OPTIONS.map((o) => ({ label: o.label, value: o.value }))}
+              options={HAFALAN_QARI.map((o) => ({ label: o.note ? `${o.name} (${o.note})` : o.name, value: o.id }))}
               className="mt-1 w-full md:w-64"
               placeholder="Pilih Qari"
             />
@@ -377,6 +389,7 @@ export default function QuranReader() {
                   <Button
                     type="default"
                     shape="circle"
+                    aria-label={currentAyah === ayat.nomorAyat && isPlaying ? `Hentikan ayat ${ayat.nomorAyat}` : `Putar ayat ${ayat.nomorAyat}`}
                     onClick={() =>
                       currentAyah === ayat.nomorAyat && isPlaying
                         ? stopAyah()
