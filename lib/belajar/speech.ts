@@ -112,8 +112,14 @@ async function speak(text: string, audioId: string | undefined, wait: boolean): 
       await el.play()
       if (wait) await ended
       return "ok"
-    } catch {
-      // lanjut ke TTS
+    } catch (error) {
+      const name = (error as DOMException | undefined)?.name
+      // AbortError: bunyi ini disela bunyi berikutnya (mis. dua kartu diketuk cepat / soal baru diputar).
+      // NotAllowedError: browser menahan putar otomatis. Keduanya BUKAN tanda file/suara rusak —
+      // jangan beralih ke suara perangkat (yang memunculkan petunjuk "pasang suara Arab" secara keliru).
+      if (name === "AbortError") return "ok"
+      if (name === "NotAllowedError") return "error"
+      // selain itu (file gagal dimuat): lanjut ke TTS
     }
   }
 
