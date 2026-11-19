@@ -6,6 +6,8 @@
  * - Kode (/_next/static), font, ikon, dan suara huruf: dari simpanan dulu (nama file unik / tidak berubah).
  * - Data dari server lain (mis. audio qari hafalan surat) tidak disimpan.
  */
+// PENTING: naikkan versi ini setiap kali file suara/ikon diganti dengan NAMA YANG SAMA
+// (file tersebut disimpan "selamanya" di perangkat dan tidak diambil ulang dari server).
 const CACHE = "belajar-anak-v1"
 const SHELL = [
   "/anak",
