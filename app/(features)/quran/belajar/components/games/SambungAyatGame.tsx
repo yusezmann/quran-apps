@@ -166,9 +166,9 @@ export default function SambungAyatGame({
 
   const words = (ayah: number) => data?.words[ayah]?.words ?? []
 
-  /** Teks ayat per kata, kata yang sedang dibaca menyala */
+  /** Teks ayat per kata, kata yang sedang dibaca menyala. Ruang atas/bawah tegas agar harakat tinggi tidak menabrak label. */
   const AyahText = ({ ayah, size }: { ayah: number; size: string }) => (
-    <p dir="rtl" className={`font-tertiary leading-[2.1] text-gray-900 ${size}`}>
+    <p dir="rtl" className={`font-tertiary pb-[0.3em] pt-[0.55em] text-center leading-[2.1] text-gray-900 ${size}`}>
       {words(ayah).map((w, k) => (
         <span key={k}>
           <span
@@ -207,7 +207,7 @@ export default function SambungAyatGame({
 
       {/* Ayat soal */}
       <div className="rounded-3xl bg-white p-5 text-center shadow-lg">
-        <p className="text-sm font-semibold text-green-800">
+        <p className="mb-2 text-sm font-semibold text-green-800">
           {surahName(r.surah)} · ayat {r.ayah}
         </p>
         {phase !== "loading" && <AyahText ayah={r.ayah} size="text-3xl sm:text-4xl" />}
@@ -234,7 +234,7 @@ export default function SambungAyatGame({
                   isRight ? "border-green-500 bg-green-50" : isWrong ? "border-gray-200 opacity-40" : "border-gray-200"
                 } ${shake?.ayah === ayah ? "animate-wiggle" : ""}`}
               >
-                <p className="mb-1 text-sm font-bold text-gray-500">Pilihan {String.fromCharCode(65 + k)}</p>
+                <p className="mb-2 text-sm font-bold text-gray-500">Pilihan {String.fromCharCode(65 + k)}</p>
                 <AyahText ayah={ayah} size="text-2xl sm:text-3xl" />
                 <div className="mt-2 flex justify-center gap-3">
                   <button

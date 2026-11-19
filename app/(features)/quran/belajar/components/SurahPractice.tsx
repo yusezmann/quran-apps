@@ -282,7 +282,7 @@ export default function SurahPractice({ surahNumber, onExit }: { surahNumber: nu
             </p>
 
             {/* Ayat per kata: kata yang sedang dibaca menyala; ketuk kata untuk mendengarnya */}
-            <p dir="rtl" className="font-tertiary mt-5 text-4xl leading-[2.3] text-gray-900 md:text-5xl md:leading-[2.3]">
+            <p dir="rtl" className="font-tertiary mt-3 pb-[0.2em] pt-[0.45em] text-4xl leading-[2.3] text-gray-900 md:text-5xl md:leading-[2.3]">
               {(verseWords?.words ?? [current.teksArab]).map((w, i) => (
                 <span key={i}>
                   <button
