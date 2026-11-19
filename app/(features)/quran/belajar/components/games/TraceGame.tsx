@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import { RotateCcw, Volume2 } from "lucide-react"
-import type { Letter } from "@/lib/belajar/letters"
-import { pickTarget, sessionStars } from "@/lib/belajar/games"
+import { LETTERS, type Letter } from "@/lib/belajar/letters"
+import { NUMBERS, numberAudioId } from "@/lib/belajar/numbers"
+import { pickTarget, sessionStars, shuffle } from "@/lib/belajar/games"
 import { speakArabic } from "@/lib/belajar/speech"
 import { sfxCorrect } from "@/lib/belajar/sfx"
 import { GameFinish, GameFrame, RoundStars } from "./GameKit"
@@ -26,6 +27,34 @@ const NEED_COVER = 0.7
 const NEED_PART = 0.5
 const MAX_OUTSIDE = 0.3
 const GRID = 5
+
+/** Yang ditebalkan: huruf hijaiyah atau angka Arab */
+interface TraceItem {
+  id: string
+  char: string
+  nameAr: string
+  /** id file suara */
+  audioId: string
+  latin: string
+  color: string
+}
+type Kind = "huruf" | "angka"
+const KIND_WORD: Record<Kind, string> = { huruf: "huruf", angka: "angka" }
+
+const NUMBER_COLORS = ["#0ea5e9", "#f59e0b", "#ec4899", "#8b5cf6", "#ef4444", "#14b8a6", "#16a34a"]
+const letterItem = (l: Letter): TraceItem => ({ id: l.id, char: l.char, nameAr: l.nameAr, audioId: l.id, latin: l.latin, color: l.color })
+const numberItem = (n: (typeof NUMBERS)[number]): TraceItem => ({
+  id: `angka-${n.n}`,
+  char: n.numeral,
+  nameAr: n.nameAr,
+  audioId: numberAudioId(n.n),
+  latin: n.latin,
+  color: NUMBER_COLORS[n.n % NUMBER_COLORS.length],
+})
+const ALL_LETTERS = LETTERS.map(letterItem)
+const ALL_NUMBERS = NUMBERS.map(numberItem)
+/** Diingat selama aplikasi terbuka */
+let lastKind: Kind = "huruf"
 
 function pickLetters(pool: Letter[], fresh: Letter[], weak: Letter[]) {
   const out: Letter[] = []
@@ -88,24 +117,86 @@ const canvas2d = (w: number) => {
  * Tebalkan Huruf: anak menebalkan huruf abu-abu dengan jari. Melatih motorik halus & ingatan bentuk.
  * Tidak menilai urutan goresan (terlalu sulit untuk usia 5 tahun) — cukup menutupi huruf tanpa banyak keluar garis.
  */
-export default function TraceGame({
-  pool,
-  fresh,
-  weak,
-  onAgain,
-  onExit,
-  onStickers,
-}: {
+type GameProps = {
   pool: Letter[]
   fresh: Letter[]
   weak: Letter[]
   onAgain: () => void
   onExit: () => void
   onStickers: () => void
-}) {
-  const [letters] = useState(() => pickLetters(pool, fresh, weak))
+}
+
+/**
+ * Pilih apa yang ditebalkan: semua 28 huruf hijaiyah atau angka Arab ٠–١٠.
+ * Ketuk satu → mulai dari situ (lanjut berurutan); "Acak" → 5 acak (huruf: utamakan yang sedang/perlu dilatih).
+ */
+export default function TraceGame(props: GameProps) {
+  const [kind, setKind] = useState<Kind>(lastKind)
+  const [items, setItems] = useState<TraceItem[] | null>(null)
+  const all = kind === "angka" ? ALL_NUMBERS : ALL_LETTERS
+
+  if (items) return <TracePlay {...props} items={items} kind={kind} />
+
+  const startFrom = (i: number) => setItems(Array.from({ length: Math.min(COUNT, all.length) }, (_, k) => all[(i + k) % all.length]))
+  const startRandom = () =>
+    setItems(kind === "angka" ? shuffle(ALL_NUMBERS).slice(0, COUNT) : pickLetters(props.pool, props.fresh, props.weak).map(letterItem))
+
+  return (
+    <GameFrame title="Tebalkan" emoji="✍️" onExit={props.onExit} hint="Pilih yang mau ditebalkan ✍️">
+      <div className="grid grid-cols-2 gap-3">
+        {(
+          [
+            ["huruf", "بَ Huruf"],
+            ["angka", "١٢٣ Angka"],
+          ] as const
+        ).map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            aria-pressed={kind === value}
+            onClick={() => {
+              lastKind = value
+              setKind(value)
+            }}
+            className={`rounded-full py-3 text-lg font-bold shadow ${kind === value ? "bg-amber-400 text-amber-950 ring-2 ring-white" : "bg-white text-green-800"}`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      <button
+        type="button"
+        onClick={startRandom}
+        className="w-full rounded-2xl bg-green-600 py-3 text-lg font-bold text-white shadow-md active:scale-95"
+      >
+        🎲 Acak 5 {KIND_WORD[kind]}
+      </button>
+      <ul className={`grid gap-2 ${kind === "angka" ? "grid-cols-4 sm:grid-cols-6" : "grid-cols-4 sm:grid-cols-7"}`}>
+        {all.map((it, i) => (
+          <li key={it.id}>
+            <button
+              type="button"
+              aria-label={`Tebalkan ${it.latin}`}
+              onClick={() => startFrom(i)}
+              className="flex w-full flex-col items-center rounded-2xl border-2 border-white bg-white py-1 shadow active:scale-95"
+            >
+              <span dir="rtl" className="font-tertiary pb-[0.3em] pt-[0.15em] text-4xl leading-[1.2]" style={{ color: it.color }}>
+                {it.char}
+              </span>
+              <span className="text-[11px] font-semibold text-gray-500">{it.latin}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </GameFrame>
+  )
+}
+
+function TracePlay({ items, kind, onAgain, onExit, onStickers }: GameProps & { items: TraceItem[]; kind: Kind }) {
+  const [letters] = useState(items)
+  const word = KIND_WORD[kind]
   const [idx, setIdx] = useState(0)
-  const [results, setResults] = useState<Array<boolean | undefined>>(() => Array(COUNT).fill(undefined))
+  const [results, setResults] = useState<Array<boolean | undefined>>(() => Array(items.length).fill(undefined))
   const [cover, setCover] = useState(0)
   const [outside, setOutside] = useState(0)
   const [cleared, setCleared] = useState(false)
@@ -130,7 +221,7 @@ export default function TraceGame({
   const done = idx >= letters.length
   const letter = letters[idx]
 
-  const sayName = useCallback(() => letter && speakArabic(letter.nameAr, letter.id), [letter])
+  const sayName = useCallback(() => letter && speakArabic(letter.nameAr, letter.audioId), [letter])
 
   // Siapkan kanvas & masker huruf setiap ganti huruf
   useEffect(() => {
@@ -290,10 +381,10 @@ export default function TraceGame({
 
   if (done) {
     return (
-      <GameFrame title="Tebalkan Huruf" emoji="✍️" onExit={onExit}>
+      <GameFrame title={word === "angka" ? "Tebalkan Angka" : "Tebalkan Huruf"} emoji="✍️" onExit={onExit}>
         <GameFinish
-          stars={sessionStars(firstTry, COUNT)}
-          summary={`Huruf yang ditebalkan rapi: ${firstTry} dari ${COUNT}`}
+          stars={sessionStars(firstTry, letters.length)}
+          summary={`${word === "angka" ? "Angka" : "Huruf"} yang ditebalkan rapi: ${firstTry} dari ${letters.length}`}
           onAgain={onAgain}
           onExit={onExit}
           onStickers={onStickers}
@@ -307,18 +398,18 @@ export default function TraceGame({
 
   return (
     <GameFrame
-      title="Tebalkan Huruf"
+      title={word === "angka" ? "Tebalkan Angka" : "Tebalkan Huruf"}
       emoji="✍️"
       onExit={onExit}
       progress={<RoundStars results={results} current={idx} />}
       hint={
         success
-          ? `⭐ Bagus! Ini huruf ${letter.latin}`
+          ? `⭐ Bagus! Ini ${word} ${letter.latin}`
           : tooMessy
             ? "Pelan-pelan, ikuti garis abu-abu ya ✍️"
             : missingPart
               ? "Hampir! Masih ada bagian yang belum ditebalkan 👀"
-            : `Tebalkan huruf ${letter.latin} dengan jarimu ✍️`
+            : `Tebalkan ${word} ${letter.latin} dengan jarimu ✍️`
       }
     >
       <span ref={probeRef} className="font-tertiary sr-only" aria-hidden="true">
@@ -330,7 +421,7 @@ export default function TraceGame({
           ref={drawRef}
           width={L * PX}
           height={L * PX}
-          aria-label={`Kanvas menebalkan huruf ${letter.latin}`}
+          aria-label={`Kanvas menebalkan ${word} ${letter.latin}`}
           className="absolute inset-0 h-full w-full cursor-crosshair touch-none select-none"
           onPointerDown={onDown}
           onPointerMove={onMove}

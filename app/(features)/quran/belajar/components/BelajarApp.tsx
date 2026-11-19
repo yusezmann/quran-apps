@@ -24,7 +24,7 @@ const GAMES: Array<{ id: GameId; emoji: string; name: string; desc: string; bg: 
   { id: "balon", emoji: "🎈", name: "Pecah Balon", desc: "Dengar & pecahkan", bg: "from-sky-400 to-blue-500" },
   { id: "pasangan", emoji: "🃏", name: "Cari Pasangan", desc: "Ingat kartunya", bg: "from-pink-400 to-rose-500" },
   { id: "beda", emoji: "🔍", name: "Mana yang Beda?", desc: "Lihat titiknya", bg: "from-violet-400 to-purple-600" },
-  { id: "tebal", emoji: "✍️", name: "Tebalkan Huruf", desc: "Latih menulis", bg: "from-amber-400 to-orange-500" },
+  { id: "tebal", emoji: "✍️", name: "Tebalkan Huruf", desc: "Huruf & angka", bg: "from-amber-400 to-orange-500" },
   { id: "sambung", emoji: "🧩", name: "Sambung Ayat", desc: "Ayat berikutnya?", bg: "from-teal-400 to-emerald-600" },
 ]
 

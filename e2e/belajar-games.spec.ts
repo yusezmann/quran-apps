@@ -77,6 +77,7 @@ test("Game: Mana yang Beda sampai selesai, lalu stiker terbuka di buku stiker", 
 
 test("Game: Tebalkan Huruf — menebalkan mengikuti garis huruf dianggap berhasil", async ({ page }) => {
   await page.getByRole("button", { name: /Tebalkan Huruf/ }).click()
+  await page.getByRole("button", { name: "🎲 Acak 5 huruf" }).click()
   let successes = 0
   for (let n = 0; n < 5; n++) {
     await expect(page.getByText(/^Tebalkan huruf /)).toBeVisible({ timeout: 15_000 })
@@ -135,6 +136,7 @@ test("Laporan orang tua menampilkan huruf yang perlu dilatih & yang sering tertu
 
 test("Game: Tebalkan Huruf — coretan asal di seluruh kanvas tidak dianggap berhasil", async ({ page }) => {
   await page.getByRole("button", { name: /Tebalkan Huruf/ }).click()
+  await page.getByRole("button", { name: "🎲 Acak 5 huruf" }).click()
   await expect(page.getByText(/^Tebalkan huruf /)).toBeVisible({ timeout: 15_000 })
   await page.locator("canvas").first().evaluate((c) => c.scrollIntoView({ block: "center", behavior: "instant" }))
   await page.waitForTimeout(300)
@@ -159,6 +161,7 @@ test("Game: Tebalkan Huruf — coretan kasar di atas huruf 'Ain (dari laporan pe
   })
   await page.reload()
   await page.getByRole("button", { name: /Tebalkan Huruf/ }).click()
+  await page.getByRole("button", { name: "Tebalkan 'Ain" }).click() // semua huruf bisa dipilih langsung
   // Bentuk coretan dari screenshot pengguna (pecahan lebar kanvas)
   const strokes = [
     [[0.13, 0.25], [0.24, 0.3], [0.38, 0.39], [0.55, 0.49], [0.73, 0.7], [0.82, 0.82]],
@@ -171,10 +174,6 @@ test("Game: Tebalkan Huruf — coretan kasar di atas huruf 'Ain (dari laporan pe
   for (let i = 0; i < 40 && !tested; i++) {
     const hint = page.getByText(/^Tebalkan huruf /)
     await expect(hint.or(finished(page))).toBeVisible({ timeout: 15_000 })
-    if (await finished(page).isVisible()) {
-      await page.getByRole("button", { name: "Main lagi" }).click()
-      continue
-    }
     if (!((await hint.textContent()) ?? "").includes("'Ain")) {
       await page.getByRole("button", { name: "Lewati" }).click()
       await page.waitForTimeout(900)
@@ -193,4 +192,43 @@ test("Game: Tebalkan Huruf — coretan kasar di atas huruf 'Ain (dari laporan pe
     tested = true
   }
   expect(tested).toBe(true)
+})
+
+test("Game: Tebalkan — semua 28 huruf & 11 angka tersedia; angka ٣ bisa ditebalkan", async ({ page }) => {
+  test.setTimeout(120_000)
+  await page.getByRole("button", { name: /Tebalkan Huruf/ }).click()
+  await expect(page.getByRole("button", { name: /^Tebalkan / })).toHaveCount(28)
+  await page.getByRole("button", { name: "١٢٣ Angka" }).click()
+  await expect(page.getByRole("button", { name: /^Tebalkan / })).toHaveCount(11)
+  await page.getByRole("button", { name: "Tebalkan Salasatun" }).click()
+  await expect(page.getByText("Tebalkan angka Salasatun dengan jarimu ✍️")).toBeVisible({ timeout: 15_000 })
+  const guide = page.locator("canvas").first()
+  await guide.evaluate((c) => c.scrollIntoView({ block: "center", behavior: "instant" }))
+  await page.waitForTimeout(900)
+  const runs = await guide.evaluate((c: HTMLCanvasElement) => {
+    const d = c.getContext("2d")!.getImageData(0, 0, c.width, c.height).data
+    const out: Array<[number, number, number]> = []
+    for (let y = 0; y < c.height; y += 14) {
+      let start = -1
+      for (let x = 0; x <= c.width; x++) {
+        const on = x < c.width && d[(y * c.width + x) * 4 + 3] > 0
+        if (on && start < 0) start = x
+        if (!on && start >= 0) {
+          out.push([y, start, x - 1])
+          start = -1
+        }
+      }
+    }
+    return out
+  })
+  const box = (await guide.boundingBox())!
+  for (const [y, x0, x1] of runs) {
+    if (await page.getByText(/⭐ Bagus!/).isVisible()) break
+    await page.mouse.move(box.x + (x0 / 600) * box.width, box.y + (y / 600) * box.width)
+    await page.mouse.down()
+    await page.mouse.move(box.x + (x1 / 600) * box.width, box.y + (y / 600) * box.width, { steps: 4 })
+    await page.mouse.up()
+  }
+  await expect(page.getByText("⭐ Bagus! Ini angka Salasatun")).toBeVisible()
+  await page.screenshot({ path: "test-results/tebal-angka.png" })
 })
