@@ -95,7 +95,7 @@ export default function ParentReport({ onExit, onPlayOdd }: { onExit: () => void
           placeholder="mis. Aisyah"
           maxLength={20}
           aria-label="Nama anak"
-          className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-lg focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-200"
+          className="w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-lg text-gray-900 placeholder:text-gray-400 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-200"
         />
         <p className="mt-2 text-sm text-gray-500">
           Pratinjau: <b className="text-gray-800">Assalamu&apos;alaikum{childName.trim() ? `, ${childName.trim()}` : ""}!</b>

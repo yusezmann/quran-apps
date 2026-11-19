@@ -18,7 +18,7 @@ export default function AnakPage() {
   }, [])
 
   return (
-    <div className="relative min-h-screen select-none overflow-x-hidden bg-teal-600 [-webkit-tap-highlight-color:transparent]">
+    <div className="relative min-h-screen select-none overflow-x-hidden bg-teal-600 text-gray-900 [-webkit-tap-highlight-color:transparent]">
       <KidBackground />
 
       <header className="relative z-10 px-4 pb-4 pt-[max(1.5rem,env(safe-area-inset-top))] text-center text-white">
