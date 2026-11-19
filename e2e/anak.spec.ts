@@ -62,3 +62,31 @@ test("aplikasi anak: laporan orang tua hanya terbuka dengan tekan-tahan 3 detik"
   await page.mouse.up()
   await expect(page.getByRole("heading", { name: "Ringkasan" })).toBeVisible()
 })
+
+test("aplikasi anak: Angka Arab — kenal, hitung benda, dan kuis sampai selesai", async ({ page }) => {
+  test.setTimeout(180_000)
+  await page.goto("/anak")
+  await page.getByRole("button", { name: /Angka Arab/ }).click()
+  await expect(page.getByRole("button", { name: /^Angka \d+,/ })).toHaveCount(11)
+
+  // Hitung: ketuk semua benda → angka Arab hasil hitungan muncul
+  await page.getByRole("button", { name: "Hitung", exact: true }).click()
+  for (let k = 0; k < 12; k++) {
+    const left = page.getByRole("button", { name: "Benda belum dihitung" }).first()
+    if (!(await left.isVisible().catch(() => false))) break
+    await left.click()
+  }
+  await expect(page.getByText(/= .* ⭐/)).toBeVisible()
+
+  // Kuis: coba pilihan sampai benar di setiap ronde
+  await page.getByRole("button", { name: "Kuis" }).click()
+  const finished = page.getByText("MasyaAllah, hebat!")
+  for (let attempt = 0; attempt < 40 && !(await finished.isVisible()); attempt++) {
+    const open = page.locator('button[aria-label^="Pilih angka"]:not([disabled])').first()
+    await expect(open.or(finished)).toBeVisible({ timeout: 15_000 })
+    if (await finished.isVisible()) break
+    await open.click()
+    await page.waitForTimeout(300)
+  }
+  await expect(finished).toBeVisible({ timeout: 15_000 })
+})

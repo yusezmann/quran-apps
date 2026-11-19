@@ -16,6 +16,7 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, unlinkSync } from "node:fs"
 import { join } from "node:path"
 import { LESSONS, LETTERS, joinSyllables, pairAudioId, syllablePairs, withFathah } from "../lib/belajar/letters.ts"
+import { NUMBERS, numberAudioId } from "../lib/belajar/numbers.ts"
 
 const ROOT = process.cwd()
 const OUT_DIR = join(ROOT, "public/assets/belajar/audio")
@@ -46,6 +47,7 @@ const voice = args.find((a) => a.startsWith("--voice="))?.slice(8) ?? "ar-XA-Wav
  * File yang tidak tercantum memakai suara bawaan (D, pendek). Tidak berlaku bila --voice diisi.
  */
 const CHOICES: Record<string, string> = {
+  ...Object.fromEntries(Array.from({ length: 11 }, (_, n) => [`angka-${n}`, "A"])),
   // nama huruf
   alif: "A", ba: "A", jim: "A", kho: "A", dal: "A", ro: "A", zai: "A", sin: "A", syin: "A", dhod: "A",
   tho: "A", ain: "A", ghoin: "A", qof: "A", lam: "A", nun: "A", wau: "A", ha2: "A", ya: "A",
@@ -96,6 +98,8 @@ async function main() {
         })),
       ),
     )
+    // Angka Arab 0–10 (suara perempuan A, paling banyak dipilih saat uji dengar huruf)
+    .concat(NUMBERS.map((n) => ({ id: numberAudioId(n.n), text: n.nameAr, label: `${n.n} ${n.latin} (angka)` })))
     .filter((j, i, all) => all.findIndex((x) => x.id === j.id) === i)
     .filter((j) => !only || only.includes(j.id.replace(/-fathah$/, "")))
 

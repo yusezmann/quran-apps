@@ -10,6 +10,7 @@ import OddOneGame from "./games/OddOneGame"
 import StickerBook from "./games/StickerBook"
 import TraceGame from "./games/TraceGame"
 import ParentReport from "./ParentReport"
+import NumbersView from "./NumbersView"
 import { LESSONS } from "@/lib/belajar/letters"
 import { isLessonUnlocked, useBelajarProgress, useTotalStars } from "@/lib/belajar/progress"
 import { STICKERS, gamePool, highestUnlocked, stickerCount } from "@/lib/belajar/games"
@@ -55,6 +56,7 @@ type View =
   | { kind: "game"; game: GameId; session: number }
   | { kind: "stickers" }
   | { kind: "parent" }
+  | { kind: "angka" }
 
 /**
  * Seluruh fitur "Belajar" (pelajaran huruf, game, hafalan, stiker, laporan orang tua).
@@ -289,6 +291,7 @@ export default function BelajarApp({ variant }: { variant: "tab" | "kid" }) {
       {view.kind === "lesson" && <LessonView lessonIndex={view.index} onExit={() => navigate(backTo("huruf"))} />}
       {view.kind === "surah" && <SurahPractice surahNumber={view.number} onExit={() => navigate(backTo("hafalan"))} />}
       {view.kind === "stickers" && <StickerBook onExit={goHome} />}
+      {view.kind === "angka" && <NumbersView onExit={goHome} onStickers={() => navigate({ kind: "stickers" })} />}
       {view.kind === "parent" && (
         <ParentReport onExit={goHome} onPlayOdd={() => navigate({ kind: "game", game: "beda", session: 0 })} />
       )}
@@ -337,12 +340,29 @@ export default function BelajarApp({ variant }: { variant: "tab" | "kid" }) {
             memorized={memorized.length}
             onOpen={(section) => navigate({ kind: "section", section })}
             onStickers={() => navigate({ kind: "stickers" })}
+            onNumbers={() => navigate({ kind: "angka" })}
             onParent={() => navigate({ kind: "parent" })}
           />
         ) : (
           <div className="space-y-8">
             {gamesSection}
             {lessonsSection}
+            <button
+              type="button"
+              onClick={() => navigate({ kind: "angka" })}
+              className="flex w-full items-center gap-4 rounded-3xl bg-white p-5 text-left shadow-lg hover:bg-gray-50"
+            >
+              <span dir="rtl" className="font-tertiary pb-[0.2em] text-4xl leading-[1.2] text-emerald-700" aria-hidden="true">
+                ١٢٣
+              </span>
+              <span className="flex-1 leading-tight">
+                <span className="block text-lg font-bold text-gray-900">Mengenal Angka Arab</span>
+                <span className="text-sm text-gray-500">٠ sampai ١٠ · kenal, hitung, kuis</span>
+              </span>
+              <span className="text-2xl text-gray-400" aria-hidden="true">
+                ›
+              </span>
+            </button>
             {surahSection}
 
             {/* Untuk orang tua */}
@@ -384,6 +404,7 @@ function KidHome({
   memorized,
   onOpen,
   onStickers,
+  onNumbers,
   onParent,
 }: {
   lessonNumber: number
@@ -392,30 +413,37 @@ function KidHome({
   memorized: number
   onOpen: (section: Section) => void
   onStickers: () => void
+  onNumbers: () => void
   onParent: () => void
 }) {
   const tiles: Array<{ key: string; emoji: string; name: string; info: string; bg: string; onClick: () => void }> = [
     { key: "huruf", emoji: "📖", name: "Belajar Huruf", info: `Pelajaran ${lessonNumber}`, bg: "from-emerald-400 to-green-600", onClick: () => onOpen("huruf") },
     { key: "game", emoji: "🎮", name: "Main Game", info: "4 permainan", bg: "from-sky-400 to-blue-600", onClick: () => onOpen("game") },
+    { key: "angka", emoji: "🔢", name: "Angka Arab", info: "١٢٣", bg: "from-rose-400 to-pink-600", onClick: onNumbers },
     { key: "hafalan", emoji: "🎧", name: "Hafalan Surat", info: `${memorized} surat hafal`, bg: "from-violet-400 to-purple-600", onClick: () => onOpen("hafalan") },
     { key: "stiker", emoji: "📒", name: "Buku Stiker", info: `${stickers} dari ${STICKERS.length}`, bg: "from-amber-400 to-orange-500", onClick: onStickers },
   ]
   return (
     <div className="space-y-6">
       {/* Potret: 2×2; mendatar (tablet diputar): satu baris agar semua terlihat tanpa menggulir */}
-      <ul className="grid grid-cols-2 gap-4 landscape:grid-cols-4">
-        {tiles.map((t) => (
-          <li key={t.key}>
+      <ul className="grid grid-cols-2 gap-4 landscape:grid-cols-5">
+        {tiles.map((t, i) => (
+          <li key={t.key} className={i === tiles.length - 1 ? "col-span-2 landscape:col-span-1" : ""}>
             <button
               type="button"
               onClick={t.onClick}
-              className={`flex aspect-square w-full flex-col items-center justify-center gap-2 rounded-[2rem] bg-gradient-to-br ${t.bg} p-4 text-white shadow-xl ring-4 ring-white/40 transition-transform hover:scale-[1.02] active:scale-95`}
+              className={`flex w-full items-center justify-center gap-2 rounded-[2rem] ${
+                // ubin terakhir di potret selebar 2 kolom: mendatar & pendek (emoji di kiri)
+                i === tiles.length - 1 ? "flex-row gap-5 py-5 landscape:aspect-square landscape:flex-col landscape:gap-2" : "aspect-square flex-col"
+              } bg-gradient-to-br ${t.bg} p-4 text-white shadow-xl ring-4 ring-white/40 transition-transform hover:scale-[1.02] active:scale-95`}
             >
               <span className="text-7xl drop-shadow sm:text-8xl landscape:sm:text-7xl" aria-hidden="true">
                 {t.emoji}
               </span>
-              <span className="text-xl font-bold leading-tight sm:text-2xl">{t.name}</span>
-              <span className="rounded-full bg-white/25 px-3 py-0.5 text-sm font-semibold">{t.info}</span>
+              <span className="flex flex-col items-center gap-2">
+                <span className="text-xl font-bold leading-tight sm:text-2xl landscape:sm:text-lg">{t.name}</span>
+                <span className="rounded-full bg-white/25 px-3 py-0.5 text-sm font-semibold">{t.info}</span>
+              </span>
             </button>
           </li>
         ))}
