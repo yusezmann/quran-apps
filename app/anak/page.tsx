@@ -3,6 +3,7 @@
 import { useEffect } from "react"
 import BelajarApp from "@/app/(features)/quran/belajar/components/BelajarApp"
 import { RECORDED_AUDIO } from "@/lib/belajar/recorded-audio"
+import KidBackground from "./KidBackground"
 
 /**
  * Beranda aplikasi anak "Belajar Mengaji" (/anak).
@@ -15,14 +16,8 @@ export default function AnakPage() {
   }, [])
 
   return (
-    <div className="relative min-h-screen select-none overflow-x-hidden bg-gradient-to-b from-emerald-500 via-teal-500 to-sky-500 [-webkit-tap-highlight-color:transparent]">
-      {/* Hiasan bintang & bulan, tipis agar tidak mengganggu */}
-      <div aria-hidden="true" className="pointer-events-none fixed inset-0 overflow-hidden">
-        <span className="absolute left-[6%] top-[6%] text-5xl opacity-30">🌙</span>
-        <span className="absolute right-[8%] top-[3%] text-3xl opacity-30">⭐</span>
-        <span className="absolute bottom-[10%] left-[10%] text-3xl opacity-25">✨</span>
-        <span className="absolute bottom-[18%] right-[6%] text-4xl opacity-25">☁️</span>
-      </div>
+    <div className="relative min-h-screen select-none overflow-x-hidden bg-teal-600 [-webkit-tap-highlight-color:transparent]">
+      <KidBackground />
 
       <header className="relative z-10 px-4 pb-4 pt-[max(1.5rem,env(safe-area-inset-top))] text-center text-white">
         <p className="text-sm font-semibold uppercase tracking-widest text-white/80">Belajar Mengaji</p>

@@ -58,6 +58,10 @@ const config: Config = {
           "50%": { transform: "scale(1.35)", opacity: "0.8" },
           "100%": { transform: "scale(0)", opacity: "0" },
         },
+        twinkle: {
+          "0%, 100%": { opacity: "0.9" },
+          "50%": { opacity: "0.35" },
+        },
         "bounce-in": {
           "0%": { transform: "scale(0.3)", opacity: "0" },
           "60%": { transform: "scale(1.15)", opacity: "1" },
@@ -68,6 +72,7 @@ const config: Config = {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "float-up": "float-up 10s linear infinite",
+        twinkle: "twinkle 3.2s ease-in-out infinite",
         sway: "sway 2.4s ease-in-out infinite",
         wiggle: "wiggle 0.5s ease-in-out",
         pop: "pop 0.35s ease-out forwards",
