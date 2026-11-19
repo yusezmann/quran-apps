@@ -44,12 +44,25 @@ export default function SurahPractice({ surahNumber, onExit }: { surahNumber: nu
   const [rate, setRate] = useState(1)
   const [playing, setPlaying] = useState(false)
   const [activeWord, setActiveWord] = useState(-1)
+  /** "tirukan": setelah tiap ayat berhenti sejenak agar anak menirukan (talaqqi) */
+  const [method, setMethod] = useState<"tirukan" | "dengar">("tirukan")
+  const [turn, setTurn] = useState<{ ms: number; key: number } | null>(null)
+  const turnTimer = useRef<number | null>(null)
 
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const rafRef = useRef<number | null>(null)
   // Nilai terbaru untuk dibaca di dalam loop animasi (tanpa menunggu render)
-  const live = useRef({ ayahIndex: 0, repeat: 3, played: 0, mode: "verse" as "verse" | "word", wordEnd: 0, timing: null as ChapterAudio | null })
+  const live = useRef({
+    ayahIndex: 0,
+    repeat: 3,
+    played: 0,
+    mode: "verse" as "verse" | "word",
+    wordEnd: 0,
+    talaqqi: true,
+    timing: null as ChapterAudio | null,
+  })
   live.current.repeat = repeat
+  live.current.talaqqi = method === "tirukan"
   live.current.timing = audioQ.data ?? null
 
   const surah = surahQ.data
@@ -65,7 +78,14 @@ export default function SurahPractice({ surahNumber, onExit }: { surahNumber: nu
     rafRef.current = null
   }
 
+  const clearTurn = () => {
+    if (turnTimer.current) window.clearTimeout(turnTimer.current)
+    turnTimer.current = null
+    setTurn(null)
+  }
+
   const stop = useCallback(() => {
+    clearTurn()
     stopLoop()
     audioRef.current?.pause()
     setPlaying(false)
@@ -143,6 +163,28 @@ export default function SurahPractice({ surahNumber, onExit }: { surahNumber: nu
   }
 
   const onVerseEnd = () => {
+    const state = live.current
+    if (state.talaqqi) {
+      // Giliran anak menirukan: jeda ≈ panjang ayat (+1 dtk), 2,5–15 dtk
+      const verse = state.timing?.verses[ayatNumber(state.ayahIndex)]
+      const speed = audioRef.current?.playbackRate || 1
+      const ms = Math.min(15000, Math.max(2500, (verse ? (verse.to - verse.from) / speed : 3000) + 1000))
+      audioRef.current?.pause()
+      stopLoop()
+      setActiveWord(-1)
+      setTurn({ ms, key: Date.now() })
+      turnTimer.current = window.setTimeout(() => {
+        turnTimer.current = null
+        setTurn(null)
+        afterVerse()
+      }, ms)
+      return
+    }
+    afterVerse()
+  }
+
+  /** Setelah ayat (dan giliran menirukan): ulangi ayat, lanjut ke ayat berikutnya, atau selesai. */
+  const afterVerse = () => {
     const state = live.current
     state.played += 1
     if (state.played < state.repeat) {
@@ -261,6 +303,22 @@ export default function SurahPractice({ surahNumber, onExit }: { surahNumber: nu
                 </span>
               )}
             </p>
+            {turn && (
+              <div className="mx-auto mt-3 max-w-md rounded-2xl bg-amber-50 p-3 ring-2 ring-amber-300" role="status">
+                <p className="text-lg font-bold text-amber-900">Giliranmu! 🎤 Tirukan ayat ini</p>
+                <TurnBar key={turn.key} ms={turn.ms} />
+                <button
+                  type="button"
+                  onClick={() => {
+                    clearTurn()
+                    afterVerse()
+                  }}
+                  className="mt-2 rounded-full bg-amber-400 px-4 py-1.5 text-sm font-bold text-amber-950 hover:bg-amber-300"
+                >
+                  Sudah, lanjut ➜
+                </button>
+              </div>
+            )}
             <p className="mt-4 text-sm italic text-amber-700">{current.teksLatin}</p>
             <p className="mt-2 text-sm text-gray-600">{current.teksIndonesia}</p>
 
@@ -365,6 +423,33 @@ export default function SurahPractice({ surahNumber, onExit }: { surahNumber: nu
               </div>
             </div>
             <div className="sm:col-span-2">
+              <p className="mb-2 font-semibold text-gray-700">Cara belajar</p>
+              <div className="flex gap-2">
+                {(
+                  [
+                    ["tirukan", "Dengar lalu tirukan 🎤"],
+                    ["dengar", "Dengar saja"],
+                  ] as const
+                ).map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    aria-pressed={method === value}
+                    onClick={() => {
+                      setMethod(value)
+                      if (value === "dengar" && turn) {
+                        clearTurn()
+                        afterVerse()
+                      }
+                    }}
+                    className={`flex-1 rounded-full py-2 font-semibold ${method === value ? "bg-green-600 text-white" : "bg-gray-100 text-gray-700"}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="sm:col-span-2">
               <p className="mb-2 font-semibold text-gray-700">Qari</p>
               <div className="flex flex-wrap gap-2" role="group" aria-label="Pilih qari">
                 {HAFALAN_QARI.map((o) => (
@@ -388,6 +473,23 @@ export default function SurahPractice({ surahNumber, onExit }: { surahNumber: nu
           </div>
         </>
       )}
+    </div>
+  )
+}
+
+/** Bilah waktu giliran menirukan: menyusut dari penuh ke kosong selama `ms`. */
+function TurnBar({ ms }: { ms: number }) {
+  const [shrink, setShrink] = useState(false)
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setShrink(true))
+    return () => cancelAnimationFrame(id)
+  }, [])
+  return (
+    <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-amber-200" aria-hidden="true">
+      <div
+        className="h-full rounded-full bg-amber-500"
+        style={{ width: shrink ? "0%" : "100%", transition: `width ${ms}ms linear` }}
+      />
     </div>
   )
 }

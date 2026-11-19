@@ -80,3 +80,38 @@ test("Hafalan: kata yang sedang dibaca menyala mengikuti audio qari", async ({ p
   expect(seen.size).toBeGreaterThanOrEqual(3) // berpindah dari kata ke kata
   await page.screenshot({ path: "test-results/hafalan-highlight.png" })
 })
+
+test("Hafalan: mode 'Dengar lalu tirukan' memberi giliran anak setelah tiap ayat", async ({ page }) => {
+  test.setTimeout(120_000)
+  await page.goto("/quran/belajar")
+  await page.getByRole("button", { name: "An-Nas 6 ayat" }).click()
+  await expect(page.getByText("Ayat 1 dari 6")).toBeVisible({ timeout: 30_000 })
+  await expect(page.getByRole("button", { name: "Dengar lalu tirukan 🎤" })).toHaveAttribute("aria-pressed", "true")
+  await page.getByRole("button", { name: "1×" }).click()
+  await page.getByRole("button", { name: "Putar" }).click()
+  await expect(page.getByText("Giliranmu! 🎤 Tirukan ayat ini")).toBeVisible({ timeout: 20_000 })
+  await expect(page.getByText("Ayat 1 dari 6")).toBeVisible() // belum pindah selama giliran anak
+  await page.screenshot({ path: "test-results/talaqqi.png" })
+  await page.getByRole("button", { name: "Sudah, lanjut ➜" }).click()
+  await expect(page.getByText("Ayat 2 dari 6")).toBeVisible()
+})
+
+test("Game Sambung Ayat: dengar ayat, pilih ayat berikutnya sampai selesai", async ({ page }) => {
+  test.setTimeout(300_000)
+  await page.goto("/quran/belajar")
+  await page.getByRole("button", { name: /Sambung Ayat/ }).click()
+  const finished = page.getByText("MasyaAllah, hebat!")
+  let shot = false
+  for (let attempt = 0; attempt < 30 && !(await finished.isVisible()); attempt++) {
+    const open = page.locator('button[aria-label^="Pilih "]:not([disabled])').first()
+    await expect(open.or(finished)).toBeVisible({ timeout: 40_000 })
+    if (await finished.isVisible()) break
+    if (!shot) {
+      await page.screenshot({ path: "test-results/sambung-ayat.png", fullPage: true })
+      shot = true
+    }
+    await open.click()
+    await page.waitForTimeout(500)
+  }
+  await expect(finished).toBeVisible({ timeout: 40_000 })
+})

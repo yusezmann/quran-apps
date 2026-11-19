@@ -11,39 +11,21 @@ import StickerBook from "./games/StickerBook"
 import TraceGame from "./games/TraceGame"
 import ParentReport from "./ParentReport"
 import NumbersView from "./NumbersView"
+import SambungAyatGame from "./games/SambungAyatGame"
+import { SHORT_SURAHS } from "@/lib/belajar/surahs"
 import { LESSONS } from "@/lib/belajar/letters"
 import { isLessonUnlocked, useBelajarProgress, useTotalStars } from "@/lib/belajar/progress"
 import { STICKERS, gamePool, highestUnlocked, stickerCount } from "@/lib/belajar/games"
 import { NO_VOICE_EVENT, hasArabicVoice, openTtsInstall, speakArabic } from "@/lib/belajar/speech"
 
-/** Surat pendek untuk anak: Al-Fatihah lalu juz 30 dari yang terpendek. */
-const SHORT_SURAHS: Array<[number, string, number]> = [
-  [1, "Al-Fatihah", 7],
-  [114, "An-Nas", 6],
-  [113, "Al-Falaq", 5],
-  [112, "Al-Ikhlas", 4],
-  [111, "Al-Lahab", 5],
-  [110, "An-Nasr", 3],
-  [109, "Al-Kafirun", 6],
-  [108, "Al-Kautsar", 3],
-  [107, "Al-Ma'un", 7],
-  [106, "Quraisy", 4],
-  [105, "Al-Fil", 5],
-  [104, "Al-Humazah", 9],
-  [103, "Al-'Asr", 3],
-  [102, "At-Takatsur", 8],
-  [101, "Al-Qari'ah", 11],
-  [100, "Al-'Adiyat", 11],
-  [99, "Az-Zalzalah", 8],
-]
-
-type GameId = "balon" | "pasangan" | "beda" | "tebal"
+type GameId = "balon" | "pasangan" | "beda" | "tebal" | "sambung"
 
 const GAMES: Array<{ id: GameId; emoji: string; name: string; desc: string; bg: string }> = [
   { id: "balon", emoji: "🎈", name: "Pecah Balon", desc: "Dengar & pecahkan", bg: "from-sky-400 to-blue-500" },
   { id: "pasangan", emoji: "🃏", name: "Cari Pasangan", desc: "Ingat kartunya", bg: "from-pink-400 to-rose-500" },
   { id: "beda", emoji: "🔍", name: "Mana yang Beda?", desc: "Lihat titiknya", bg: "from-violet-400 to-purple-600" },
   { id: "tebal", emoji: "✍️", name: "Tebalkan Huruf", desc: "Latih menulis", bg: "from-amber-400 to-orange-500" },
+  { id: "sambung", emoji: "🧩", name: "Sambung Ayat", desc: "Ayat berikutnya?", bg: "from-teal-400 to-emerald-600" },
 ]
 
 type Section = "huruf" | "game" | "hafalan"
@@ -135,7 +117,7 @@ export default function BelajarApp({ variant }: { variant: "tab" | "kid" }) {
         </h2>
         <p className="text-sm text-gray-500">Kumpulkan bintang untuk membuka stiker</p>
       </div>
-      <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         {GAMES.map((g) => (
           <li key={g.id}>
             <button
@@ -309,6 +291,8 @@ export default function BelajarApp({ variant }: { variant: "tab" | "kid" }) {
           if (view.game === "balon") return <BalloonGame key={key} {...props} />
           if (view.game === "pasangan") return <MemoryGame key={key} {...props} />
           if (view.game === "tebal") return <TraceGame key={key} {...props} />
+          if (view.game === "sambung")
+            return <SambungAyatGame key={key} onAgain={props.onAgain} onExit={props.onExit} onStickers={props.onStickers} />
           return <OddOneGame key={key} {...props} />
         })()}
 
@@ -418,7 +402,7 @@ function KidHome({
 }) {
   const tiles: Array<{ key: string; emoji: string; name: string; info: string; bg: string; onClick: () => void }> = [
     { key: "huruf", emoji: "📖", name: "Belajar Huruf", info: `Pelajaran ${lessonNumber}`, bg: "from-emerald-400 to-green-600", onClick: () => onOpen("huruf") },
-    { key: "game", emoji: "🎮", name: "Main Game", info: "4 permainan", bg: "from-sky-400 to-blue-600", onClick: () => onOpen("game") },
+    { key: "game", emoji: "🎮", name: "Main Game", info: `${GAMES.length} permainan`, bg: "from-sky-400 to-blue-600", onClick: () => onOpen("game") },
     { key: "angka", emoji: "🔢", name: "Angka Arab", info: "١٢٣", bg: "from-rose-400 to-pink-600", onClick: onNumbers },
     { key: "hafalan", emoji: "🎧", name: "Hafalan Surat", info: `${memorized} surat hafal`, bg: "from-violet-400 to-purple-600", onClick: () => onOpen("hafalan") },
     { key: "stiker", emoji: "📒", name: "Buku Stiker", info: `${stickers} dari ${STICKERS.length}`, bg: "from-amber-400 to-orange-500", onClick: onStickers },
