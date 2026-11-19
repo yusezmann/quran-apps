@@ -47,3 +47,4 @@ next-env.d.ts
 *.jks
 *.keystore
 keystore.base64.txt
+/.next-build/

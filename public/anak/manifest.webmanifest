@@ -1,0 +1,19 @@
+{
+  "id": "/anak",
+  "name": "Belajar Mengaji",
+  "short_name": "Belajar Mengaji",
+  "description": "Belajar huruf hijaiyah, main game, dan hafalan surat pendek untuk anak",
+  "lang": "id",
+  "start_url": "/anak",
+  "scope": "/anak",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#10b981",
+  "theme_color": "#059669",
+  "categories": ["education", "kids"],
+  "icons": [
+    { "src": "/anak/icons/icon-192.png", "type": "image/png", "sizes": "192x192", "purpose": "any" },
+    { "src": "/anak/icons/icon-512.png", "type": "image/png", "sizes": "512x512", "purpose": "any" },
+    { "src": "/anak/icons/icon-maskable-512.png", "type": "image/png", "sizes": "512x512", "purpose": "maskable" }
+  ]
+}

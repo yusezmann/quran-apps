@@ -8,6 +8,7 @@ import AdzanManager from "@/app/(features)/adzan/components/AdzanManager"
 import AdzanBanner from "@/app/(features)/adzan/components/AdzanBanner"
 import AdzanSettingsModal from "@/app/(features)/adzan/components/AdzanSettingsModal"
 import AutoLocationManager from "@/components/AutoLocationManager"
+import AdultOnly from "@/components/AdultOnly"
 
 /*
  * Font disimpan di dalam proyek (app/fonts/google, lisensi OFL — lihat OFL-LICENSES.txt), bukan diunduh
@@ -101,11 +102,14 @@ export default function RootLayout({
         <QueryProvider>
           <AntdProvider>
             {children}
-            {/* Adzan aktif di semua halaman: penjadwal, banner saat adzan, dan pengaturan */}
-            <AdzanManager />
-            <AdzanBanner />
-            <AdzanSettingsModal />
-            <AutoLocationManager />
+            {/* Adzan aktif di semua halaman: penjadwal, banner saat adzan, dan pengaturan.
+                Tidak dijalankan di aplikasi anak (/anak). */}
+            <AdultOnly>
+              <AdzanManager />
+              <AdzanBanner />
+              <AdzanSettingsModal />
+              <AutoLocationManager />
+            </AdultOnly>
           </AntdProvider>
         </QueryProvider>
         <Toaster />
