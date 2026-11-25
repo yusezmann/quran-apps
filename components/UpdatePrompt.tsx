@@ -12,8 +12,12 @@ const LATEST_RELEASE_API = "https://api.github.com/repos/yusezmann/quran-apps/re
 const APK_URL = "https://github.com/yusezmann/quran-apps/releases/latest/download/quran-apps.apk"
 const CHECK_KEY = "quran-apps:update-check"
 const DISMISS_KEY = "quran-apps:update-dismissed"
-/** Cek paling sering tiap 3 jam (API GitHub dibatasi 60 permintaan/jam per IP). */
-const CHECK_EVERY_MS = 3 * 60 * 60 * 1000
+/**
+ * Saat aplikasi BARU DIBUKA selalu dicek ke GitHub; saat kembali dari latar belakang paling sering tiap 30 menit
+ * (API GitHub dibatasi 60 permintaan/jam per IP). Dulu hasil "belum ada versi baru" disimpan 3 jam sehingga
+ * versi yang terbit dalam jeda itu tidak terdeteksi.
+ */
+const CHECK_EVERY_MS = 30 * 60 * 1000
 /** "Nanti saja" menyembunyikan versi yang sama selama 1 hari. */
 const SNOOZE_MS = 24 * 60 * 60 * 1000
 
@@ -32,10 +36,16 @@ const write = (key: string, value: unknown) => {
   }
 }
 
-/** Versi terbaru di GitHub Releases (pakai simpanan bila baru dicek). */
-async function latestVersion(): Promise<string | null> {
+/**
+ * Versi terbaru di GitHub Releases. Simpanan hanya dipakai bila `allowCache` (kembali dari latar belakang)
+ * DAN masih baru DAN sudah lebih baru dari versi terpasang — "tidak ada pembaruan" tidak pernah disimpan lama.
+ */
+async function latestVersion(current: string, allowCache: boolean): Promise<string | null> {
   const cached = read<{ version: string; at: number }>(CHECK_KEY)
-  if (cached && Date.now() - cached.at < CHECK_EVERY_MS) return cached.version
+  if (allowCache && cached && Date.now() - cached.at < CHECK_EVERY_MS) {
+    if (isNewer(cached.version, current)) return cached.version
+    if (Date.now() - cached.at < 5 * 60 * 1000) return cached.version // baru dicek ≤5 menit lalu
+  }
   const res = await fetch(LATEST_RELEASE_API, { headers: { Accept: "application/vnd.github+json" } })
   if (!res.ok) return cached?.version ?? null
   const data = (await res.json()) as { tag_name?: string }
@@ -73,8 +83,8 @@ export default function UpdatePrompt() {
   useEffect(() => {
     if (!Capacitor.isNativePlatform() || !APP_VERSION) return
     const current = APP_VERSION
-    const check = () =>
-      latestVersion()
+    const check = (allowCache: boolean) =>
+      latestVersion(current, allowCache)
         .then((v) => {
           if (!v || !isNewer(v, current)) return
           const snoozed = read<{ version: string; at: number }>(DISMISS_KEY)
@@ -82,12 +92,12 @@ export default function UpdatePrompt() {
           setLatest(v)
         })
         .catch(() => {}) // tanpa internet: coba lagi nanti
-    check()
+    check(false) // aplikasi baru dibuka: selalu cek
     const onVisible = () => {
       if (document.visibilityState !== "visible") return
       // Kembali dari layar izin "instal aplikasi tidak dikenal" → langsung lanjut memasang
       if (phaseRef.current === "permission") install()
-      else if (phaseRef.current === "ask") check()
+      else if (phaseRef.current === "ask") check(true)
     }
     document.addEventListener("visibilitychange", onVisible)
     return () => document.removeEventListener("visibilitychange", onVisible)
