@@ -61,6 +61,8 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Pembaruan dari dalam aplikasi: membuka layar pemasangan APK (pengguna tetap menekan "Update") -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <!-- Alarm adzan: alarm tepat waktu (Android 13+ otomatis diizinkan untuk aplikasi jenis alarm),
          layanan pemutar latar depan, dan pemulihan jadwal setelah HP dinyalakan ulang -->
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
