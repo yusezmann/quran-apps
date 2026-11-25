@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query"
 import { useQuranStore } from "@/app/(features)/quran/store/quranStore"
-import { Play, Pause, Bookmark, AlertCircle, Hexagon, Book } from "lucide-react"
+import { Play, Pause, Bookmark, AlertCircle, Hexagon, Book, ChevronLeft, ChevronRight, X } from "lucide-react"
 import { useState, useRef, useEffect } from "react"
 import BismillahText from "@/components/BismillahText"
 import {
@@ -458,27 +458,50 @@ export default function QuranReader() {
 
         {/* Kontrol audio: hanya tampil saat ada ayat yang diputar, menempel di bawah layar */}
         {currentAyah !== null && (
-        <div className="sticky bottom-[calc(env(safe-area-inset-bottom)+92px)] xl:bottom-0 z-20 p-3 border-t bg-white/95 backdrop-blur flex justify-between items-center gap-3 shadow-[0_-4px_12px_rgba(0,0,0,0.06)]">
-          <Button
+        <div className="sticky bottom-[calc(env(safe-area-inset-bottom)+92px)] xl:bottom-0 z-20 flex items-center gap-3 border-t bg-white/95 px-4 py-2.5 shadow-[0_-4px_12px_rgba(0,0,0,0.06)] backdrop-blur">
+          {/* Ringkas untuk layar HP: tombol ikon bulat + keterangan satu baris */}
+          <div className="min-w-0 flex-1 leading-tight">
+            <p className="truncate text-base font-bold text-gray-900 tabular-nums">
+              Ayat {currentAyah}/{surah?.jumlahAyat}
+            </p>
+            <p className="truncate text-xs text-gray-500">
+              {surah?.namaLatin} · {isPlaying ? "Memutar" : "Dijeda"}
+            </p>
+          </div>
+          <button
+            type="button"
+            aria-label="Ayat sebelumnya"
             onClick={goToPreviousAyah}
-            disabled={
-              !currentAyah || (currentAyah === 1 && !surah?.suratSebelumnya)
-            }
+            disabled={!currentAyah || currentAyah === 1}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-green-600 text-green-700 active:scale-95 disabled:border-gray-200 disabled:text-gray-300"
           >
-            Ayat Sebelumnya
-          </Button>
-          <span className="text-sm text-gray-600 tabular-nums">
-            {isPlaying ? "Memutar" : "Dijeda"} · Ayat {currentAyah}/{surah?.jumlahAyat}
-          </span>
-          <Button
+            <ChevronLeft className="h-6 w-6" strokeWidth={2.5} />
+          </button>
+          <button
+            type="button"
+            aria-label={isPlaying ? "Jeda" : "Lanjutkan"}
+            onClick={() => (isPlaying ? audioRef.current?.pause() : audioRef.current?.play().catch(() => {}))}
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-green-600 text-white shadow active:scale-95"
+          >
+            {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="ml-0.5 h-6 w-6" />}
+          </button>
+          <button
+            type="button"
+            aria-label="Ayat selanjutnya"
             onClick={goToNextAyah}
-            disabled={
-              !currentAyah ||
-              (currentAyah === surah?.jumlahAyat && !surah?.suratSelanjutnya)
-            }
+            disabled={!currentAyah || currentAyah === surah?.jumlahAyat}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-green-600 text-green-700 active:scale-95 disabled:border-gray-200 disabled:text-gray-300"
           >
-            Ayat Selanjutnya
-          </Button>
+            <ChevronRight className="h-6 w-6" strokeWidth={2.5} />
+          </button>
+          <button
+            type="button"
+            aria-label="Tutup pemutar"
+            onClick={stopAyah}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100"
+          >
+            <X className="h-5 w-5" />
+          </button>
         </div>
         )}
         <audio

@@ -23,3 +23,17 @@ test("Baca: qari Quran.com bisa dipilih & audio ayat memakai qari itu (dipakai j
     timeout: 30_000,
   })
 })
+
+test("Baca: bilah audio ringkas di HP — jeda, lanjut, ayat berikutnya, tutup", async ({ page }) => {
+  test.setTimeout(120_000)
+  await page.goto("/quran")
+  await page.getByRole("button", { name: "Putar ayat 1" }).click({ timeout: 30_000 })
+  await expect(page.getByText("Ayat 1/7")).toBeVisible()
+  await page.getByRole("button", { name: "Jeda" }).click()
+  await expect(page.getByText("Al-Fatihah · Dijeda")).toBeVisible()
+  await page.getByRole("button", { name: "Ayat selanjutnya" }).click()
+  await expect(page.getByText("Ayat 2/7")).toBeVisible()
+  await page.screenshot({ path: "test-results/baca-bar.png" })
+  await page.getByRole("button", { name: "Tutup pemutar" }).click()
+  await expect(page.getByText("Ayat 2/7")).toHaveCount(0)
+})
