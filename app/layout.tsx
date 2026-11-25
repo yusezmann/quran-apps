@@ -9,6 +9,7 @@ import AdzanBanner from "@/app/(features)/adzan/components/AdzanBanner"
 import AdzanSettingsModal from "@/app/(features)/adzan/components/AdzanSettingsModal"
 import AutoLocationManager from "@/components/AutoLocationManager"
 import AdultOnly from "@/components/AdultOnly"
+import UpdatePrompt from "@/components/UpdatePrompt"
 
 /*
  * Font disimpan di dalam proyek (app/fonts/google, lisensi OFL — lihat OFL-LICENSES.txt), bukan diunduh
@@ -109,6 +110,7 @@ export default function RootLayout({
               <AdzanBanner />
               <AdzanSettingsModal />
               <AutoLocationManager />
+              <UpdatePrompt />
             </AdultOnly>
           </AntdProvider>
         </QueryProvider>
